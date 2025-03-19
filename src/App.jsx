@@ -1,12 +1,4 @@
-import {
-  createContext,
-  Fragment,
-  Suspense,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { Fragment, Suspense, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import "./App.css";
 import {
@@ -26,7 +18,8 @@ import PopUp from "./components/pop-up";
 import UnitInfoPopup from "./components/unit-info-popup";
 import * as THREE from "three";
 import DirectionalArrows from "./components/directional-arrows";
-
+import gsap from "gsap";
+import { ControlsProvider, useControls } from "./context/ControlsContext";
 
 const styles = `
 .canvas-container {
@@ -37,27 +30,14 @@ const styles = `
 }
 `;
 
-const ControlsContext = createContext(null);
-const ControlsProvider = ({ children }) => {
-  const controlsRef = useRef(null);
-
-  return (
-    <ControlsContext.Provider value={controlsRef}>
-      {children}
-    </ControlsContext.Provider>
-  );
-};
-ControlsProvider.propTypes = {
-  children: PropTypes.node.isRequired,
-};
-
 const CameraController = () => {
   const { camera, gl } = useThree();
   const controlsRef = useRef();
-  const controlsContext = useContext(ControlsContext);
+  const controlsContext = useControls();
 
   useEffect(() => {
     gl.setClearColor("#000000");
+    camera.position.set(0, 15, 70);
     camera.lookAt(controlsRef.current.target);
     const controls = controlsRef.current;
     controls.update();
@@ -78,9 +58,13 @@ const CameraController = () => {
       args={[camera, gl.domElement]}
       minDistance={40}
       maxDistance={100}
-      // minPolarAngle={Math.PI / 10}
-      maxPolarAngle={Math.PI / 2.5}
+      minPolarAngle={0}
+      maxPolarAngle={Math.PI / 2}
       enableDamping
+      dampingFactor={0.05}
+      enableRotate={true}
+      screenSpacePanning={true}
+      target={[0, 15, 0]}
     />
   );
 };
@@ -89,7 +73,7 @@ const BuildingModel = ({ onUnitSelect, selectedUnit }) => {
   const { scene } = useGLTF("/models/TYPE-A-HitBox.glb", "/draco/");
   const [selected, setSelected] = useState(null);
   const [hoverInfo, setHoverInfo] = useState(null);
-  const controlsRef = useContext(ControlsContext);
+  const controlsRef = useControls();
   const animationFrameRef = useRef(null);
 
   const handlePointerOver = (e) => {
@@ -151,17 +135,21 @@ const BuildingModel = ({ onUnitSelect, selectedUnit }) => {
       clickedObject.material = materials.selected;
       setSelected(clickedObject);
 
+      console.log("controlsRef: ", controlsRef);
       if (controlsRef && controlsRef.current) {
-        // Cancel any ongoing animation first
+        gsap.killTweensOf(controlsRef.current.target);
+        gsap.killTweensOf(controlsRef.current.object.position);
+
         if (animationFrameRef.current) {
           cancelAnimationFrame(animationFrameRef.current);
-          controlsRef.current.enabled = true;
+          animationFrameRef.current = null;
         }
 
-        const worldPosition = new Vector3();
-        e.object.getWorldPosition(worldPosition);
+        controlsRef.current.enabled = true;
 
-        // Save current camera position and target
+        const worldPosition = new Vector3();
+        clickedObject.getWorldPosition(worldPosition);
+
         const startPosition = controlsRef.current.object.position.clone();
         const startTarget = controlsRef.current.target.clone();
 
@@ -178,7 +166,6 @@ const BuildingModel = ({ onUnitSelect, selectedUnit }) => {
           worldPosition.z
         );
 
-        // Calculate distance on the XZ plane only
         const initialDistanceToCenter =
           flatStartPosition.distanceTo(buildingCenter);
 
@@ -201,69 +188,74 @@ const BuildingModel = ({ onUnitSelect, selectedUnit }) => {
           worldPosition.x +
             objectToCenterDir.x *
               (initialDistanceToCenter - objectDistanceFromCenter),
-          startPosition.y, // Keep original camera height
+          startPosition.y,
           worldPosition.z +
             objectToCenterDir.z *
               (initialDistanceToCenter - objectDistanceFromCenter)
         );
 
-        // Animation
-        const startTime = Date.now();
-        const duration = 1200;
-
-        // Store original values from controls
-        const originalEnabled = controlsRef.current.enabled;
-        const originalMinDistance = controlsRef.current.minDistance;
-        const originalMaxDistance = controlsRef.current.maxDistance;
-
-        // Disable controls during animation
-        controlsRef.current.enabled = false;
-
-        const animate = () => {
-          const now = Date.now();
-          const progress = Math.min((now - startTime) / duration, 1);
-          const easeProgress = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
-
-          // Interpolate target
-          const newTarget = new Vector3().lerpVectors(
-            startTarget,
-            endTarget,
-            easeProgress
-          );
-
-          // Interpolate camera position
-          const newPosition = new Vector3().lerpVectors(
-            startPosition,
-            endPosition,
-            easeProgress
-          );
-
-          // Apply the new positions directly to the camera and controls
-          controlsRef.current.target.copy(newTarget);
-          controlsRef.current.object.position.copy(newPosition);
-
-          // Force the camera to look at the target
-          controlsRef.current.object.lookAt(newTarget);
-          controlsRef.current.object.updateMatrixWorld(true);
-
-          // Refresh controls
-          controlsRef.current.update();
-
-          if (progress < 1) {
-            animationFrameRef.current = requestAnimationFrame(animate);
-          } else {
-            // Animation complete - restore control settings
-            controlsRef.current.enabled = originalEnabled;
-            controlsRef.current.minDistance = originalMinDistance;
-            controlsRef.current.maxDistance = originalMaxDistance;
-            animationFrameRef.current = null;
-          }
+        const originalSettings = {
+          enabled: controlsRef.current.enabled,
+          minDistance: controlsRef.current.minDistance,
+          maxDistance: controlsRef.current.maxDistance,
         };
 
-        animationFrameRef.current = requestAnimationFrame(animate);
+        controlsRef.current.enabled = false;
+
+        const animationProxy = {
+          targetX: startTarget.x,
+          targetY: startTarget.y,
+          targetZ: startTarget.z,
+          positionX: startPosition.x,
+          positionY: startPosition.y,
+          positionZ: startPosition.z,
+          progress: 0,
+        };
+
+        gsap.to(animationProxy, {
+          targetX: endTarget.x,
+          targetY: endTarget.y,
+          targetZ: endTarget.z,
+          positionX: endPosition.x,
+          positionY: endPosition.y,
+          positionZ: endPosition.z,
+          progress: 1,
+          duration: 1.2,
+          ease: "power3.out",
+          onUpdate: () => {
+            if (!controlsRef.current) return;
+
+            controlsRef.current.target.set(
+              animationProxy.targetX,
+              animationProxy.targetY,
+              animationProxy.targetZ
+            );
+
+            controlsRef.current.object.position.set(
+              animationProxy.positionX,
+              animationProxy.positionY,
+              animationProxy.positionZ
+            );
+
+            controlsRef.current.object.lookAt(controlsRef.current.target);
+            controlsRef.current.object.updateMatrixWorld(true);
+
+            controlsRef.current.update();
+          },
+          onComplete: () => {
+            if (!controlsRef.current) return;
+
+            controlsRef.current.enabled = originalSettings.enabled;
+            controlsRef.current.minDistance = originalSettings.minDistance;
+            controlsRef.current.maxDistance = originalSettings.maxDistance;
+
+            controlsRef.current.update();
+          },
+        });
       }
     }
   };
+  console.log("controlsRef:>>23232 ", controlsRef);
 
   useEffect(() => {
     const box = new Box3().setFromObject(scene);
@@ -338,12 +330,12 @@ const GrassPlane = () => {
   grassTexture.wrapS = THREE.RepeatWrapping;
   grassTexture.wrapT = THREE.RepeatWrapping;
   grassTexture.repeat.set(20, 20);
+
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
-      <planeGeometry args={[300, 300]} />
+      <planeGeometry args={[300, 300, 128, 128]} />
       <meshStandardMaterial
         map={grassTexture}
-        normalScale={new THREE.Vector2(0.8, 0.8)}
         roughness={0.8}
         metalness={0.1}
         depthWrite={true}
@@ -384,7 +376,7 @@ function App() {
                 fov={35}
                 near={1}
                 far={1000}
-                position={[30, 25, 50]}
+                position={[30, 15, 70]}
               />
 
               <ambientLight intensity={0.3} />
@@ -398,7 +390,7 @@ function App() {
               </Bounds>
               <GrassPlane />
               <Grid
-                position={[0, 0.05, 0]}
+                position={[0, 0.2, 0]}
                 args={[300, 300]}
                 cellSize={5}
                 cellThickness={0}
