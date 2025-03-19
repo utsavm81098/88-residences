@@ -25,3 +25,7 @@ dist-ssr
 
 # local env files
 .env*
+
+# file
+public/models/CYPRUS.glb
+public/models/DragonAttenuation.glb
