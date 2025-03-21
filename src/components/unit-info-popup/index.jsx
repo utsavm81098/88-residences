@@ -10,7 +10,7 @@ const UnitInfoPopup = ({ unit, onClose }) => {
         top: "20px",
         right: "20px",
         zIndex: 1000,
-        background: "rgba(0,0,0,0.8)",
+        background: "rgb(51 48 48)",
         color: "white",
         padding: "20px",
         borderRadius: "8px",
