@@ -73,7 +73,7 @@ function App() {
               <CameraController />
               <axesHelper args={[5]} />
               <Environment preset="night" />
-              {/* <FloorPlan /> */}
+              <FloorPlan />
               <DirectionalArrows />
             </Suspense>
           </ControlsProvider>
