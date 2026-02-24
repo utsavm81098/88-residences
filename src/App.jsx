@@ -70,7 +70,7 @@ function App() {
               azimuth={0.25}
             /> */}
 
-            <fog attach="fog" args={["#dfe9f3", 200, 800]} />
+            {/* <fog attach="fog" args={["#dfe9f3", 200, 800]} /> */}
 
             <ambientLight intensity={0.3} />
             {/* <directionalLight position={[50, 50, 25]} castShadow /> */}
