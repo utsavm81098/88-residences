@@ -1,14 +1,49 @@
 import { useGLTF } from "@react-three/drei";
-import { useEffect } from "react";
+import { useMemo } from "react";
 import * as THREE from "three";
+
+useGLTF.setDecoderPath("/draco/");
+
+useGLTF.preload("/models/Type-F-optimized.glb");
+useGLTF.preload("/models/Glass-HitBox.glb");
 
 export default function BuildingModel() {
   // const { scene } = useGLTF("/models/Type-F-compressed.glb");
   // const { scene } = useGLTF("/models/Glass-HitBox.glb");
   // const { scene } = useGLTF("/models/TYPE-A-HitBox.glb");
 
-  const building = useGLTF("/models/Type-F-compressed.glb");
+  const building = useGLTF("/models/Type-F-optimized.glb");
   const glassHitbox = useGLTF("/models/Glass-HitBox.glb");
+
+  const glassScene = useMemo(() => {
+    const scene = glassHitbox.scene.clone();
+
+    scene.traverse((child) => {
+      if (child.isMesh) {
+        child.material = new THREE.MeshBasicMaterial({
+          color: "#ffffff",
+          transparent: true,
+          opacity: 0,
+          depthWrite: false,
+        });
+      }
+    });
+
+    return scene;
+  }, [glassHitbox]);
+
+  const buildingScene = useMemo(() => {
+    const scene = building.scene.clone();
+
+    scene.traverse((child) => {
+      if (child.isMesh && child.material) {
+        child.material.metalness = 0;
+        child.material.roughness = 0.9;
+      }
+    });
+
+    return scene;
+  }, [building]);
 
   const onPointerOver = (e) => {
     e.stopPropagation();
@@ -25,28 +60,11 @@ export default function BuildingModel() {
     console.log("Clicked:", e.object.name);
   };
 
-  useEffect(() => {
-    glassHitbox.scene.traverse((child) => {
-      // console.log("child: ", child);
-      if (child.isMesh) {
-        child.material = new THREE.MeshBasicMaterial({
-          color: "#ffffff", // your plain color
-          transparent: true,
-          opacity: 0,
-          depthWrite: false,
-        });
-        child.material = child.material.clone();
-        // child.material.color.set("#ff0000");
-        console.log("Mesh Name:", child.name);
-      }
-    });
-  }, [glassHitbox]);
-
   return (
     <>
-      <primitive object={building.scene} />
+      <primitive object={buildingScene} position={[0, 0, 0]} renderOrder={2} />
       <primitive
-        object={glassHitbox.scene}
+        object={glassScene}
         onPointerOver={onPointerOver}
         onPointerOut={onPointerOut}
         onClick={onClick}
