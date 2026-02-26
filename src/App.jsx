@@ -26,6 +26,7 @@ function App() {
           frameloop="demand"
           gl={{
             antialias: true,
+            logarithmicDepthBuffer: true,
             toneMapping: THREE.ACESFilmicToneMapping,
             toneMappingExposure: 0.6,
             outputColorSpace: THREE.SRGBColorSpace,
@@ -41,7 +42,7 @@ function App() {
             <PerspectiveCamera
               makeDefault
               fov={35}
-              near={2}
+              near={0.1}
               far={2000}
               position={[50, 15, 50]}
             />
@@ -53,10 +54,10 @@ function App() {
 
             <directionalLight position={[60, 100, 40]} intensity={1.2} />
 
-            <GrassGrid />
+            <GrassGrid position={[0, 0, 0]} renderOrder={2} />
 
             <Grid
-              position={[0, -0.02, 0]} // ⭐ slightly below model
+              position={[0, 0.01, 0]} // ⭐ between grass (-0.15) and model (0)
               args={[300, 300]}
               cellSize={4}
               cellThickness={0}
@@ -67,16 +68,11 @@ function App() {
               fadeStrength={1}
               followCamera={false}
               infiniteGrid
+              depthWrite={false}
+              depthTest={true}
               renderOrder={1}
-              material={{
-                transparent: true,
-                depthWrite: false, // ⭐ prevents z-fighting
-                polygonOffset: true,
-                polygonOffsetFactor: -10,
-                polygonOffsetUnits: -10,
-              }}
             />
-            <BuildingModel />
+            <BuildingModel position={[0, 0.02, 0]} renderOrder={3} />
 
             <OrbitControls
               makeDefault
@@ -86,8 +82,10 @@ function App() {
               minDistance={50} // prevent too close
               maxDistance={80} // prevent too far
               enablePan={false} // prevents drifting outside
-              minPolarAngle={Math.PI / 4}
-              maxPolarAngle={Math.PI / 2.1}
+              // minPolarAngle={Math.PI / 4}
+              // maxPolarAngle={Math.PI / 2.1}
+              minPolarAngle={Math.PI * 0.35} // ~63°
+              maxPolarAngle={Math.PI * 0.48} // ~86°
             />
 
             <DirectionalArrows />

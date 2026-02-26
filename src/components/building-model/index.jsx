@@ -7,7 +7,7 @@ useGLTF.setDecoderPath("/draco/");
 useGLTF.preload("/models/Type-F-optimized.glb");
 useGLTF.preload("/models/Glass-HitBox.glb");
 
-export default function BuildingModel() {
+const BuildingModel = ({ position = [], renderOrder = 0 }) => {
   // const { scene } = useGLTF("/models/Type-F-compressed.glb");
   // const { scene } = useGLTF("/models/Glass-HitBox.glb");
   // const { scene } = useGLTF("/models/TYPE-A-HitBox.glb");
@@ -25,6 +25,9 @@ export default function BuildingModel() {
           transparent: true,
           opacity: 0,
           depthWrite: false,
+          polygonOffset: true, // ⭐ added
+          polygonOffsetFactor: -1, // ⭐ pull forward (toward camera) so hover works
+          polygonOffsetUnits: -1,
         });
       }
     });
@@ -62,13 +65,21 @@ export default function BuildingModel() {
 
   return (
     <>
-      <primitive object={buildingScene} position={[0, 0, 0]} renderOrder={2} />
+      <primitive
+        object={buildingScene}
+        position={position}
+        renderOrder={renderOrder}
+      />
       <primitive
         object={glassScene}
+        position={position}
+        renderOrder={renderOrder + 1} // glass above building
         onPointerOver={onPointerOver}
         onPointerOut={onPointerOut}
         onClick={onClick}
       />
     </>
   );
-}
+};
+
+export default BuildingModel;
