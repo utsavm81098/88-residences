@@ -8,12 +8,11 @@ useGLTF.preload("/models/Type-F-optimized.glb");
 useGLTF.preload("/models/Glass-HitBox.glb");
 
 const BuildingModel = ({ position = [], renderOrder = 0 }) => {
-  // const { scene } = useGLTF("/models/Type-F-compressed.glb");
-  // const { scene } = useGLTF("/models/Glass-HitBox.glb");
   // const { scene } = useGLTF("/models/TYPE-A-HitBox.glb");
+  // const building = useGLTF("/models/type-f-optimized.glb");
 
-  const building = useGLTF("/models/Type-F-optimized.glb");
-  const glassHitbox = useGLTF("/models/Glass-HitBox.glb");
+  const building = useGLTF("/models/type-f-compressed.glb");
+  const glassHitbox = useGLTF("/models/glass-hitbox.glb");
 
   const glassScene = useMemo(() => {
     const scene = glassHitbox.scene.clone();
