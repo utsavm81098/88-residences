@@ -4,8 +4,8 @@ import * as THREE from "three";
 
 useGLTF.setDecoderPath("/draco/");
 
-useGLTF.preload("/models/Type-F-optimized.glb");
-useGLTF.preload("/models/Glass-HitBox.glb");
+useGLTF.preload("/models/type-f-compressed.glb");
+useGLTF.preload("/models/glass-hitbox.glb");
 
 const BuildingModel = ({ position = [], renderOrder = 0 }) => {
   // const { scene } = useGLTF("/models/TYPE-A-HitBox.glb");
