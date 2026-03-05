@@ -1,4 +1,4 @@
-import { Fragment, Suspense } from "react";
+import { Fragment, Suspense, useRef } from "react";
 import "./App.css";
 import {
   Html,
@@ -9,14 +9,15 @@ import {
   useEnvironment,
 } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import DirectionalArrows from "./components/directional-arrows";
 import GrassGrid from "./components/grass-grid";
 import BuildingModel from "./components/building-model";
 import * as THREE from "three";
+import DirectionLabels from "./components/direction-labels";
 
 useEnvironment.preload("/hdr/sky.hdr");
 
 function App() {
+  const controlsRef = useRef();
   return (
     <Fragment>
       <div className="canvas-container">
@@ -59,10 +60,10 @@ function App() {
             <Grid
               position={[0, 0.01, 0]} // ⭐ between grass (-0.15) and model (0)
               args={[300, 300]}
-              cellSize={4}
+              cellSize={2}
               cellThickness={0}
-              sectionSize={20}
-              sectionThickness={2}
+              sectionSize={10}
+              sectionThickness={1}
               sectionColor="#ffffff"
               fadeDistance={200}
               fadeStrength={1}
@@ -71,10 +72,16 @@ function App() {
               depthWrite={false}
               depthTest={true}
               renderOrder={1}
+              raycast={() => null}
             />
-            <BuildingModel position={[0, 0.02, 0]} renderOrder={3} />
+            <BuildingModel
+              controlsRef={controlsRef}
+              position={[0, 0.02, 0]}
+              renderOrder={3}
+            />
 
             <OrbitControls
+              ref={controlsRef}
               makeDefault
               enableDamping
               dampingFactor={0.05}
@@ -87,8 +94,7 @@ function App() {
               minPolarAngle={Math.PI * 0.35} // ~63°
               maxPolarAngle={Math.PI * 0.48} // ~86°
             />
-
-            <DirectionalArrows />
+            <DirectionLabels controlsRef={controlsRef} />
           </Suspense>
         </Canvas>
       </div>

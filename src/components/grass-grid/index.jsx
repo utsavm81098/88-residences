@@ -8,7 +8,7 @@ const GrassGrid = ({ position = [], renderOrder = 0 }) => {
     >
       <planeGeometry args={[300, 300]} />
       <meshStandardMaterial
-        color="#0a0a0a" // elegant black
+        color="#000000" // elegant black
         roughness={0.9}
         metalness={0.05}
         depthWrite={false}
