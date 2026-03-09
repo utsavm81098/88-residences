@@ -99,7 +99,7 @@ function App() {
             target={[0, 5, 0]}
             enablePan={false}
             enableZoom
-            minPolarAngle={1.4}
+            minPolarAngle={1.1}
             maxPolarAngle={1.5}
           />
 
