@@ -4,7 +4,30 @@ import gsap from "gsap";
 import { useCallback, useMemo } from "react";
 import * as THREE from "three";
 
-const Label = ({ children, position, onClick }) => (
+// ✅ Same breakpoints as useFitCamera — single source of truth
+const BREAKPOINTS = {
+  mobile: 768,
+  tablet: 1024,
+};
+
+// ✅ Label config scales with camera distance per device
+const LABEL_CONFIG = {
+  mobile: { distance: 25, fontSize: 1.2 },
+  tablet: { distance: 28, fontSize: 1.2 },
+  desktop: { distance: 30, fontSize: 1.5 }, // your original values
+};
+
+function getLabelConfig(width) {
+  if (width < BREAKPOINTS.mobile) return LABEL_CONFIG.mobile;
+  if (width < BREAKPOINTS.tablet) return LABEL_CONFIG.tablet;
+  return LABEL_CONFIG.desktop;
+}
+
+// ✅ Module-level reusable vectors
+const _newPos = new THREE.Vector3();
+const _offset = new THREE.Vector3();
+
+const Label = ({ children, position, onClick, fontSize }) => (
   <Billboard
     position={position}
     follow
@@ -13,12 +36,10 @@ const Label = ({ children, position, onClick }) => (
     lockZ={false}
   >
     <Text
-      fontSize={1.5}
+      fontSize={fontSize}
       color="white"
       anchorX="center"
       anchorY="middle"
-      //   outlineWidth={0.25}
-      //   outlineColor="#000000"
       depthTest={false}
       renderOrder={100}
       onClick={onClick}
@@ -31,62 +52,59 @@ const Label = ({ children, position, onClick }) => (
 );
 
 export default function DirectionLabels({ controlsRef }) {
-  const { camera } = useThree();
-  const d = 30;
+  const { camera, size: viewportSize } = useThree();
+
+  // ✅ Recalculates automatically on resize — same as useFitCamera
+  const { distance, fontSize } = useMemo(
+    () => getLabelConfig(viewportSize.width),
+    [viewportSize.width],
+  );
 
   const positions = useMemo(
     () => ({
-      N: [0, 1, -d],
-      S: [0, 1, d],
-      E: [d, 1, 0],
-      W: [-d, 1, 0],
+      N: [0, 1, -distance],
+      S: [0, 1, distance],
+      E: [distance, 1, 0],
+      W: [-distance, 1, 0],
     }),
-    [d],
+    [distance],
   );
+
   const moveCamera = useCallback(
     (direction) => {
       const controls = controlsRef.current;
       if (!controls) return;
 
       const target = controls.target.clone();
-      const offset = camera.position.clone().sub(target);
 
-      const radius = Math.sqrt(offset.x * offset.x + offset.z * offset.z);
-      const height = offset.y;
+      // ✅ Reuse _offset instead of camera.position.clone()
+      _offset.copy(camera.position).sub(target);
 
-      let startAngle = Math.atan2(offset.x, offset.z);
-      let endAngle = startAngle;
+      const radius = Math.sqrt(_offset.x * _offset.x + _offset.z * _offset.z);
+      const height = _offset.y;
+      const startAngle = Math.atan2(_offset.x, _offset.z);
 
-      switch (direction) {
-        case "N":
-          endAngle = Math.PI; // -Z direction
-          break;
+      const TARGET_ANGLES = {
+        N: Math.PI,
+        E: Math.PI / 2,
+        S: 0,
+        W: -Math.PI / 2,
+      };
 
-        case "E":
-          endAngle = Math.PI / 2; // +X
-          break;
+      // ✅ Guard for unknown directions
+      if (!(direction in TARGET_ANGLES)) return;
 
-        case "S":
-          endAngle = 0; // +Z
-          break;
+      const rawEnd = TARGET_ANGLES[direction];
 
-        case "W":
-          endAngle = -Math.PI / 2; // -X
-          break;
-
-        default:
-          return;
-      }
-
-      endAngle =
+      // Shortest path wrap
+      const endAngle =
         startAngle +
         THREE.MathUtils.euclideanModulo(
-          endAngle - startAngle + Math.PI,
+          rawEnd - startAngle + Math.PI,
           Math.PI * 2,
         ) -
         Math.PI;
 
-      // animate angle (NOT position)
       gsap.to(
         { angle: startAngle },
         {
@@ -96,13 +114,12 @@ export default function DirectionLabels({ controlsRef }) {
           onUpdate: function () {
             const a = this.targets()[0].angle;
 
-            const newPos = new THREE.Vector3(
-              Math.sin(a) * radius,
-              height,
-              Math.cos(a) * radius,
-            ).add(target);
+            // ✅ Reuse _newPos instead of new THREE.Vector3() every frame
+            _newPos
+              .set(Math.sin(a) * radius, height, Math.cos(a) * radius)
+              .add(target);
 
-            camera.position.copy(newPos);
+            camera.position.copy(_newPos);
             camera.lookAt(target);
             controls.update();
           },
@@ -114,21 +131,22 @@ export default function DirectionLabels({ controlsRef }) {
 
   return (
     <group>
-      <Label position={positions.N} onClick={() => moveCamera("N")}>
-        NORTH
-      </Label>
-
-      <Label position={positions.S} onClick={() => moveCamera("S")}>
-        SOUTH
-      </Label>
-
-      <Label position={positions.E} onClick={() => moveCamera("E")}>
-        EAST
-      </Label>
-
-      <Label position={positions.W} onClick={() => moveCamera("W")}>
-        WEST
-      </Label>
+      {Object.entries(positions).map(([dir, pos]) => (
+        <Label
+          key={dir}
+          position={pos}
+          fontSize={fontSize}
+          onClick={() => moveCamera(dir)}
+        >
+          {dir === "N"
+            ? "NORTH"
+            : dir === "S"
+              ? "SOUTH"
+              : dir === "E"
+                ? "EAST"
+                : "WEST"}
+        </Label>
+      ))}
     </group>
   );
 }
