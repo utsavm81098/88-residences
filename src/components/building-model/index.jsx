@@ -34,8 +34,6 @@ const BuildingModel = ({
   const rotationTween = useRef(null);
   const { invalidate } = useThree(); // ✅ Removed unused `camera` and `size`
 
-  useFitCamera(modelRef, controlsRef);
-
   const building = useGLTF("/models/BUILDING_1.glb");
   const glassHitbox = useGLTF("/models/glass-hitbox.glb");
 
