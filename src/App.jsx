@@ -8,13 +8,39 @@ import {
   OrbitControls,
   useEnvironment,
 } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import GrassGrid from "./components/grass-grid";
 import BuildingModel from "./components/building-model";
 import * as THREE from "three";
 import DirectionLabels from "./components/direction-labels";
 
 useEnvironment.preload("/hdr/sky.hdr");
+
+// ✅ This component runs inside the Canvas context and forces
+//    every mesh material to use the scene's HDRI environment map.
+//    Without this, some materials (especially from GLTF/GLB imports)
+//    silently ignore scene.environment.
+function SceneEnvironmentApplicator() {
+  const { scene } = useThree();
+
+  scene.traverse((obj) => {
+    if (obj.isMesh && obj.material) {
+      const materials = Array.isArray(obj.material)
+        ? obj.material
+        : [obj.material];
+      materials.forEach((mat) => {
+        // Only PBR materials respond to env maps
+        if (mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial) {
+          mat.envMap = scene.environment; // ✅ explicitly bind HDRI
+          mat.envMapIntensity = 1.5; // ✅ controls how strongly HDRI reflects
+          mat.needsUpdate = true;
+        }
+      });
+    }
+  });
+
+  return null;
+}
 
 function App() {
   const controlsRef = useRef();
@@ -25,27 +51,25 @@ function App() {
       <Canvas
         dpr={[1, Math.min(window.devicePixelRatio, 2)]}
         performance={{ min: 0.5, debounce: 200 }}
-        frameloop="demand"
+        // ✅ CRITICAL FIX: was "demand" — only re-rendered on pointer events.
+        //    "always" renders every frame so HDRI reflections update
+        //    continuously as the camera orbits around the scene.
+        frameloop="always"
         gl={{
           antialias: true,
           logarithmicDepthBuffer: true,
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 0.6,
+          // ✅ was 0.6 — was darkening the entire HDRI contribution
+          toneMappingExposure: 1.0,
           outputColorSpace: THREE.SRGBColorSpace,
         }}
         shadows={false}
         fallback={<div>Sorry no WebGL supported!</div>}
         style={{ width: "100%", height: "100%" }}
       >
-        {/* <ControlsProvider> */}
         <Suspense
           fallback={
-            <Html
-              center
-              style={{
-                color: "white",
-              }}
-            >
+            <Html center style={{ color: "white" }}>
               Loading Model...
             </Html>
           }
@@ -58,17 +82,35 @@ function App() {
             position={[50, 15, 50]}
           />
 
-          <Environment files="/hdr/sky.hdr" background intensity={0.15} />
+          {/*
+            ✅ intensity={1} — was 0.15, almost invisible.
+            background: renders HDRI as skybox.
+            environmentIntensity prop drives scene.environmentIntensity
+            which scales IBL (Image Based Lighting) globally.
+          */}
+          <Environment
+            files="/hdr/sky.hdr"
+            background
+            intensity={1}
+            environmentIntensity={1}
+          />
 
-          <hemisphereLight intensity={0.5} groundColor="#111111" />
-          <ambientLight intensity={0.04} />
+          {/*
+            ✅ SceneEnvironmentApplicator must be AFTER <Environment>
+            so scene.environment is already populated when it runs.
+          */}
+          <SceneEnvironmentApplicator />
 
-          <directionalLight position={[60, 100, 40]} intensity={1.2} />
+          {/*
+            ✅ Removed all manual lights (hemisphere, ambient, directional).
+            They were overpowering and flattening the HDRI-based PBR shading.
+            The HDRI alone provides full ambient + directional + specular lighting.
+          */}
 
           <GrassGrid position={[0, 0, 0]} renderOrder={2} />
 
           <Grid
-            position={[0, 0.01, 0]} // ⭐ between grass (-0.15) and model (0)
+            position={[0, 0.01, 0]}
             args={[300, 300]}
             cellSize={2}
             cellThickness={0}
@@ -84,6 +126,7 @@ function App() {
             renderOrder={1}
             raycast={() => null}
           />
+
           <BuildingModel
             controlsRef={controlsRef}
             modelRef={modelRef}
