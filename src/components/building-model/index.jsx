@@ -36,7 +36,7 @@ const BuildingModel = ({
 
   useFitCamera(modelRef, controlsRef);
 
-  const building = useGLTF("/models/type-f-compressed.glb");
+  const building = useGLTF("/models/BUILDING_1.glb");
   const glassHitbox = useGLTF("/models/glass-hitbox.glb");
 
   // ✅ Material moved to module-level constant — no longer recreated on mount
@@ -141,13 +141,13 @@ const BuildingModel = ({
   return (
     <group ref={modelRef} position={position}>
       <primitive object={buildingScene} renderOrder={renderOrder} />
-      <primitive
+      {/* <primitive
         object={glassScene}
         renderOrder={renderOrder + 1}
         onPointerOver={handlePointerOver}
         onPointerOut={handlePointerOut}
         onClick={handleClick}
-      />
+      /> */}
     </group>
   );
 };
