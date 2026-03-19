@@ -8,11 +8,8 @@ import {
   useEnvironment,
   Bounds,
 } from "@react-three/drei";
-<<<<<<< HEAD
-import { Canvas, useThree } from "@react-three/fiber";
-=======
+
 import { Canvas, useFrame } from "@react-three/fiber";
->>>>>>> 2b2f07f92432efc2be8e5b73e40fd6a1cb567542
 import GrassGrid from "./components/grass-grid";
 import BuildingModel from "./components/building-model";
 import * as THREE from "three";
@@ -21,32 +18,6 @@ import AdaptiveControls from "./components/adaptive-controls";
 
 useEnvironment.preload("/hdr/sky.hdr");
 
-<<<<<<< HEAD
-// ✅ This component runs inside the Canvas context and forces
-//    every mesh material to use the scene's HDRI environment map.
-//    Without this, some materials (especially from GLTF/GLB imports)
-//    silently ignore scene.environment.
-function SceneEnvironmentApplicator() {
-  const { scene } = useThree();
-
-  scene.traverse((obj) => {
-    if (obj.isMesh && obj.material) {
-      const materials = Array.isArray(obj.material)
-        ? obj.material
-        : [obj.material];
-      materials.forEach((mat) => {
-        // Only PBR materials respond to env maps
-        if (mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial) {
-          mat.envMap = scene.environment; // ✅ explicitly bind HDRI
-          mat.envMapIntensity = 1.5; // ✅ controls how strongly HDRI reflects
-          mat.needsUpdate = true;
-        }
-      });
-    }
-  });
-
-  return null;
-=======
 // function Headlamp() {
 //   const lightRef = useRef();
 
@@ -99,7 +70,6 @@ function Headlamp() {
       decay={2}
     />
   );
->>>>>>> 2b2f07f92432efc2be8e5b73e40fd6a1cb567542
 }
 
 function App() {
@@ -118,23 +88,12 @@ function App() {
       <Canvas
         dpr={[1, Math.min(window.devicePixelRatio, 2)]}
         performance={{ min: 0.5, debounce: 200 }}
-<<<<<<< HEAD
-        // ✅ CRITICAL FIX: was "demand" — only re-rendered on pointer events.
-        //    "always" renders every frame so HDRI reflections update
-        //    continuously as the camera orbits around the scene.
-=======
->>>>>>> 2b2f07f92432efc2be8e5b73e40fd6a1cb567542
         frameloop="always"
         gl={{
           antialias: true,
           logarithmicDepthBuffer: true,
           toneMapping: THREE.ACESFilmicToneMapping,
-<<<<<<< HEAD
-          // ✅ was 0.6 — was darkening the entire HDRI contribution
-          toneMappingExposure: 1.0,
-=======
           toneMappingExposure: 1,
->>>>>>> 2b2f07f92432efc2be8e5b73e40fd6a1cb567542
           outputColorSpace: THREE.SRGBColorSpace,
           powerPreference: "high-performance",
           physicallyCorrectLights: true,
@@ -143,9 +102,15 @@ function App() {
         fallback={<div>Sorry no WebGL supported!</div>}
         style={{ width: "100%", height: "100%" }}
       >
+        {/* <ControlsProvider> */}
         <Suspense
           fallback={
-            <Html center style={{ color: "white" }}>
+            <Html
+              center
+              style={{
+                color: "white",
+              }}
+            >
               Loading Model...
             </Html>
           }
@@ -162,32 +127,6 @@ function App() {
             position={[50, 15, 50]}
           />
 
-<<<<<<< HEAD
-          {/*
-            ✅ intensity={1} — was 0.15, almost invisible.
-            background: renders HDRI as skybox.
-            environmentIntensity prop drives scene.environmentIntensity
-            which scales IBL (Image Based Lighting) globally.
-          */}
-          <Environment
-            files="/hdr/sky.hdr"
-            background
-            intensity={1}
-            environmentIntensity={1}
-          />
-
-          {/*
-            ✅ SceneEnvironmentApplicator must be AFTER <Environment>
-            so scene.environment is already populated when it runs.
-          */}
-          <SceneEnvironmentApplicator />
-
-          {/*
-            ✅ Removed all manual lights (hemisphere, ambient, directional).
-            They were overpowering and flattening the HDRI-based PBR shading.
-            The HDRI alone provides full ambient + directional + specular lighting.
-          */}
-=======
           <Environment files="/hdr/sky.hdr" background={false} intensity={1} />
 
           <directionalLight position={[10, 20, 10]} intensity={1.2} />
@@ -201,7 +140,6 @@ function App() {
             position={sunDirection.clone().multiplyScalar(10)}
             castShadow={false} // No shadows, as requested
           /> */}
->>>>>>> 2b2f07f92432efc2be8e5b73e40fd6a1cb567542
 
           {/* <Environment files="/hdr/sky.hdr" background={false} intensity={2} /> */}
           {/* 
@@ -210,7 +148,7 @@ function App() {
           <Headlamp /> */}
           <GrassGrid position={[0, 0, 0]} renderOrder={2} />
           <Grid
-            position={[0, 0.01, 0]}
+            position={[0, 0.01, 0]} // ⭐ between grass (-0.15) and model (0)
             args={[300, 300]}
             cellSize={2}
             cellThickness={0}
@@ -226,29 +164,6 @@ function App() {
             renderOrder={1}
             raycast={() => null}
           />
-<<<<<<< HEAD
-
-          <BuildingModel
-            controlsRef={controlsRef}
-            modelRef={modelRef}
-            position={[0, 0.02, 0]}
-            renderOrder={3}
-          />
-
-          <OrbitControls
-            ref={controlsRef}
-            makeDefault
-            enableDamping
-            dampingFactor={0.05}
-            target={[0, 5, 0]}
-            enablePan={false}
-            enableZoom
-            minPolarAngle={1.1}
-            maxPolarAngle={1.5}
-          />
-
-          <DirectionLabels controlsRef={controlsRef} modelRef={modelRef} />
-=======
           <Bounds fit clip observe margin={1.2}>
             <BuildingModel
               controlsRef={controlsRef}
@@ -259,7 +174,6 @@ function App() {
           </Bounds>
           <AdaptiveControls controlsRef={controlsRef} />
           <DirectionLabel controlsRef={controlsRef} modelRef={modelRef} />
->>>>>>> 2b2f07f92432efc2be8e5b73e40fd6a1cb567542
         </Suspense>
       </Canvas>
     </div>
