@@ -7,32 +7,20 @@ import { useThree } from "@react-three/fiber";
 // import useFitCamera from "../use-fit-camera";
 
 // useGLTF.setDecoderPath("/draco/");
-useGLTF.preload(
-  "/models/TYPE_F+_compressed.glb",
-  "https://www.gstatic.com/draco/versioned/decoders/1.5.5/",
-);
-useGLTF.preload(
-  "/models/HITBOX01.glb",
-  "https://www.gstatic.com/draco/versioned/decoders/1.5.5/",
-);
+useGLTF.preload("/models/TYPE_F+_compressed.glb");
+useGLTF.preload("/models/HITBOX01.glb");
 const _Y_AXIS = new THREE.Vector3(0, 1, 0);
 const _hitPoint = new THREE.Vector3();
 const _dir = new THREE.Vector3();
 const _temp = new THREE.Vector3();
 
 const useBuilding = ({ controlsRef }) => {
-  const building = useGLTF(
-    "/models/TYPE_F+_compressed.glb",
-    "https://www.gstatic.com/draco/versioned/decoders/1.5.5/",
-  );
-  const glassHitbox = useGLTF(
-    "/models/HITBOX01.glb",
-    "https://www.gstatic.com/draco/versioned/decoders/1.5.5/",
-  );
+  const building = useGLTF("/models/TYPE_F+_compressed.glb");
+  const glassHitbox = useGLTF("/models/HITBOX01.glb");
   const rotationTween = useRef(null);
   const { invalidate } = useThree();
 
-  const HIDDEN_NODES = ["Box001", "Box006", "Box011", "Box016"];
+  // const HIDDEN_NODES = ["Box001", "Box006", "Box011", "Box016"];
 
   const unitMap = useMemo(() => {
     const map = {};
