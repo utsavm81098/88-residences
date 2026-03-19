@@ -1,8 +1,7 @@
-import { Text, Billboard } from "@react-three/drei";
+import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import gsap from "gsap";
-import { useCallback, useMemo } from "react";
-import * as THREE from "three";
+import React, { useCallback, useMemo } from "react";
 
 // ✅ Same breakpoints as useFitCamera — single source of truth
 const BREAKPOINTS = {
@@ -27,31 +26,7 @@ function getLabelConfig(width) {
 const _newPos = new THREE.Vector3();
 const _offset = new THREE.Vector3();
 
-const Label = ({ children, position, onClick, fontSize }) => (
-  <Billboard
-    position={position}
-    follow
-    lockX={false}
-    lockY={false}
-    lockZ={false}
-  >
-    <Text
-      fontSize={fontSize}
-      color="white"
-      anchorX="center"
-      anchorY="middle"
-      depthTest={false}
-      renderOrder={100}
-      onClick={onClick}
-      onPointerOver={() => (document.body.style.cursor = "pointer")}
-      onPointerOut={() => (document.body.style.cursor = "auto")}
-    >
-      {children}
-    </Text>
-  </Billboard>
-);
-
-export default function DirectionLabels({ controlsRef }) {
+const useDirectionLabel = ({ controlsRef }) => {
   const { camera, size: viewportSize } = useThree();
 
   // ✅ Recalculates automatically on resize — same as useFitCamera
@@ -62,10 +37,10 @@ export default function DirectionLabels({ controlsRef }) {
 
   const positions = useMemo(
     () => ({
-      N: [0, 1, -distance],
-      S: [0, 1, distance],
-      E: [distance, 1, 0],
-      W: [-distance, 1, 0],
+      N: [0, 0, -distance],
+      S: [0, 0, distance],
+      E: [distance, 0, 0],
+      W: [-distance, 0, 0],
     }),
     [distance],
   );
@@ -129,24 +104,7 @@ export default function DirectionLabels({ controlsRef }) {
     [camera, controlsRef],
   );
 
-  return (
-    <group>
-      {Object.entries(positions).map(([dir, pos]) => (
-        <Label
-          key={dir}
-          position={pos}
-          fontSize={fontSize}
-          onClick={() => moveCamera(dir)}
-        >
-          {dir === "N"
-            ? "NORTH"
-            : dir === "S"
-              ? "SOUTH"
-              : dir === "E"
-                ? "EAST"
-                : "WEST"}
-        </Label>
-      ))}
-    </group>
-  );
-}
+  return { positions, fontSize, moveCamera };
+};
+
+export default useDirectionLabel;
