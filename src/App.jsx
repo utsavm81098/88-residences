@@ -8,6 +8,7 @@ import {
   useEnvironment,
   Bounds,
 } from "@react-three/drei";
+
 import { Canvas, useFrame } from "@react-three/fiber";
 import GrassGrid from "./components/grass-grid";
 import BuildingModel from "./components/building-model";
