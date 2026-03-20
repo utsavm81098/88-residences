@@ -7,6 +7,9 @@ import {
   Grid,
   useEnvironment,
   Bounds,
+  PerformanceMonitor,
+  AdaptiveDpr,
+  AdaptiveEvents,
 } from "@react-three/drei";
 
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -18,70 +21,9 @@ import AdaptiveControls from "./components/adaptive-controls";
 
 useEnvironment.preload("/hdr/sky.hdr");
 
-// function Headlamp() {
-//   const lightRef = useRef();
-
-//   useFrame((state) => {
-//     if (lightRef.current) {
-//       // Copy the camera's world position to the light
-//       lightRef.current.position.copy(state.camera.position);
-//     }
-//   });
-
-//   return (
-//     <directionalLight
-//       ref={lightRef}
-//       castShadow={false} // No shadows, as requested
-//     />
-//   );
-// }
-
-function RotatingEnvironment({ modelRef }) {
-  const envRef = useRef();
-
-  useFrame(() => {
-    if (envRef.current && modelRef.current) {
-      // Sync environment with model rotation
-      envRef.current.rotation.y = modelRef.current.rotation.y;
-    }
-  });
-
-  return (
-    <group ref={envRef}>
-      <Environment files="/hdr/sky.hdr" background={false} />
-    </group>
-  );
-}
-
-function Headlamp() {
-  const lightRef = useRef();
-
-  useFrame((state) => {
-    if (lightRef.current) {
-      lightRef.current.position.copy(state.camera.position);
-    }
-  });
-
-  return (
-    <pointLight
-      ref={lightRef}
-      intensity={2}
-      distance={0} // infinite range
-      decay={2}
-    />
-  );
-}
-
 function App() {
   const controlsRef = useRef();
   const modelRef = useRef();
-  const hdriRotation = Math.PI / 4; // example
-
-  const sunDirection = new THREE.Vector3(
-    Math.sin(hdriRotation),
-    1,
-    Math.cos(hdriRotation),
-  ).normalize();
 
   return (
     <div className="canvas-container">
@@ -91,18 +33,27 @@ function App() {
         frameloop="always"
         gl={{
           antialias: true,
-          logarithmicDepthBuffer: true,
-          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMapping: THREE.LinearToneMapping,
           toneMappingExposure: 1,
-          outputColorSpace: THREE.SRGBColorSpace,
           powerPreference: "high-performance",
+          outputColorSpace: THREE.SRGBColorSpace,
           physicallyCorrectLights: true,
         }}
-        shadows={false}
+        shadows
         fallback={<div>Sorry no WebGL supported!</div>}
         style={{ width: "100%", height: "100%" }}
       >
         {/* <ControlsProvider> */}
+        <PerformanceMonitor
+          onDecline={() => {
+            console.log("Performance dropped");
+          }}
+          onIncline={() => {
+            console.log("Performance improved");
+          }}
+        />
+        <AdaptiveDpr pixelated />
+        <AdaptiveEvents />
         <Suspense
           fallback={
             <Html
@@ -115,37 +66,20 @@ function App() {
             </Html>
           }
         >
-          <mesh position={sunDirection.clone().multiplyScalar(10)}>
-            <sphereGeometry args={[1]} />
-            <meshBasicMaterial color="yellow" />
-          </mesh>
-          <PerspectiveCamera
-            makeDefault
-            fov={35}
-            near={0.1}
-            far={2000}
-            position={[50, 15, 50]}
+          <PerspectiveCamera makeDefault fov={35} near={0.1} far={2000} />
+          <Environment
+            files="/hdr/kloppenheim_06_puresky_4k.hdr"
+            background={false}
+            intensity={1}
+            resolution={256}
           />
-
-          <Environment files="/hdr/sky.hdr" background={false} intensity={1} />
-
-          <directionalLight position={[10, 20, 10]} intensity={1.2} />
-
-          <hemisphereLight
-            intensity={0.6}
-            skyColor="#ffffff"
-            groundColor="#444444"
+          <ambientLight intensity={0.3} color="#ffffff" />
+          <directionalLight
+            intensity={2.5}
+            color="#ffffff"
+            position={[5, 10, 5]}
+            castShadow
           />
-          {/* <directionalLight
-            position={sunDirection.clone().multiplyScalar(10)}
-            castShadow={false} // No shadows, as requested
-          /> */}
-
-          {/* <Environment files="/hdr/sky.hdr" background={false} intensity={2} /> */}
-          {/* 
-          <ambientLight intensity={0.6} />
-
-          <Headlamp /> */}
           <GrassGrid position={[0, 0, 0]} renderOrder={2} />
           <Grid
             position={[0, 0.01, 0]} // ⭐ between grass (-0.15) and model (0)

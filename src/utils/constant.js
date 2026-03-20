@@ -197,7 +197,7 @@ export const getUnitMaterialConfig = ({ status }) => {
     baseColor: isSold ? soldColor : availableColor,
     hoverColor: isSold ? soldColor : availableColor,
 
-    baseOpacity: isSold ? 0 : 0.3, // SOLD hidden initially
+    baseOpacity: isSold ? 0 : 0, // SOLD hidden initially
     hoverOpacity: 0.7, // both visible on hover
 
     emissive: isSold ? soldColor : availableColor,

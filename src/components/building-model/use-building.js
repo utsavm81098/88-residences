@@ -1,26 +1,21 @@
-import React, { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import gsap from "gsap";
 import * as THREE from "three";
 import { unitData, getUnitMaterialConfig } from "../../utils/constant";
 import { useGLTF } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
-// import useFitCamera from "../use-fit-camera";
 
-// useGLTF.setDecoderPath("/draco/");
-useGLTF.preload("/models/TYPE_F+_compressed.glb");
-useGLTF.preload("/models/HITBOX01.glb");
+useGLTF.preload("/models/type-f.glb");
 const _Y_AXIS = new THREE.Vector3(0, 1, 0);
 const _hitPoint = new THREE.Vector3();
 const _dir = new THREE.Vector3();
 const _temp = new THREE.Vector3();
 
-const useBuilding = ({ controlsRef }) => {
-  const building = useGLTF("/models/TYPE_F+_compressed.glb");
-  const glassHitbox = useGLTF("/models/HITBOX01.glb");
+const useBuilding = ({ controlsRef, modelRef }) => {
+  const building = useGLTF("/models/type-f.glb");
+  const glassHitbox = useGLTF("/models/hitbox.glb");
   const rotationTween = useRef(null);
   const { invalidate } = useThree();
-
-  // const HIDDEN_NODES = ["Box001", "Box006", "Box011", "Box016"];
 
   const unitMap = useMemo(() => {
     const map = {};
@@ -37,13 +32,13 @@ const useBuilding = ({ controlsRef }) => {
 
     buildingClone.traverse((child) => {
       if (!child.isMesh) return;
-      // child.material.envMapIntensity = 2;
-      // child.material.needsUpdate = true;
-      // child.material.roughness = 1; // ⭐ removes shine
-      // child.material.metalness = 0; // ⭐ removes reflections
-      child.material.envMapIntensity = 0.5; // ⭐ reduce HDR effect
-      child.material.flatShading = true;
-      child.material.needsUpdate = true;
+      child.castShadow = true;
+      child.receiveShadow = true;
+
+      if (child.material) {
+        child.material.envMapIntensity = 1.5;
+        child.material.needsUpdate = true;
+      }
     });
 
     return buildingClone;
@@ -54,37 +49,7 @@ const useBuilding = ({ controlsRef }) => {
 
     scene.traverse((child) => {
       if (!child.isMesh) return;
-
-      child.material = new THREE.MeshStandardMaterial({
-        transparent: true,
-        opacity: 1,
-      });
-      const unit = unitMap[child.name];
-
-      if (!unit) {
-        child.material = new THREE.MeshStandardMaterial({
-          transparent: true,
-          opacity: 0.5,
-        });
-        return;
-      }
-
-      const config = getUnitMaterialConfig({ status: unit.status });
-
-      const material = new THREE.MeshStandardMaterial({
-        color: config.baseColor,
-        transparent: true,
-        opacity: config.baseOpacity,
-        emissive: config.emissive,
-        emissiveIntensity: 0,
-      });
-
-      child.material = material;
-      child.userData.status = unit.status;
-      child.userData.baseColor = config.baseColor;
-      child.userData.hoverColor = config.hoverColor;
-      child.userData.baseOpacity = config.baseOpacity;
-      child.userData.hoverOpacity = config.hoverOpacity;
+      child.visible = false;
     });
 
     return scene;

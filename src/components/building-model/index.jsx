@@ -13,7 +13,7 @@ const BuildingModel = ({
     handlePointerOver,
     handlePointerOut,
     handleClick,
-  } = useBuilding({ controlsRef });
+  } = useBuilding({ controlsRef, modelRef });
 
   return (
     <group ref={modelRef} position={position}>
