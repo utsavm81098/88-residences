@@ -37,6 +37,7 @@ const AdaptiveControls = ({ controlsRef }) => {
       target={[0, 5, 0]}
       enablePan={false}
       enableZoom
+      rotateSpeed={0.5}
     />
   );
 };

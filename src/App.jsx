@@ -10,6 +10,7 @@ import {
   PerformanceMonitor,
   AdaptiveDpr,
   AdaptiveEvents,
+  ContactShadows,
 } from "@react-three/drei";
 
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -18,6 +19,7 @@ import BuildingModel from "./components/building-model";
 import * as THREE from "three";
 import DirectionLabel from "./components/direction-label";
 import AdaptiveControls from "./components/adaptive-controls";
+import ReflectionCube from "./components/reflection-cube";
 
 useEnvironment.preload("/hdr/sky.hdr");
 
@@ -34,10 +36,9 @@ function App() {
         gl={{
           antialias: true,
           toneMapping: THREE.LinearToneMapping,
-          toneMappingExposure: 1,
+          toneMappingExposure: 1.0,
           powerPreference: "high-performance",
           outputColorSpace: THREE.SRGBColorSpace,
-          physicallyCorrectLights: true,
         }}
         shadows
         fallback={<div>Sorry no WebGL supported!</div>}
@@ -67,19 +68,61 @@ function App() {
           }
         >
           <PerspectiveCamera makeDefault fov={35} near={0.1} far={2000} />
+
+          {/*
+            ✅ FIX 3: <Environment> sets scene.environment automatically.
+            Every MeshPhysicalMaterial/MeshStandardMaterial in the scene
+            picks it up with NO manual envMap needed anywhere.
+            This is exactly what the GLTF viewer does.
+          */}
           <Environment
-            files="/hdr/kloppenheim_06_puresky_4k.hdr"
+            files="/hdr/venice_sunset_1k.hdr"
             background={false}
-            intensity={1}
-            resolution={256}
+            resolution={1024}
+            environmentIntensity={1.5}
           />
-          <ambientLight intensity={0.3} color="#ffffff" />
+
+          {/* ✅ FIX 4: Match viewer exactly — ambient=0.3, directional=2.5 */}
+          <ambientLight intensity={0.15} color="#ffffff" />
+
+          {/* Key light — front */}
           <directionalLight
-            intensity={2.5}
+            position={[5, 12, 8]}
+            intensity={0.6}
             color="#ffffff"
-            position={[5, 10, 5]}
             castShadow
+            shadow-mapSize={[2048, 2048]}
+            shadow-camera-near={0.5}
+            shadow-camera-far={500}
+            shadow-camera-left={-80}
+            shadow-camera-right={80}
+            shadow-camera-top={80}
+            shadow-camera-bottom={-80}
+            shadow-bias={-0.0005}
           />
+
+          {/*
+            ✅ FIX 5: Fill light from BACK — fixes the front/back rotation mismatch.
+            The viewer looks the same from all angles because HDR IBL is omnidirectional.
+            Adding a back fill light at ~30% key intensity replicates that balance.
+          */}
+          <directionalLight
+            position={[-5, 8, -8]}
+            intensity={0.3}
+            color="#ddeeff"
+          />
+
+          {/* ✅ FIX 4: Remove hemisphereLight — not in the viewer, causes color tint */}
+
+          <ContactShadows
+            position={[0, 0, 0]}
+            opacity={0.5}
+            scale={50}
+            blur={2}
+            far={10}
+          />
+          {/* Ambient matches viewer's ambientIntensity=0.3 */}
+          <ambientLight intensity={0.3} color="#ffffff" />
           <GrassGrid position={[0, 0, 0]} renderOrder={2} />
           <Grid
             position={[0, 0.01, 0]} // ⭐ between grass (-0.15) and model (0)
@@ -96,7 +139,7 @@ function App() {
             depthWrite={false}
             depthTest={true}
             renderOrder={1}
-            raycast={() => null}
+            // raycast={() => null}
           />
           <Bounds fit clip observe margin={1.2}>
             <BuildingModel

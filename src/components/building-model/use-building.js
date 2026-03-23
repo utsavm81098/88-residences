@@ -30,19 +30,42 @@ const useBuilding = ({ controlsRef, modelRef }) => {
   const buildingScene = useMemo(() => {
     const buildingClone = building.scene.clone();
 
-    buildingClone.traverse((child) => {
-      if (!child.isMesh) return;
-      child.castShadow = true;
-      child.receiveShadow = true;
+    const clonedMaterials = new Map();
 
-      if (child.material) {
-        child.material.envMapIntensity = 1.5;
-        child.material.needsUpdate = true;
+    buildingClone.traverse((child) => {
+      if (!child.isMesh || !child.material) return;
+
+      const originalMat = child.material;
+      const matUuid = originalMat.uuid;
+
+      // ✅ Clone each unique material only once (avoid shared-material mutation)
+      if (!clonedMaterials.has(matUuid)) {
+        const cloned = originalMat.clone();
+
+        // ✅ FIX 1: Detect glass by transmission property that GLTFLoader already set.
+        //    Do NOT create a new material — GLTFLoader already configured transmission,
+        //    ior, thickness from KHR_materials_transmission + KHR_materials_ior extensions.
+        //    We only add the one thing GLTFLoader doesn't set: side = DoubleSide.
+        if (cloned.transmission > 0) {
+          cloned.side = THREE.DoubleSide;
+          // Slightly increase thickness for more visible refraction depth
+          if (cloned.thickness === 0) cloned.thickness = 0.3;
+          cloned.needsUpdate = true;
+        } else {
+          // ✅ FIX 2: For opaque materials — just enable double-side so back faces render.
+          //    Do NOT set envMap — scene.environment from <Environment> is auto-used.
+          cloned.side = THREE.DoubleSide;
+          cloned.needsUpdate = true;
+        }
+
+        clonedMaterials.set(matUuid, cloned);
       }
+
+      child.material = clonedMaterials.get(matUuid);
     });
 
     return buildingClone;
-  }, [building]);
+  }, [building]); //
 
   const glassScene = useMemo(() => {
     const scene = glassHitbox.scene.clone();
@@ -104,65 +127,65 @@ const useBuilding = ({ controlsRef, modelRef }) => {
       e.stopPropagation();
 
       console.log("e: ", e);
-      const controls = controlsRef.current;
-      if (!controls) return;
+      // const controls = controlsRef.current;
+      // if (!controls) return;
 
-      const camera = controls.object;
+      // const camera = controls.object;
 
-      if (rotationTween.current) {
-        rotationTween.current.eventCallback("onInterrupt", null);
-        rotationTween.current.eventCallback("onComplete", null);
-        rotationTween.current.kill();
-        rotationTween.current = null;
-      }
+      // if (rotationTween.current) {
+      //   rotationTween.current.eventCallback("onInterrupt", null);
+      //   rotationTween.current.eventCallback("onComplete", null);
+      //   rotationTween.current.kill();
+      //   rotationTween.current = null;
+      // }
 
-      controls.enabled = false;
+      // controls.enabled = false;
 
-      const center = controls.target.clone();
+      // const center = controls.target.clone();
 
-      // ✅ Reuse module-level vectors instead of `new THREE.Vector3()` per click
-      e.object.getWorldPosition(_hitPoint);
-      _dir.subVectors(_hitPoint, center);
+      // // ✅ Reuse module-level vectors instead of `new THREE.Vector3()` per click
+      // e.object.getWorldPosition(_hitPoint);
+      // _dir.subVectors(_hitPoint, center);
 
-      const targetAngle = Math.atan2(_dir.x, _dir.z);
-      const currentAzimuth = controls.getAzimuthalAngle();
+      // const targetAngle = Math.atan2(_dir.x, _dir.z);
+      // const currentAzimuth = controls.getAzimuthalAngle();
 
-      const delta = Math.atan2(
-        Math.sin(targetAngle - currentAzimuth),
-        Math.cos(targetAngle - currentAzimuth),
-      );
-      const finalAzimuth = currentAzimuth + delta;
+      // const delta = Math.atan2(
+      //   Math.sin(targetAngle - currentAzimuth),
+      //   Math.cos(targetAngle - currentAzimuth),
+      // );
+      // const finalAzimuth = currentAzimuth + delta;
 
-      const offset = camera.position.clone().sub(center);
-      const state = { azimuth: currentAzimuth };
-      let prevAzimuth = currentAzimuth;
+      // const offset = camera.position.clone().sub(center);
+      // const state = { azimuth: currentAzimuth };
+      // let prevAzimuth = currentAzimuth;
 
-      const onFinish = () => {
-        controls.enabled = true;
-        rotationTween.current = null;
-      };
+      // const onFinish = () => {
+      //   controls.enabled = true;
+      //   rotationTween.current = null;
+      // };
 
-      rotationTween.current = gsap.to(state, {
-        azimuth: finalAzimuth,
-        duration: 1.2,
-        ease: "power3.inOut",
+      // rotationTween.current = gsap.to(state, {
+      //   azimuth: finalAzimuth,
+      //   duration: 1.2,
+      //   ease: "power3.inOut",
 
-        onUpdate: () => {
-          const frameDelta = state.azimuth - prevAzimuth;
-          prevAzimuth = state.azimuth;
+      //   onUpdate: () => {
+      //     const frameDelta = state.azimuth - prevAzimuth;
+      //     prevAzimuth = state.azimuth;
 
-          // ✅ Reuse _Y_AXIS + _temp instead of new Vector3 every frame
-          offset.applyAxisAngle(_Y_AXIS, frameDelta);
-          camera.position.copy(_temp.copy(center).add(offset));
+      //     // ✅ Reuse _Y_AXIS + _temp instead of new Vector3 every frame
+      //     offset.applyAxisAngle(_Y_AXIS, frameDelta);
+      //     camera.position.copy(_temp.copy(center).add(offset));
 
-          controls.target.copy(center);
-          controls.update();
-          invalidate();
-        },
+      //     controls.target.copy(center);
+      //     controls.update();
+      //     invalidate();
+      //   },
 
-        onComplete: onFinish,
-        onInterrupt: onFinish,
-      });
+      //   onComplete: onFinish,
+      //   onInterrupt: onFinish,
+      // });
     },
     [controlsRef, invalidate],
   );
