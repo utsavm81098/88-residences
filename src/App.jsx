@@ -19,7 +19,6 @@ import BuildingModel from "./components/building-model";
 import * as THREE from "three";
 import DirectionLabel from "./components/direction-label";
 import AdaptiveControls from "./components/adaptive-controls";
-import ReflectionCube from "./components/reflection-cube";
 
 useEnvironment.preload("/hdr/sky.hdr");
 
