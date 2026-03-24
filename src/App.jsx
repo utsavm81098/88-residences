@@ -24,6 +24,9 @@ import useTooltip from "./components/building-tooltip/use-tooltip";
 
 useEnvironment.preload("/hdr/sky.hdr");
 
+// ✅ Just this
+const CAMERA_POSITION = [50, 15, 50];
+
 function App() {
   const controlsRef = useRef();
   const modelRef = useRef();
@@ -76,7 +79,7 @@ function App() {
             fov={35}
             near={0.1}
             far={2000}
-            position={[80, 15, 80]}
+            position={CAMERA_POSITION}
           />
 
           <Environment
