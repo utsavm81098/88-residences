@@ -13,18 +13,23 @@ import {
   ContactShadows,
 } from "@react-three/drei";
 
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import GrassGrid from "./components/grass-grid";
 import BuildingModel from "./components/building-model";
 import * as THREE from "three";
 import DirectionLabel from "./components/direction-label";
 import AdaptiveControls from "./components/adaptive-controls";
+import BuildingTooltip from "./components/building-tooltip";
+import useTooltip from "./components/building-tooltip/use-tooltip";
 
 useEnvironment.preload("/hdr/sky.hdr");
 
 function App() {
   const controlsRef = useRef();
   const modelRef = useRef();
+
+  const { tooltipState, tooltipElRef, showTooltip, hideTooltip, moveTooltip } =
+    useTooltip();
 
   return (
     <div className="canvas-container">
@@ -66,14 +71,14 @@ function App() {
             </Html>
           }
         >
-          <PerspectiveCamera makeDefault fov={35} near={0.1} far={2000} />
+          <PerspectiveCamera
+            makeDefault
+            fov={35}
+            near={0.1}
+            far={2000}
+            position={[80, 15, 80]}
+          />
 
-          {/*
-            ✅ FIX 3: <Environment> sets scene.environment automatically.
-            Every MeshPhysicalMaterial/MeshStandardMaterial in the scene
-            picks it up with NO manual envMap needed anywhere.
-            This is exactly what the GLTF viewer does.
-          */}
           <Environment
             files="/hdr/venice_sunset_1k.hdr"
             background={false}
@@ -81,7 +86,6 @@ function App() {
             environmentIntensity={1.5}
           />
 
-          {/* ✅ FIX 4: Match viewer exactly — ambient=0.3, directional=2.5 */}
           <ambientLight intensity={0.15} color="#ffffff" />
 
           {/* Key light — front */}
@@ -100,11 +104,6 @@ function App() {
             shadow-bias={-0.0005}
           />
 
-          {/*
-            ✅ FIX 5: Fill light from BACK — fixes the front/back rotation mismatch.
-            The viewer looks the same from all angles because HDR IBL is omnidirectional.
-            Adding a back fill light at ~30% key intensity replicates that balance.
-          */}
           <directionalLight
             position={[-5, 8, -8]}
             intensity={0.3}
@@ -140,18 +139,25 @@ function App() {
             renderOrder={1}
             // raycast={() => null}
           />
-          <Bounds fit clip observe margin={1.2}>
-            <BuildingModel
-              controlsRef={controlsRef}
-              modelRef={modelRef}
-              position={[0, 0.02, 0]}
-              renderOrder={3}
-            />
-          </Bounds>
+          {/* <Bounds fit clip observe margin={1.2} maxDuration={0}> */}
+          <BuildingModel
+            controlsRef={controlsRef}
+            modelRef={modelRef}
+            position={[0, 0.02, 0]}
+            renderOrder={3}
+            onTooltipShow={showTooltip}
+            onTooltipHide={hideTooltip}
+            onTooltipMove={moveTooltip}
+          />
+          {/* </Bounds> */}
           <AdaptiveControls controlsRef={controlsRef} />
           <DirectionLabel controlsRef={controlsRef} modelRef={modelRef} />
         </Suspense>
       </Canvas>
+      <BuildingTooltip
+        tooltipState={tooltipState}
+        tooltipElRef={tooltipElRef}
+      />
     </div>
   );
 }

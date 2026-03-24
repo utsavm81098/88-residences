@@ -7,7 +7,7 @@ export const unitData = [
     type: "1BHK",
     area: "750 sq ft",
     price: "$250,000",
-    floor: 1,
+    floor: 4,
     direction: "North-East",
   },
   {
@@ -16,7 +16,7 @@ export const unitData = [
     type: "2BHK",
     area: "1050 sq ft",
     price: "$355,000",
-    floor: 2,
+    floor: 4,
     direction: "North-West",
   },
 
@@ -26,7 +26,7 @@ export const unitData = [
     type: "2BHK",
     area: "1050 sq ft",
     price: "$350,000",
-    floor: 1,
+    floor: 4,
     direction: "North-West",
   },
   {
@@ -35,7 +35,7 @@ export const unitData = [
     type: "2BHK",
     area: "1050 sq ft",
     price: "$355,000",
-    floor: 2,
+    floor: 4,
     direction: "North-West",
   },
   {
@@ -44,7 +44,7 @@ export const unitData = [
     type: "1BHK",
     area: "750 sq ft",
     price: "$255,000",
-    floor: 2,
+    floor: 4,
     direction: "North-East",
   },
   {
@@ -53,7 +53,7 @@ export const unitData = [
     type: "2BHK",
     area: "1050 sq ft",
     price: "$355,000",
-    floor: 2,
+    floor: 3,
     direction: "North-West",
   },
   {
@@ -62,7 +62,7 @@ export const unitData = [
     type: "2BHK",
     area: "1050 sq ft",
     price: "$355,000",
-    floor: 2,
+    floor: 3,
     direction: "North-West",
   },
   {
@@ -71,7 +71,7 @@ export const unitData = [
     type: "3BHK",
     area: "1750 sq ft",
     price: "$550,000",
-    floor: 5,
+    floor: 3,
     direction: "South-East",
   },
   {
@@ -80,7 +80,7 @@ export const unitData = [
     type: "1BHK",
     area: "750 sq ft",
     price: "$255,000",
-    floor: 2,
+    floor: 3,
     direction: "North-East",
   },
   {
@@ -89,7 +89,7 @@ export const unitData = [
     type: "2BHK",
     area: "1050 sq ft",
     price: "$355,000",
-    floor: 2,
+    floor: 3,
     direction: "North-West",
   },
   {
@@ -107,7 +107,7 @@ export const unitData = [
     type: "3BHK",
     area: "1750 sq ft",
     price: "$550,000",
-    floor: 5,
+    floor: 2,
     direction: "South-East",
   },
   {
@@ -134,7 +134,7 @@ export const unitData = [
     type: "3BHK",
     area: "1750 sq ft",
     price: "$550,000",
-    floor: 5,
+    floor: 2,
     direction: "South-East",
   },
   {
@@ -143,7 +143,7 @@ export const unitData = [
     type: "2BHK",
     area: "1050 sq ft",
     price: "$355,000",
-    floor: 2,
+    floor: 1,
     direction: "North-West",
   },
   {
@@ -152,7 +152,7 @@ export const unitData = [
     type: "3BHK",
     area: "1750 sq ft",
     price: "$550,000",
-    floor: 5,
+    floor: 1,
     direction: "South-East",
   },
   {
@@ -161,7 +161,7 @@ export const unitData = [
     type: "2BHK",
     area: "1050 sq ft",
     price: "$355,000",
-    floor: 2,
+    floor: 1,
     direction: "North-West",
   },
   {
@@ -170,7 +170,7 @@ export const unitData = [
     type: "3BHK",
     area: "1750 sq ft",
     price: "$550,000",
-    floor: 5,
+    floor: 1,
     direction: "South-East",
   },
   {
@@ -179,7 +179,7 @@ export const unitData = [
     type: "3BHK",
     area: "1750 sq ft",
     price: "$550,000",
-    floor: 5,
+    floor: 1,
     direction: "South-East",
   },
 ];

@@ -6,14 +6,24 @@ const BuildingModel = ({
   modelRef,
   position = [],
   renderOrder = 0,
+  onTooltipShow, // ← new
+  onTooltipHide, // ← new
+  onTooltipMove, // ← new
 }) => {
   const {
     buildingScene,
     glassScene,
     handlePointerOver,
     handlePointerOut,
+    handlePointerMove,
     handleClick,
-  } = useBuilding({ controlsRef, modelRef });
+  } = useBuilding({
+    controlsRef,
+    modelRef,
+    onTooltipShow,
+    onTooltipHide,
+    onTooltipMove,
+  }); // ← pass tooltip handlers
 
   return (
     <group ref={modelRef} position={position}>
@@ -23,6 +33,7 @@ const BuildingModel = ({
         renderOrder={renderOrder + 1}
         onPointerOver={handlePointerOver}
         onPointerOut={handlePointerOut}
+        onPointerMove={handlePointerMove}
         onClick={handleClick}
       />
     </group>

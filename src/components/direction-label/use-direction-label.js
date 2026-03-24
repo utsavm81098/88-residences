@@ -37,10 +37,10 @@ const useDirectionLabel = ({ controlsRef }) => {
 
   const positions = useMemo(
     () => ({
-      N: [0, 0, -distance],
-      S: [0, 0, distance],
-      E: [distance, 0, 0],
-      W: [-distance, 0, 0],
+      N: [0, 1, -distance],
+      S: [0, 1, distance],
+      E: [distance, 1, 0],
+      W: [-distance, 1, 0],
     }),
     [distance],
   );
