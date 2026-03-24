@@ -6,7 +6,6 @@ import {
   PerspectiveCamera,
   Grid,
   useEnvironment,
-  Bounds,
   PerformanceMonitor,
   AdaptiveDpr,
   AdaptiveEvents,
@@ -25,7 +24,7 @@ import useTooltip from "./components/building-tooltip/use-tooltip";
 useEnvironment.preload("/hdr/sky.hdr");
 
 // ✅ Just this
-const CAMERA_POSITION = [50, 15, 50];
+const CAMERA_POSITION = [0, 5, 80];
 
 function App() {
   const controlsRef = useRef();
@@ -93,7 +92,7 @@ function App() {
 
           {/* Key light — front */}
           <directionalLight
-            position={[5, 12, 8]}
+            position={[5, 15, 8]}
             intensity={0.6}
             color="#ffffff"
             castShadow
