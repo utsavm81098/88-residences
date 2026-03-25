@@ -2,19 +2,19 @@ const GrassGrid = ({ position = [], renderOrder = 0 }) => {
   return (
     <mesh
       rotation={[-Math.PI / 2, 0, 0]}
-      position={position} // under grid
+      position={position}
       receiveShadow
       renderOrder={renderOrder}
     >
       <planeGeometry args={[300, 300]} />
       <meshStandardMaterial
-        color="#000000" // elegant black
+        color="#000000"
         roughness={0.9}
         metalness={0.05}
-        depthWrite={false}
-        polygonOffset={true} // ⭐ added
-        polygonOffsetFactor={1} // ⭐ push back in depth buffer
-        polygonOffsetUnits={1} // ⭐
+        polygonOffset={true}
+        polygonOffsetFactor={4}
+        polygonOffsetUnits={4}
+        depthWrite={true}
       />
     </mesh>
   );

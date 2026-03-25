@@ -11,6 +11,8 @@ const _hitPoint = new THREE.Vector3();
 const _dir = new THREE.Vector3();
 const _temp = new THREE.Vector3();
 
+const DRAG_THRESHOLD = 5; // pixels - if mouse moves more than this, it's a drag
+
 const useBuilding = ({
   controlsRef,
   modelRef,
@@ -21,6 +23,7 @@ const useBuilding = ({
   const building = useGLTF("/models/type-f.glb");
   const glassHitbox = useGLTF("/models/hitbox.glb");
   const rotationTween = useRef(null);
+  const pointerDownRef = useRef(null); // Track pointer down position and target
   const { invalidate } = useThree();
 
   const unitMap = useMemo(() => {
@@ -176,11 +179,43 @@ const useBuilding = ({
     [onTooltipMove],
   );
 
-  const handleClick = useCallback(
+  const handlePointerDown = useCallback(
     (e) => {
       e.stopPropagation();
 
-      console.log("e: ", e);
+      // Hide tooltip immediately on pointer down (click or drag start)
+      if (onTooltipHide) onTooltipHide();
+
+      // Store pointer down info to differentiate click from drag
+      pointerDownRef.current = {
+        x: e.nativeEvent.clientX,
+        y: e.nativeEvent.clientY,
+        object: e.object,
+      };
+    },
+    [onTooltipHide],
+  );
+
+  const handlePointerUp = useCallback(
+    (e) => {
+      e.stopPropagation();
+
+      const downInfo = pointerDownRef.current;
+      pointerDownRef.current = null;
+
+      if (!downInfo) return;
+
+      // Calculate distance moved
+      const dx = e.nativeEvent.clientX - downInfo.x;
+      const dy = e.nativeEvent.clientY - downInfo.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // If moved more than threshold, it was a drag - let OrbitControls handle it
+      if (distance > DRAG_THRESHOLD) {
+        return;
+      }
+
+      // It was a click (not a drag) - rotate camera to face the unit
       const controls = controlsRef.current;
       if (!controls) return;
 
@@ -198,7 +233,7 @@ const useBuilding = ({
       const center = controls.target.clone();
 
       // ✅ Reuse module-level vectors instead of `new THREE.Vector3()` per click
-      e.object.getWorldPosition(_hitPoint);
+      downInfo.object.getWorldPosition(_hitPoint);
       _dir.subVectors(_hitPoint, center);
 
       const targetAngle = Math.atan2(_dir.x, _dir.z);
@@ -250,7 +285,8 @@ const useBuilding = ({
     handlePointerOver,
     handlePointerOut,
     handlePointerMove,
-    handleClick,
+    handlePointerDown,
+    handlePointerUp,
   };
 };
 

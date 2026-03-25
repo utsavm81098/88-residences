@@ -10,10 +10,11 @@ const BREAKPOINTS = {
 };
 
 // ✅ Label config scales with camera distance per device
+// distanceX for East/West (longer side), distanceZ for North/South (shorter side)
 const LABEL_CONFIG = {
-  mobile: { distance: 25, fontSize: 1.2 },
-  tablet: { distance: 28, fontSize: 1.2 },
-  desktop: { distance: 30, fontSize: 1.5 }, // your original values
+  mobile: { distanceX: 25, distanceZ: 18, fontSize: 1.2 },
+  tablet: { distanceX: 28, distanceZ: 20, fontSize: 1.2 },
+  desktop: { distanceX: 30, distanceZ: 20, fontSize: 1.5 },
 };
 
 function getLabelConfig(width) {
@@ -30,19 +31,19 @@ const useDirectionLabel = ({ controlsRef }) => {
   const { camera, size: viewportSize } = useThree();
 
   // ✅ Recalculates automatically on resize — same as useFitCamera
-  const { distance, fontSize } = useMemo(
+  const { distanceX, distanceZ, fontSize } = useMemo(
     () => getLabelConfig(viewportSize.width),
     [viewportSize.width],
   );
 
   const positions = useMemo(
     () => ({
-      N: [0, 1, -distance],
-      S: [0, 1, distance],
-      E: [distance, 1, 0],
-      W: [-distance, 1, 0],
+      N: [0, 1, -distanceZ],
+      S: [0, 1, distanceZ],
+      E: [distanceX, 1, 0],
+      W: [-distanceX, 1, 0],
     }),
-    [distance],
+    [distanceX, distanceZ],
   );
 
   const moveCamera = useCallback(

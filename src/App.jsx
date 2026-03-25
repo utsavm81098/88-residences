@@ -13,6 +13,7 @@ import {
 } from "@react-three/drei";
 
 import { Canvas } from "@react-three/fiber";
+import { EffectComposer, SMAA } from "@react-three/postprocessing";
 import GrassGrid from "./components/grass-grid";
 import BuildingModel from "./components/building-model";
 import * as THREE from "three";
@@ -21,10 +22,10 @@ import AdaptiveControls from "./components/adaptive-controls";
 import BuildingTooltip from "./components/building-tooltip";
 import useTooltip from "./components/building-tooltip/use-tooltip";
 
-useEnvironment.preload("/hdr/sky.hdr");
+useEnvironment.preload("/hdr/venice_sunset_1k.hdr");
 
 // ✅ Just this
-const CAMERA_POSITION = [0, 5, 80];
+const CAMERA_POSITION = [0, 5, 0];
 
 function App() {
   const controlsRef = useRef();
@@ -36,7 +37,7 @@ function App() {
   return (
     <div className="canvas-container">
       <Canvas
-        dpr={[1, Math.min(window.devicePixelRatio, 2)]}
+        dpr={[1.5, Math.min(window.devicePixelRatio, 2)]}
         performance={{ min: 0.5, debounce: 200 }}
         frameloop="always"
         gl={{
@@ -59,7 +60,7 @@ function App() {
             console.log("Performance improved");
           }}
         />
-        <AdaptiveDpr pixelated />
+        <AdaptiveDpr />
         <AdaptiveEvents />
         <Suspense
           fallback={
@@ -76,8 +77,8 @@ function App() {
           <PerspectiveCamera
             makeDefault
             fov={35}
-            near={0.1}
-            far={2000}
+            near={0.5}
+            far={500}
             position={CAMERA_POSITION}
           />
 
@@ -88,12 +89,12 @@ function App() {
             environmentIntensity={1.5}
           />
 
-          <ambientLight intensity={0.15} color="#ffffff" />
+          <ambientLight intensity={0.5} color="#ffffff" />
 
-          {/* Key light — front */}
+          {/* Key light — front/south */}
           <directionalLight
-            position={[5, 15, 8]}
-            intensity={0.6}
+            position={[5, 15, 10]}
+            intensity={0.4}
             color="#ffffff"
             castShadow
             shadow-mapSize={[2048, 2048]}
@@ -106,10 +107,25 @@ function App() {
             shadow-bias={-0.0005}
           />
 
+          {/* Fill light — back/north */}
           <directionalLight
-            position={[-5, 8, -8]}
-            intensity={0.3}
-            color="#ddeeff"
+            position={[-5, 15, -10]}
+            intensity={0.4}
+            color="#ffffff"
+          />
+
+          {/* Side light — east */}
+          <directionalLight
+            position={[15, 10, 0]}
+            intensity={0.4}
+            color="#ffffff"
+          />
+
+          {/* Side light — west */}
+          <directionalLight
+            position={[-15, 10, 0]}
+            intensity={0.4}
+            color="#ffffff"
           />
 
           {/* ✅ FIX 4: Remove hemisphereLight — not in the viewer, causes color tint */}
@@ -121,11 +137,9 @@ function App() {
             blur={2}
             far={10}
           />
-          {/* Ambient matches viewer's ambientIntensity=0.3 */}
-          <ambientLight intensity={0.3} color="#ffffff" />
-          <GrassGrid position={[0, 0, 0]} renderOrder={2} />
+          <GrassGrid position={[0, -0.1, 0]} renderOrder={0} />
           <Grid
-            position={[0, 0.01, 0]} // ⭐ between grass (-0.15) and model (0)
+            position={[0, 0.05, 0]}
             args={[300, 300]}
             cellSize={2}
             cellThickness={0}
@@ -136,12 +150,10 @@ function App() {
             fadeStrength={1}
             followCamera={false}
             infiniteGrid
-            depthWrite={false}
-            depthTest={true}
             renderOrder={1}
-            // raycast={() => null}
+            raycast={() => null}
           />
-          {/* <Bounds fit clip observe margin={1.2} maxDuration={0}> */}
+
           <BuildingModel
             controlsRef={controlsRef}
             modelRef={modelRef}
@@ -151,9 +163,12 @@ function App() {
             onTooltipHide={hideTooltip}
             onTooltipMove={moveTooltip}
           />
-          {/* </Bounds> */}
           <AdaptiveControls controlsRef={controlsRef} />
           <DirectionLabel controlsRef={controlsRef} modelRef={modelRef} />
+
+          <EffectComposer multisampling={8}>
+            <SMAA />
+          </EffectComposer>
         </Suspense>
       </Canvas>
       <BuildingTooltip
