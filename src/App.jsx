@@ -25,7 +25,7 @@ import useTooltip from "./components/building-tooltip/use-tooltip";
 useEnvironment.preload("/hdr/venice_sunset_1k.hdr");
 
 // ✅ Just this
-const CAMERA_POSITION = [0, 5, 0];
+const CAMERA_POSITION = [0, 10, 60];
 
 function App() {
   const controlsRef = useRef();

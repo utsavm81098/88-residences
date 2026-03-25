@@ -3,7 +3,7 @@ import { useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 
 const POLAR = { min: 1.1, max: 1.5 };
-const TARGET = [0, 5, 0];
+const TARGET = [0, 10, 0];
 
 const getDistances = (width) => {
   if (width < 768) return { min: 55, max: 140 };
