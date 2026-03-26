@@ -9,12 +9,10 @@ import {
   PerformanceMonitor,
   AdaptiveDpr,
   AdaptiveEvents,
-  ContactShadows,
 } from "@react-three/drei";
 
 import { Canvas } from "@react-three/fiber";
 import { EffectComposer, SMAA } from "@react-three/postprocessing";
-import GrassGrid from "./components/grass-grid";
 import BuildingModel from "./components/building-model";
 import * as THREE from "three";
 import DirectionLabel from "./components/direction-label";
@@ -22,7 +20,8 @@ import AdaptiveControls from "./components/adaptive-controls";
 import BuildingTooltip from "./components/building-tooltip";
 import useTooltip from "./components/building-tooltip/use-tooltip";
 
-useEnvironment.preload("/hdr/venice_sunset_1k.hdr");
+const HDR_URL = "/hdr/san_bridge_2k.hdr";
+useEnvironment.preload(HDR_URL);
 
 // ✅ Just this
 const CAMERA_POSITION = [0, 10, 60];
@@ -42,7 +41,7 @@ function App() {
         frameloop="always"
         gl={{
           antialias: true,
-          toneMapping: THREE.LinearToneMapping,
+          toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 1.0,
           powerPreference: "high-performance",
           outputColorSpace: THREE.SRGBColorSpace,
@@ -78,73 +77,27 @@ function App() {
             makeDefault
             fov={35}
             near={0.5}
-            far={500}
+            far={2000}
             position={CAMERA_POSITION}
           />
+          <Environment files={HDR_URL} background={false} />
 
-          <Environment
-            files="/hdr/venice_sunset_1k.hdr"
-            background={false}
-            resolution={1024}
-            environmentIntensity={1.5}
-          />
+          {/* Main light (South-East) */}
+          <directionalLight position={[10, 10, -10]} intensity={1.5} />
 
-          <ambientLight intensity={0.5} color="#ffffff" />
+          {/* Opposite fill light (North-West) */}
+          <directionalLight position={[-10, 10, 10]} intensity={1} />
 
-          {/* Key light — front/south */}
-          <directionalLight
-            position={[5, 15, 10]}
-            intensity={0.4}
-            color="#ffffff"
-            castShadow
-            shadow-mapSize={[2048, 2048]}
-            shadow-camera-near={0.5}
-            shadow-camera-far={500}
-            shadow-camera-left={-80}
-            shadow-camera-right={80}
-            shadow-camera-top={80}
-            shadow-camera-bottom={-80}
-            shadow-bias={-0.0005}
-          />
+          {/* Soft ambient to balance everything */}
+          <ambientLight intensity={0.3} />
 
-          {/* Fill light — back/north */}
-          <directionalLight
-            position={[-5, 15, -10]}
-            intensity={0.4}
-            color="#ffffff"
-          />
-
-          {/* Side light — east */}
-          <directionalLight
-            position={[15, 10, 0]}
-            intensity={0.4}
-            color="#ffffff"
-          />
-
-          {/* Side light — west */}
-          <directionalLight
-            position={[-15, 10, 0]}
-            intensity={0.4}
-            color="#ffffff"
-          />
-
-          {/* ✅ FIX 4: Remove hemisphereLight — not in the viewer, causes color tint */}
-
-          <ContactShadows
-            position={[0, 0, 0]}
-            opacity={0.5}
-            scale={50}
-            blur={2}
-            far={10}
-          />
-          <GrassGrid position={[0, -0.1, 0]} renderOrder={0} />
           <Grid
-            position={[0, 0.05, 0]}
+            position={[0, 0.01, 0]}
             args={[300, 300]}
             cellSize={2}
             cellThickness={0}
             sectionSize={10}
-            sectionThickness={1}
+            sectionThickness={0.9}
             sectionColor="#ffffff"
             fadeDistance={200}
             fadeStrength={1}

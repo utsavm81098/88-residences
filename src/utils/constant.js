@@ -190,15 +190,17 @@ export const statusType = {
 export const getUnitMaterialConfig = ({ status }) => {
   const isSold = status === statusType.SOLD;
 
-  const availableColor = new Color("#0080ff");
-  const soldColor = new Color("#ff0000");
+  // Premium Palette
+  const availableColor = new Color("#2563eb"); // Electric Blue
+  const soldColor = new Color("#f43f5e");      // Rose/Deep Red
 
   return {
     baseColor: isSold ? soldColor : availableColor,
     hoverColor: isSold ? soldColor : availableColor,
 
-    baseOpacity: isSold ? 0 : 0.3, // SOLD hidden initially
-    hoverOpacity: 0.7, // both visible on hover
+    // Glass effect settings
+    baseOpacity: isSold ? 0.05 : 0.2, // Slightly more visible available color
+    hoverOpacity: 0.7,                 // Stronger hover glow
 
     emissive: isSold ? soldColor : availableColor,
   };

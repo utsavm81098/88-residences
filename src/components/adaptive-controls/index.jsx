@@ -8,7 +8,7 @@ const TARGET = [0, 10, 0];
 const getDistances = (width) => {
   if (width < 768) return { min: 55, max: 140 };
   if (width < 1024) return { min: 55, max: 120 };
-  return { min: 50, max: 90 };
+  return { min: 60, max: 90 };
 };
 
 const AdaptiveControls = ({ controlsRef }) => {

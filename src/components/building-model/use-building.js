@@ -44,26 +44,26 @@ const useBuilding = ({
     buildingClone.traverse((child) => {
       if (!child.isMesh || !child.material) return;
 
-      const originalMat = child.material;
-      const matUuid = originalMat.uuid;
+      // const originalMat = child.material;
+      // const matUuid = originalMat.uuid;
 
-      if (!clonedMaterials.has(matUuid)) {
-        const cloned = originalMat.clone();
+      // if (!clonedMaterials.has(matUuid)) {
+      //   const cloned = originalMat.clone();
 
-        if (cloned.transmission > 0) {
-          cloned.side = THREE.DoubleSide;
+      //   if (cloned.transmission > 0) {
+      //     cloned.side = THREE.DoubleSide;
 
-          if (cloned.thickness === 0) cloned.thickness = 0.3;
-          cloned.needsUpdate = true;
-        } else {
-          cloned.side = THREE.DoubleSide;
-          cloned.needsUpdate = true;
-        }
+      //     if (cloned.thickness === 0) cloned.thickness = 0.3;
+      //     cloned.needsUpdate = true;
+      //   } else {
+      //     cloned.side = THREE.DoubleSide;
+      //     cloned.needsUpdate = true;
+      //   }
 
-        clonedMaterials.set(matUuid, cloned);
-      }
+      //   clonedMaterials.set(matUuid, cloned);
+      // }
 
-      child.material = clonedMaterials.get(matUuid);
+      // child.material = clonedMaterials.get(matUuid);
     });
 
     return buildingClone;
@@ -85,13 +85,14 @@ const useBuilding = ({
       const config = getUnitMaterialConfig({ status: unit.status });
 
       child.material = new THREE.MeshStandardMaterial({
-        color: config.baseColor,
+        // color: config.baseColor,
         transparent: true,
-        opacity: config.baseOpacity,
+        // opacity: config.baseOpacity,
+        opacity: 0,
         depthWrite: false,
         depthTest: true,
         side: THREE.DoubleSide,
-        emissive: config.emissive,
+        // emissive: config.emissive,
         emissiveIntensity: 0,
       });
 
@@ -160,7 +161,8 @@ const useBuilding = ({
       });
 
       gsap.to(mesh.material, {
-        opacity: mesh.userData.baseOpacity,
+        // opacity: mesh.userData.baseOpacity,
+        opacity: 0,
         emissiveIntensity: 0,
         duration: 0.25,
         ease: "power2.out",
