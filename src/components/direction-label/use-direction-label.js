@@ -2,46 +2,24 @@ import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import gsap from "gsap";
 import React, { useCallback, useMemo } from "react";
-
-// ✅ Same breakpoints as useFitCamera — single source of truth
-const BREAKPOINTS = {
-  mobile: 768,
-  tablet: 1024,
-};
-
-// ✅ Label config scales with camera distance per device
-// distanceX for East/West (longer side), distanceZ for North/South (shorter side)
-const LABEL_CONFIG = {
-  mobile: { distanceX: 25, distanceZ: 18, fontSize: 1.2 },
-  tablet: { distanceX: 28, distanceZ: 20, fontSize: 1.2 },
-  desktop: { distanceX: 30, distanceZ: 20, fontSize: 1.5 },
-};
-
-function getLabelConfig(width) {
-  if (width < BREAKPOINTS.mobile) return LABEL_CONFIG.mobile;
-  if (width < BREAKPOINTS.tablet) return LABEL_CONFIG.tablet;
-  return LABEL_CONFIG.desktop;
-}
+import useResponsiveConfig from "../../hooks/useResponsiveConfig";
 
 // ✅ Module-level reusable vectors
 const _newPos = new THREE.Vector3();
 const _offset = new THREE.Vector3();
 
 const useDirectionLabel = ({ controlsRef }) => {
-  const { camera, size: viewportSize } = useThree();
-
-  // ✅ Recalculates automatically on resize — same as useFitCamera
-  const { distanceX, distanceZ, fontSize } = useMemo(
-    () => getLabelConfig(viewportSize.width),
-    [viewportSize.width],
-  );
+  const { camera } = useThree();
+  const config = useResponsiveConfig();
+  
+  const { distanceX, distanceZ, fontSize } = config.label;
 
   const positions = useMemo(
     () => ({
-      N: [0, 1, -distanceZ],
-      S: [0, 1, distanceZ],
-      E: [distanceX, 1, 0],
-      W: [-distanceX, 1, 0],
+      N: [0, 0.8, -distanceZ],
+      S: [0, 0.8, distanceZ],
+      E: [distanceX, 0.8, 0],
+      W: [-distanceX, 0.8, 0],
     }),
     [distanceX, distanceZ],
   );

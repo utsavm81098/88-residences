@@ -1,19 +1,11 @@
-import { useMemo } from "react";
-import { useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
+import useResponsiveConfig from "../../hooks/useResponsiveConfig";
 
 const POLAR = { min: 1.1, max: 1.5 };
 const TARGET = [0, 10, 0];
 
-const getDistances = (width) => {
-  if (width < 768) return { min: 55, max: 140 };
-  if (width < 1024) return { min: 55, max: 120 };
-  return { min: 60, max: 90 };
-};
-
 const AdaptiveControls = ({ controlsRef }) => {
-  const { size } = useThree();
-  const distances = useMemo(() => getDistances(size.width), [size.width]);
+  const config = useResponsiveConfig();
 
   return (
     <OrbitControls
@@ -27,8 +19,8 @@ const AdaptiveControls = ({ controlsRef }) => {
       rotateSpeed={0.5}
       minPolarAngle={POLAR.min}
       maxPolarAngle={POLAR.max}
-      minDistance={distances.min}
-      maxDistance={distances.max}
+      minDistance={config.orbit.min}
+      maxDistance={config.orbit.max}
     />
   );
 };

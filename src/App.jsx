@@ -1,4 +1,4 @@
-import { Suspense, useRef } from "react";
+import { Suspense, useRef, useEffect } from "react";
 import "./App.css";
 import {
   Html,
@@ -11,7 +11,7 @@ import {
   AdaptiveEvents,
 } from "@react-three/drei";
 
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { EffectComposer, SMAA } from "@react-three/postprocessing";
 import BuildingModel from "./components/building-model";
 import * as THREE from "three";
@@ -19,12 +19,23 @@ import DirectionLabel from "./components/direction-label";
 import AdaptiveControls from "./components/adaptive-controls";
 import BuildingTooltip from "./components/building-tooltip";
 import useTooltip from "./components/building-tooltip/use-tooltip";
+import useResponsiveConfig from "./hooks/useResponsiveConfig";
 
 const HDR_URL = "/hdr/san_bridge_2k.hdr";
 useEnvironment.preload(HDR_URL);
 
-// ✅ Just this
-const CAMERA_POSITION = [0, 10, 60];
+function ResponsiveCamera() {
+  const config = useResponsiveConfig();
+  return (
+    <PerspectiveCamera
+      makeDefault
+      fov={35}
+      near={0.5}
+      far={2000}
+      position={[0, 10, config.cameraZ]}
+    />
+  );
+}
 
 function App() {
   const controlsRef = useRef();
@@ -50,7 +61,6 @@ function App() {
         fallback={<div>Sorry no WebGL supported!</div>}
         style={{ width: "100%", height: "100%" }}
       >
-        {/* <ControlsProvider> */}
         <PerformanceMonitor
           onDecline={() => {
             console.log("Performance dropped");
@@ -73,24 +83,24 @@ function App() {
             </Html>
           }
         >
-          <PerspectiveCamera
-            makeDefault
-            fov={35}
-            near={0.5}
-            far={2000}
-            position={CAMERA_POSITION}
+          <ResponsiveCamera />
+          {/* Lower environmentIntensity so the HDR's bright sun doesn't blow out the South side, while keeping nice reflections */}
+          <Environment
+            files={HDR_URL}
+            background={false}
+            environmentIntensity={0.3}
           />
-          <Environment files={HDR_URL} background={false} />
-
-          {/* Main light (South-East) */}
-          <directionalLight position={[10, 10, -10]} intensity={1.5} />
-
-          {/* Opposite fill light (North-West) */}
-          <directionalLight position={[-10, 10, 10]} intensity={1} />
-
-          {/* Soft ambient to balance everything */}
-          <ambientLight intensity={0.3} />
-
+          {/* Strong ambient light provides a bright, even baseline for all sides */}
+          <ambientLight intensity={1.5} />
+          {/* Symmetrical 4-point lighting ensures every side is identical */}
+          <directionalLight position={[0, 20, -50]} intensity={1.0} />
+          {/* North */}
+          <directionalLight position={[0, 20, 50]} intensity={0.5} />
+          {/* South */}
+          <directionalLight position={[50, 20, 0]} intensity={0.5} />
+          {/* East */}
+          <directionalLight position={[-50, 20, 0]} intensity={1.0} />
+          {/* West */}
           <Grid
             position={[0, 0.01, 0]}
             args={[300, 300]}
@@ -106,7 +116,6 @@ function App() {
             renderOrder={1}
             raycast={() => null}
           />
-
           <BuildingModel
             controlsRef={controlsRef}
             modelRef={modelRef}
@@ -118,7 +127,6 @@ function App() {
           />
           <AdaptiveControls controlsRef={controlsRef} />
           <DirectionLabel controlsRef={controlsRef} modelRef={modelRef} />
-
           <EffectComposer multisampling={8}>
             <SMAA />
           </EffectComposer>

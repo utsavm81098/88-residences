@@ -16,8 +16,9 @@ const BuildingModel = ({
     handlePointerOver,
     handlePointerOut,
     handlePointerMove,
-    handlePointerDown,
-    handlePointerUp,
+    handleClick,
+    // handlePointerDown,
+    // handlePointerUp,
   } = useBuilding({
     controlsRef,
     modelRef,
@@ -35,8 +36,9 @@ const BuildingModel = ({
         onPointerOver={handlePointerOver}
         onPointerOut={handlePointerOut}
         onPointerMove={handlePointerMove}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
+        onClick={handleClick}
+        // onPointerDown={handlePointerDown}
+        // onPointerUp={handlePointerUp}
       />
     </group>
   );

@@ -1,0 +1,127 @@
+/* ── Tooltip Container ───────────────────────────────────────────────────────── */
+.tooltip-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform;
+  transform: translate(-9999px, -9999px);
+  transition: opacity 0.15s ease;
+}
+.tooltip-card {
+  background: rgba(14, 14, 20, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px 16px;
+  min-width: 230px;
+  max-width: 270px;
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.6),
+    0 0 0 0.5px rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font-family: inherit;
+}
+/* ── Header Row: Name + Status Badge ─────────────────────────────────────────── */
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.tooltip-name {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.tooltip-status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+/* ── Divider ─────────────────────────────────────────────────────────────────── */
+.tooltip-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin-bottom: 10px;
+}
+.tooltip-divider--price {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 12px 0 10px;
+}
+/* ── Building / Floor Row ────────────────────────────────────────────────────── */
+.tooltip-meta {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tooltip-meta__separator {
+  color: rgba(255, 255, 255, 0.15);
+}
+.tooltip-meta__floor-sup {
+  font-size: 8px;
+  margin-left: 1px;
+}
+/* ── Stats Grid ──────────────────────────────────────────────────────────────── */
+.tooltip-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+}
+/* ── Price Row ───────────────────────────────────────────────────────────────── */
+.tooltip-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tooltip-price-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tooltip-price-label__icon {
+  color: #475569;
+}
+.tooltip-price-label__text {
+  font-size: 11px;
+  color: #64748b;
+}
+.tooltip-price-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #a78bfa;
+  letter-spacing: 0.02em;
+}
+/* ── StatCell ────────────────────────────────────────────────────────────────── */
+.stat-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.stat-cell__icon {
+  color: #475569;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.stat-cell__value {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.stat-cell__label {
+  font-size: 11px;
+  color: #475569;
+  margin-top: 2px;
+}

@@ -1,4 +1,4 @@
-import { Color, MeshStandardMaterial } from "three";
+import * as THREE from "three";
 
 export const unitData = [
   {
@@ -187,21 +187,19 @@ export const statusType = {
   SOLD: "sold",
   AVAILABLE: "available",
 };
-export const getUnitMaterialConfig = ({ status }) => {
-  const isSold = status === statusType.SOLD;
 
-  // Premium Palette
-  const availableColor = new Color("#2563eb"); // Electric Blue
-  const soldColor = new Color("#f43f5e");      // Rose/Deep Red
-
-  return {
-    baseColor: isSold ? soldColor : availableColor,
-    hoverColor: isSold ? soldColor : availableColor,
-
-    // Glass effect settings
-    baseOpacity: isSold ? 0.05 : 0.2, // Slightly more visible available color
-    hoverOpacity: 0.7,                 // Stronger hover glow
-
-    emissive: isSold ? soldColor : availableColor,
-  };
+export const UNIT_COLORS = {
+  available: {
+    base: new THREE.Color("#6B8EB5"), // muted steel-blue (subtle tint)
+    hover: new THREE.Color("#3B8BF5"), // bright vivid blue (hover pop)
+    baseOpacity: 0.1, // subtle see-through
+    hoverOpacity: 0.6, // clearly visible bright blue
+  },
+  sold: {
+    base: new THREE.Color("#D0D0D0"), // faint white-grey
+    hover: new THREE.Color("#FFFFFF"), // bright white
+    baseOpacity: 0.1, // barely visible
+    hoverOpacity: 0.6, // clearly visible white
+  },
 };
+export const OUTLINE_KEY = "__edgeLines";
