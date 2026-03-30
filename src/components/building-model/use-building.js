@@ -1,25 +1,35 @@
 import { useCallback, useMemo, useRef } from "react";
 import gsap from "gsap";
 import * as THREE from "three";
-import { unitData, UNIT_COLORS, OUTLINE_KEY } from "../../utils/constant";
+import {
+  unitData,
+  UNIT_COLORS,
+  OUTLINE_KEY,
+  BUILDING_CONFIG,
+} from "../../utils/constant";
 import { useGLTF } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
+import { useSelector } from "react-redux";
 
-useGLTF.preload("/models/type-f.glb");
+// Preload ALL models in the configuration to prevent loading flickering during switches
+BUILDING_CONFIG.forEach((b) => {
+  useGLTF.preload(b.model);
+});
+
 const _Y_AXIS = new THREE.Vector3(0, 1, 0);
 const _hitPoint = new THREE.Vector3();
 const _dir = new THREE.Vector3();
 const _temp = new THREE.Vector3();
 
 const useBuilding = ({
+  config,
   controlsRef,
-  modelRef,
   onTooltipShow, // ← new
   onTooltipHide, // ← new
   onTooltipMove,
 }) => {
-  const building = useGLTF("/models/type-f.glb");
-  const glassHitbox = useGLTF("/models/hitbox.glb");
+  const building = useGLTF(config.model);
+  const glassHitbox = useGLTF(config.hitbox);
   const rotationTween = useRef(null);
   // const pointerDownRef = useRef(null); // Track pointer down position and target
   const { invalidate } = useThree();
@@ -27,50 +37,54 @@ const useBuilding = ({
   const unitMap = useMemo(() => {
     const map = {};
 
-    unitData.forEach((unit) => {
+    // Dynamically get units for the current building from the nested unitData object
+    const buildingUnits = unitData[config.name] || [];
+
+    buildingUnits.forEach((unit) => {
       map[unit.name] = unit;
     });
 
     return map;
-  }, [unitData]);
+  }, [config.name]);
 
   const buildingScene = useMemo(() => {
     const buildingClone = building.scene.clone();
 
-    const clonedMaterials = new Map();
+    // const clonedMaterials = new Map();
 
     buildingClone.traverse((child) => {
-      if (!child.isMesh || !child.material) return;
-
-      // const originalMat = child.material;
-      // const matUuid = originalMat.uuid;
-
-      // if (!clonedMaterials.has(matUuid)) {
-      //   const cloned = originalMat.clone();
-
-      //   if (cloned.transmission > 0) {
-      //     cloned.side = THREE.DoubleSide;
-
-      //     if (cloned.thickness === 0) cloned.thickness = 0.3;
-      //     cloned.needsUpdate = true;
-      //   } else {
-      //     cloned.side = THREE.DoubleSide;
-      //     cloned.needsUpdate = true;
-      //   }
-
-      //   clonedMaterials.set(matUuid, cloned);
+      // ✅ STRIP BAKED-IN LIGHTS:
+      // If the .glb model was exported with a sun/light facing the South side, it breaks our symmetry!
+      // if (child.isLight) {
+      //   child.visible = false;
+      //   child.intensity = 0;
+      //   child.castShadow = false;
+      //   return;
       // }
 
-      // child.material = clonedMaterials.get(matUuid);
+      if (!child.isMesh || !child.material) return;
     });
 
     return buildingClone;
-  }, [building]); //
+  }, [building]);
 
   const glassScene = useMemo(() => {
     const scene = glassHitbox.scene.clone();
     scene.traverse((child) => {
+      // Strip any lights exported within the hitbox GLB to prevent them from breaking the scene lighting
+      if (child.isLight) {
+        child.visible = false;
+        child.intensity = 0;
+        child.castShadow = false;
+        return;
+      }
+
       if (!child.isMesh) return;
+
+      // Prevent hitboxes from casting or receiving shadows to preserve the building's original lighting
+      child.castShadow = false;
+      child.receiveShadow = false;
+
       const unit = unitMap[child.name];
       if (!unit) {
         child.visible = false;
@@ -79,15 +93,17 @@ const useBuilding = ({
       // Normalise status key; default to "available" for unknown values
       const statusKey = unit.status === "sold" ? "sold" : "available";
       const cfg = UNIT_COLORS[statusKey];
-      // ── Main hitbox material (flat overlay, lighting-independent) ─────────────
+      // ── Main hitbox material (invisible by default, lighting-independent) ─────────────
       child.material = new THREE.MeshBasicMaterial({
         color: cfg.base.clone(),
         transparent: true,
         opacity: cfg.baseOpacity,
+        // opacity: 0,
         depthWrite: false,
         depthTest: true,
         side: THREE.DoubleSide,
         toneMapped: false,
+        blending: THREE.AdditiveBlending,
       });
       // Store references in userData for pointer handlers
       child.userData.status = unit.status;
@@ -96,12 +112,14 @@ const useBuilding = ({
       child.userData.hoverColor = cfg.hover.clone();
       child.userData.baseOpacity = cfg.baseOpacity;
       child.userData.hoverOpacity = cfg.hoverOpacity;
-      // ── Edge border lines (always visible, thin white wireframe) ──────────────
+
+      // ── Edge border lines (invisible by default) ──────────────
       const edges = new THREE.EdgesGeometry(child.geometry, 15);
       const edgeMaterial = new THREE.LineBasicMaterial({
         color: 0xffffff,
         transparent: true,
         opacity: 0.6,
+        // opacity: 0,
         depthTest: true,
         depthWrite: false,
         toneMapped: false,

@@ -11,7 +11,7 @@ const _offset = new THREE.Vector3();
 const useDirectionLabel = ({ controlsRef }) => {
   const { camera } = useThree();
   const config = useResponsiveConfig();
-  
+
   const { distanceX, distanceZ, fontSize } = config.label;
 
   const positions = useMemo(
