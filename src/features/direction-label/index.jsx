@@ -1,6 +1,7 @@
 import { Text, Billboard } from "@react-three/drei";
 import useDirectionLabel from "./use-direction-label";
 import { memo } from "react";
+import { useSelector } from "react-redux";
 
 const DIRECTION_NAMES = {
   N: "NORTH",
@@ -9,7 +10,7 @@ const DIRECTION_NAMES = {
   W: "WEST",
 };
 
-const Label = ({ children, position, onClick, fontSize }) => (
+const Label = ({ children, position, onClick, fontSize, isDragging }) => (
   <Billboard
     position={position}
     follow
@@ -24,9 +25,18 @@ const Label = ({ children, position, onClick, fontSize }) => (
       anchorY="middle"
       depthTest={false}
       renderOrder={100}
-      onClick={onClick}
-      onPointerOver={() => (document.body.style.cursor = "pointer")}
-      onPointerOut={() => (document.body.style.cursor = "auto")}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (e.delta <= 2) onClick();
+      }}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        if (!isDragging) document.body.style.cursor = "pointer";
+      }}
+      onPointerOut={(e) => {
+        e.stopPropagation();
+        if (!isDragging) document.body.style.cursor = "auto";
+      }}
     >
       {children}
     </Text>
@@ -37,6 +47,7 @@ const DirectionLabel = ({ controlsRef }) => {
   const { positions, fontSize, moveCamera } = useDirectionLabel({
     controlsRef,
   });
+  const isDragging = useSelector((state) => state.drag.isDragging);
 
   return (
     <group>
@@ -45,6 +56,7 @@ const DirectionLabel = ({ controlsRef }) => {
           key={dir}
           position={pos}
           fontSize={fontSize}
+          isDragging={isDragging}
           onClick={() => moveCamera(dir)}
         >
           {DIRECTION_NAMES[dir]}

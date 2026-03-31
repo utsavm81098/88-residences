@@ -9,7 +9,7 @@ import {
 } from "../../utils/constant";
 import { useGLTF } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { showTooltip, hideTooltip, updateTooltipPosition } from "../../redux/reducers/tooltipSlice";
 
 // Preload ALL models in the configuration to prevent loading flickering during switches
@@ -24,6 +24,7 @@ const _temp = new THREE.Vector3();
 
 const useBuilding = ({ config, controlsRef }) => {
   const dispatch = useDispatch();
+  const isDragging = useSelector((state) => state.drag.isDragging);
   const building = useGLTF(config.model);
   const glassHitbox = useGLTF(config.hitbox);
   const rotationTween = useRef(null);
@@ -132,6 +133,8 @@ const useBuilding = ({ config, controlsRef }) => {
   const handlePointerOver = useCallback(
     (e) => {
       e.stopPropagation();
+      if (isDragging) return;
+      
       const mesh = e.object;
       if (!mesh.userData.status) return;
       document.body.style.cursor = "pointer";
@@ -171,14 +174,18 @@ const useBuilding = ({ config, controlsRef }) => {
         });
       }
     },
-    [unitMap, dispatch],
+    [unitMap, dispatch, isDragging],
   );
   // ── Pointer out → revert to base colour + hide outline ──────────────────────
   const handlePointerOut = useCallback(
     (e) => {
       const mesh = e.object;
       if (!mesh.userData.status) return;
-      document.body.style.cursor = "default";
+      
+      if (!isDragging) {
+        document.body.style.cursor = "default";
+      }
+      
       dispatch(hideTooltip());
       gsap.killTweensOf(mesh.material.color);
       gsap.killTweensOf(mesh.material);
@@ -205,20 +212,22 @@ const useBuilding = ({ config, controlsRef }) => {
         });
       }
     },
-    [dispatch],
+    [dispatch, isDragging],
   );
   // ── Pointer move → update tooltip position ──────────────────────────────────
   const handlePointerMove = useCallback((e) => {
-    if (!e.object.userData.status) return;
+    if (!e.object.userData.status || isDragging) return;
     dispatch(updateTooltipPosition({ 
       x: e.nativeEvent.clientX, 
       y: e.nativeEvent.clientY 
     }));
-  }, [dispatch]);
+  }, [dispatch, isDragging]);
 
   const handleClick = useCallback(
     (e) => {
       e.stopPropagation();
+      if (e.delta > 2) return;
+      
       const controls = controlsRef.current;
       if (!controls) return;
       const camera = controls.object;
@@ -265,7 +274,7 @@ const useBuilding = ({ config, controlsRef }) => {
         onInterrupt: onFinish,
       });
     },
-    [controlsRef, invalidate],
+    [controlsRef, invalidate, isDragging],
   );
 
   // const handlePointerDown = useCallback(
