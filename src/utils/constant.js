@@ -212,17 +212,24 @@ export const BUILDING_CONFIG = [
     name: "Type F",
     model: "/models/type-f.glb",
     hitbox: "/models/type-f-hitbox.glb",
+    environment: { preset: "city", background: false },
   },
   {
     name: "Type D",
     // model: "/models/type-d.glb",
     model: "/models/type-d-1024.glb",
     hitbox: "/models/type-d-hitbox.glb",
+    environment: { preset: "city", background: false },
   },
   {
     name: "Type A",
-    model: "/models/type-a.glb",
+    // model: "/models/type-a.glb",
+    model: "/models/type-a-1024.glb",
     hitbox: "/models/type-a-hitbox.glb",
-    environment: "/hdr/sky.hdr",
+    environment: {
+      files: "/hdr/sky.hdr",
+      // preset: "city",
+      background: false,
+    },
   },
 ];

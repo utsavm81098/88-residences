@@ -1,25 +1,23 @@
-import { useState, useCallback, useRef } from "react";
+import { useCallback, useRef } from "react";
+import { useDispatch } from "react-redux";
+import { showTooltip as showAction, hideTooltip as hideAction } from "../../redux/reducers/tooltipSlice";
 
 const useTooltip = () => {
-  const [tooltipState, setTooltipState] = useState({
-    visible: false,
-    unit: null,
-  });
-
+  const dispatch = useDispatch();
   // Ref to the tooltip DOM element — position written directly, no re-render
   const tooltipElRef = useRef(null);
 
   const showTooltip = useCallback((unit, x, y) => {
-    setTooltipState({ visible: true, unit });
+    dispatch(showAction(unit));
     // Write position immediately without waiting for re-render
     requestAnimationFrame(() => {
       positionTooltip(tooltipElRef.current, x, y);
     });
-  }, []);
+  }, [dispatch]);
 
   const hideTooltip = useCallback(() => {
-    setTooltipState({ visible: false, unit: null });
-  }, []);
+    dispatch(hideAction());
+  }, [dispatch]);
 
   // Called on every onPointerMove — NO setState, just direct DOM write
   const moveTooltip = useCallback((x, y) => {
@@ -28,7 +26,7 @@ const useTooltip = () => {
     }
   }, []);
 
-  return { tooltipState, tooltipElRef, showTooltip, hideTooltip, moveTooltip };
+  return { tooltipElRef, showTooltip, hideTooltip, moveTooltip };
 };
 
 // ── Pure helper — calculates clamped position and writes to DOM directly ──

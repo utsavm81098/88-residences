@@ -9,7 +9,8 @@ import {
 } from "../../utils/constant";
 import { useGLTF } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
-import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import { showTooltip, hideTooltip, updateTooltipPosition } from "../../redux/reducers/tooltipSlice";
 
 // Preload ALL models in the configuration to prevent loading flickering during switches
 BUILDING_CONFIG.forEach((b) => {
@@ -21,13 +22,8 @@ const _hitPoint = new THREE.Vector3();
 const _dir = new THREE.Vector3();
 const _temp = new THREE.Vector3();
 
-const useBuilding = ({
-  config,
-  controlsRef,
-  onTooltipShow, // ← new
-  onTooltipHide, // ← new
-  onTooltipMove,
-}) => {
+const useBuilding = ({ config, controlsRef }) => {
+  const dispatch = useDispatch();
   const building = useGLTF(config.model);
   const glassHitbox = useGLTF(config.hitbox);
   const rotationTween = useRef(null);
@@ -140,8 +136,14 @@ const useBuilding = ({
       if (!mesh.userData.status) return;
       document.body.style.cursor = "pointer";
       const unit = unitMap[mesh.userData.unitName];
-      if (unit && onTooltipShow) {
-        onTooltipShow(unit, e.nativeEvent.clientX, e.nativeEvent.clientY);
+      if (unit) {
+        dispatch(
+          showTooltip({
+            unit,
+            x: e.nativeEvent.clientX,
+            y: e.nativeEvent.clientY,
+          }),
+        );
       }
       // Kill any running tweens on this material
       gsap.killTweensOf(mesh.material.color);
@@ -169,7 +171,7 @@ const useBuilding = ({
         });
       }
     },
-    [unitMap, onTooltipShow],
+    [unitMap, dispatch],
   );
   // ── Pointer out → revert to base colour + hide outline ──────────────────────
   const handlePointerOut = useCallback(
@@ -177,7 +179,7 @@ const useBuilding = ({
       const mesh = e.object;
       if (!mesh.userData.status) return;
       document.body.style.cursor = "default";
-      if (onTooltipHide) onTooltipHide();
+      dispatch(hideTooltip());
       gsap.killTweensOf(mesh.material.color);
       gsap.killTweensOf(mesh.material);
       // Revert fill colour to base
@@ -203,18 +205,16 @@ const useBuilding = ({
         });
       }
     },
-    [onTooltipHide],
+    [dispatch],
   );
   // ── Pointer move → update tooltip position ──────────────────────────────────
-  const handlePointerMove = useCallback(
-    (e) => {
-      if (!e.object.userData.status) return;
-      if (onTooltipMove) {
-        onTooltipMove(e.nativeEvent.clientX, e.nativeEvent.clientY);
-      }
-    },
-    [onTooltipMove],
-  );
+  const handlePointerMove = useCallback((e) => {
+    if (!e.object.userData.status) return;
+    dispatch(updateTooltipPosition({ 
+      x: e.nativeEvent.clientX, 
+      y: e.nativeEvent.clientY 
+    }));
+  }, [dispatch]);
 
   const handleClick = useCallback(
     (e) => {

@@ -10,9 +10,6 @@ const BuildingModel = ({
   controlsRef,
   position = [0, 0, 0],
   renderOrder = 0,
-  onTooltipShow,
-  onTooltipHide,
-  onTooltipMove,
 }) => {
   const { currentBuilding } = useSelector((state) => state.building);
 
@@ -25,9 +22,6 @@ const BuildingModel = ({
           active={currentBuilding.name === config.name}
           controlsRef={controlsRef}
           renderOrder={renderOrder}
-          onTooltipShow={onTooltipShow}
-          onTooltipHide={onTooltipHide}
-          onTooltipMove={onTooltipMove}
         />
       ))}
     </group>
@@ -39,9 +33,6 @@ const BuildingInstance = ({
   active,
   controlsRef,
   renderOrder,
-  onTooltipShow,
-  onTooltipHide,
-  onTooltipMove,
 }) => {
   const {
     buildingScene,
@@ -53,9 +44,6 @@ const BuildingInstance = ({
   } = useBuilding({
     config, // Pass the specific config to the hook
     controlsRef,
-    onTooltipShow,
-    onTooltipHide,
-    onTooltipMove,
   });
 
   // const groupRef = useRef();
