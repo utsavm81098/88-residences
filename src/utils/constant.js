@@ -227,8 +227,8 @@ export const BUILDING_CONFIG = [
     model: "/models/type-a-1024.glb",
     hitbox: "/models/type-a-hitbox.glb",
     environment: {
-      files: "/hdr/sky.hdr",
-      // preset: "city",
+      // files: "/hdr/sky.hdr",
+      preset: "city",
       background: false,
     },
   },
