@@ -10,7 +10,11 @@ import {
 import { useGLTF } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { useDispatch, useSelector } from "react-redux";
-import { showTooltip, hideTooltip, updateTooltipPosition } from "../../redux/reducers/tooltipSlice";
+import {
+  showTooltip,
+  hideTooltip,
+  updateTooltipPosition,
+} from "../../redux/reducers/tooltipSlice";
 
 // Preload ALL models in the configuration to prevent loading flickering during switches
 BUILDING_CONFIG.forEach((b) => {
@@ -38,7 +42,13 @@ const useBuilding = ({ config, controlsRef }) => {
     const buildingUnits = unitData[config.name] || [];
 
     buildingUnits.forEach((unit) => {
-      map[unit.name] = unit;
+      if (Array.isArray(unit.name)) {
+        unit.name.forEach((name) => {
+          map[name] = unit;
+        });
+      } else {
+        map[unit.name] = unit;
+      }
     });
 
     return map;
@@ -134,7 +144,7 @@ const useBuilding = ({ config, controlsRef }) => {
     (e) => {
       e.stopPropagation();
       if (isDragging) return;
-      
+
       const mesh = e.object;
       if (!mesh.userData.status) return;
       document.body.style.cursor = "pointer";
@@ -181,11 +191,11 @@ const useBuilding = ({ config, controlsRef }) => {
     (e) => {
       const mesh = e.object;
       if (!mesh.userData.status) return;
-      
+
       if (!isDragging) {
         document.body.style.cursor = "default";
       }
-      
+
       dispatch(hideTooltip());
       gsap.killTweensOf(mesh.material.color);
       gsap.killTweensOf(mesh.material);
@@ -215,19 +225,24 @@ const useBuilding = ({ config, controlsRef }) => {
     [dispatch, isDragging],
   );
   // ── Pointer move → update tooltip position ──────────────────────────────────
-  const handlePointerMove = useCallback((e) => {
-    if (!e.object.userData.status || isDragging) return;
-    dispatch(updateTooltipPosition({ 
-      x: e.nativeEvent.clientX, 
-      y: e.nativeEvent.clientY 
-    }));
-  }, [dispatch, isDragging]);
+  const handlePointerMove = useCallback(
+    (e) => {
+      if (!e.object.userData.status || isDragging) return;
+      dispatch(
+        updateTooltipPosition({
+          x: e.nativeEvent.clientX,
+          y: e.nativeEvent.clientY,
+        }),
+      );
+    },
+    [dispatch, isDragging],
+  );
 
   const handleClick = useCallback(
     (e) => {
       e.stopPropagation();
       if (e.delta > 2) return;
-      
+
       const controls = controlsRef.current;
       if (!controls) return;
       const camera = controls.object;

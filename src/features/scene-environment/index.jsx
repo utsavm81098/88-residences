@@ -1,4 +1,4 @@
-import { Fragment, Suspense } from "react";
+import { Fragment, Suspense, useEffect } from "react";
 import {
   Html,
   Environment,
@@ -9,6 +9,7 @@ import {
   AdaptiveDpr,
   AdaptiveEvents,
 } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
 import { EffectComposer, SMAA } from "@react-three/postprocessing";
 import useResponsiveConfig from "../../hooks/useResponsiveConfig";
 import { GRID_CONFIG } from "../../utils/config";
@@ -23,8 +24,16 @@ BUILDING_CONFIG.forEach((config) => {
 
 const SceneEnvironment = ({ children }) => {
   const { currentBuilding } = useSelector((state) => state.building);
-  const { environment } = currentBuilding || {};
+  const { environment, lighting = {} } = currentBuilding || {};
+  const { directIntensity = 1.0, ambientIntensity = 0.36, exposure = 1.0 } = lighting;
+  
   const config = useResponsiveConfig();
+  const { gl } = useThree();
+
+  useEffect(() => {
+    gl.toneMappingExposure = exposure;
+  }, [gl, exposure]);
+
   return (
     <Fragment>
       <PerformanceMonitor
@@ -55,16 +64,25 @@ const SceneEnvironment = ({ children }) => {
           near={0.5}
           far={2000}
           position={[0, 10, config.cameraZ]}
-        >
+        />
+        {/* Stationary light replacing the camera headlamp */}
+        <directionalLight
+          position={[30, 40, 30]} // Front/South-East to match HDR sun lightly
+          intensity={directIntensity}
+          color="#ffffff"
+          castShadow
+        />
+        {/* Counter-Fill light pointing inward from North-West to kill shadows */}
+        {lighting.fillIntensity && (
           <directionalLight
-            position={[-30, 40, 20]}
-            intensity={1.0}
+            position={[-30, 40, -30]} // Placed exactly opposite (North-West)
+            intensity={lighting.fillIntensity}
             color="#ffffff"
-            castShadow
+            castShadow={false} // Soft fill light only
           />
-        </PerspectiveCamera>
+        )}
         <Environment {...environment} />
-        <ambientLight intensity={0.36} color="#ffffff" />
+        <ambientLight intensity={ambientIntensity} color="#ffffff" />
         <Grid {...GRID_CONFIG} raycast={() => null} />
         {children}
         <EffectComposer multisampling={8} stencilBuffer={false}>

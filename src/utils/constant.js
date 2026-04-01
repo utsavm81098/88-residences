@@ -185,7 +185,7 @@ export const unitData = {
   ],
   "Type D": [
     {
-      name: "Box001",
+      name: ["Box001", "Box001-roof"],
       status: "available",
       type: "1BHK",
       area: "750 sq ft",
@@ -194,7 +194,7 @@ export const unitData = {
       direction: "North-East",
     },
     {
-      name: "Box002",
+      name: ["Box002", "Box002-roof"],
       status: "sold",
       type: "2BHK",
       area: "1050 sq ft",
@@ -203,7 +203,7 @@ export const unitData = {
       direction: "North-West",
     },
     {
-      name: "Box003",
+      name: ["Box003", "Box003-roof"],
       status: "available",
       type: "2BHK",
       area: "1050 sq ft",
@@ -212,7 +212,7 @@ export const unitData = {
       direction: "North-West",
     },
     {
-      name: "Box004",
+      name: ["Box004", "Box004-roof"],
       status: "sold",
       type: "2BHK",
       area: "1050 sq ft",
@@ -221,7 +221,7 @@ export const unitData = {
       direction: "North-West",
     },
     {
-      name: "Box005",
+      name: ["Box005", "Box005-roof"],
       status: "available",
       type: "1BHK",
       area: "750 sq ft",
@@ -230,7 +230,7 @@ export const unitData = {
       direction: "North-East",
     },
     {
-      name: "Box006",
+      name: ["Box006", "Box006-roof"],
       status: "sold",
       type: "2BHK",
       area: "1050 sq ft",
@@ -241,7 +241,7 @@ export const unitData = {
   ],
   "Type A": [
     {
-      name: "Box001",
+      name: "Line002",
       status: "available",
       type: "1BHK",
       area: "750 sq ft",
@@ -250,7 +250,7 @@ export const unitData = {
       direction: "North-East",
     },
     {
-      name: "Box002",
+      name: "Line003",
       status: "sold",
       type: "2BHK",
       area: "1050 sq ft",
@@ -259,7 +259,7 @@ export const unitData = {
       direction: "North-West",
     },
     {
-      name: "Box003",
+      name: "Line004",
       status: "available",
       type: "2BHK",
       area: "1050 sq ft",
@@ -268,7 +268,7 @@ export const unitData = {
       direction: "North-West",
     },
     {
-      name: "Box004",
+      name: "Line028",
       status: "sold",
       type: "2BHK",
       area: "1050 sq ft",
@@ -277,7 +277,7 @@ export const unitData = {
       direction: "North-West",
     },
     {
-      name: "Box005",
+      name: "Line027",
       status: "available",
       type: "1BHK",
       area: "750 sq ft",
@@ -286,8 +286,62 @@ export const unitData = {
       direction: "North-East",
     },
     {
-      name: "Box006",
+      name: "Line024",
       status: "sold",
+      type: "2BHK",
+      area: "1050 sq ft",
+      price: "$355,000",
+      floor: 3,
+      direction: "North-West",
+    },
+    {
+      name: "Line023",
+      status: "available",
+      type: "2BHK",
+      area: "1050 sq ft",
+      price: "$355,000",
+      floor: 3,
+      direction: "North-West",
+    },
+    {
+      name: "Line022",
+      status: "sold",
+      type: "2BHK",
+      area: "1050 sq ft",
+      price: "$355,000",
+      floor: 3,
+      direction: "North-West",
+    },
+    {
+      name: "Line021",
+      status: "available",
+      type: "2BHK",
+      area: "1050 sq ft",
+      price: "$355,000",
+      floor: 3,
+      direction: "North-West",
+    },
+    {
+      name: "Line020",
+      status: "available",
+      type: "2BHK",
+      area: "1050 sq ft",
+      price: "$355,000",
+      floor: 3,
+      direction: "North-West",
+    },
+    {
+      name: "Line007",
+      status: "sold",
+      type: "2BHK",
+      area: "1050 sq ft",
+      price: "$355,000",
+      floor: 3,
+      direction: "North-West",
+    },
+    {
+      name: "Line011",
+      status: "available",
       type: "2BHK",
       area: "1050 sq ft",
       price: "$355,000",
@@ -326,20 +380,28 @@ export const BUILDING_CONFIG = [
   },
   {
     name: "Type D",
-    // model: "/models/type-d.glb",
     model: "/models/type-d-1024.glb",
-    hitbox: "/models/type-d-hitbox.glb",
-    environment: { preset: "city", background: false },
+    hitbox: "/models/d-hitbox.glb",
+    environment: {
+      files: "/hdr/kloofendal_48d_partly_cloudy_puresky_2k.hdr",
+      background: false,
+      environmentIntensity: 0.25, // Reduce the HDR's overpowering sun
+    },
+    lighting: {
+      directIntensity: 1.0, // Sun-side stationary light
+      fillIntensity: 1.5, // Opposite side stationary light (North-West) to kill HDR shadows
+      ambientIntensity: 0.8, // Ambient base lift
+      exposure: 1.0,
+    },
   },
   {
     name: "Type A",
     // model: "/models/type-a.glb",
     model: "/models/type-a-1024.glb",
-    hitbox: "/models/type-a-hitbox.glb",
+    hitbox: "/models/a-hitbox.glb",
     environment: {
       preset: "city",
       background: false,
-      // files: "/hdr/sky.hdr",
     },
   },
 ];
