@@ -4,6 +4,7 @@ import { useProgress } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import TopNavigation from "./components/ui/top-navigation";
+import InventorySidebar from "./components/ui/inventory-sidebar";
 import { useDispatch } from "react-redux";
 import { resetBuilding } from "./redux/reducers/buildingSlice";
 import SceneEnvironment from "./features/scene-environment";
@@ -26,36 +27,41 @@ function App() {
   };
 
   return (
-    <div className="canvas-container">
-      {/* Hide TopNavigation until loading completes completely */}
-      {!isLoading && <TopNavigation onReset={handleResetCamera} />}
-      <Canvas
-        dpr={[1.5, Math.min(window.devicePixelRatio, 2)]}
-        performance={{ min: 0.5, debounce: 200 }}
-        frameloop="always"
-        gl={{
-          antialias: true,
-          toneMapping: THREE.LinearToneMapping, // Essential for preventing the "blown out" white clipping
-          toneMappingExposure: 1.0,
-          powerPreference: "high-performance",
-          outputColorSpace: THREE.SRGBColorSpace,
-        }}
-        shadows
-        fallback={<div>Sorry no WebGL supported!</div>}
-        style={{ width: "100%", height: "100%" }}
-      >
-        <SceneEnvironment>
-          <Building
-            controlsRef={controlsRef}
-            modelRef={modelRef}
-            position={[0, 0.02, 0]}
-            renderOrder={3}
-          />
-          <AdaptiveControls controlsRef={controlsRef} />
-          <DirectionLabel controlsRef={controlsRef} modelRef={modelRef} />
-        </SceneEnvironment>
-      </Canvas>
-      <BuildingTooltip />
+    <div className="flex h-screen w-screen overflow-hidden bg-[#050505] text-white">
+      {/* Filters Sidebar (Desktop Only) */}
+      {!isLoading && <InventorySidebar />}
+
+      <div className="relative flex-1 canvas-container">
+        {/* Hide TopNavigation until loading completes completely */}
+        {!isLoading && <TopNavigation onReset={handleResetCamera} />}
+        <Canvas
+          dpr={[1.5, Math.min(window.devicePixelRatio, 2)]}
+          performance={{ min: 0.5, debounce: 200 }}
+          frameloop="always"
+          gl={{
+            antialias: true,
+            toneMapping: THREE.LinearToneMapping, // Essential for preventing the "blown out" white clipping
+            toneMappingExposure: 1.0,
+            powerPreference: "high-performance",
+            outputColorSpace: THREE.SRGBColorSpace,
+          }}
+          shadows
+          fallback={<div>Sorry no WebGL supported!</div>}
+          style={{ width: "100%", height: "100%" }}
+        >
+          <SceneEnvironment>
+            <Building
+              controlsRef={controlsRef}
+              modelRef={modelRef}
+              position={[0, 0.02, 0]}
+              renderOrder={3}
+            />
+            <AdaptiveControls controlsRef={controlsRef} />
+            <DirectionLabel controlsRef={controlsRef} modelRef={modelRef} />
+          </SceneEnvironment>
+        </Canvas>
+        <BuildingTooltip />
+      </div>
     </div>
   );
 }

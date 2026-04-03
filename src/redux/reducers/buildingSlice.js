@@ -5,6 +5,7 @@ const initialState = {
   currentBuildingIndex: 0,
   currentBuilding: BUILDING_CONFIG[0],
   isMenuOpen: false,
+  selectedUnit: null,
 };
 
 export const buildingSlice = createSlice({
@@ -37,6 +38,13 @@ export const buildingSlice = createSlice({
       state.currentBuildingIndex = 0;
       state.currentBuilding = BUILDING_CONFIG[0];
       state.isMenuOpen = false;
+      state.selectedUnit = null;
+    },
+    setSelectedUnit: (state, action) => {
+      state.selectedUnit = action.payload;
+    },
+    clearSelectedUnit: (state) => {
+      state.selectedUnit = null;
     },
   },
 });
@@ -48,5 +56,7 @@ export const {
   toggleMenu,
   closeMenu,
   resetBuilding,
+  setSelectedUnit,
+  clearSelectedUnit,
 } = buildingSlice.actions;
 export default buildingSlice.reducer;

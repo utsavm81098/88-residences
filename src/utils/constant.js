@@ -185,7 +185,7 @@ export const unitData = {
   ],
   "Type D": [
     {
-      name: ["Box001", "Box001-roof"],
+      name: "Box001",
       status: "available",
       type: "1BHK",
       area: "750 sq ft",
@@ -194,7 +194,7 @@ export const unitData = {
       direction: "North-East",
     },
     {
-      name: ["Box002", "Box002-roof"],
+      name: "Box002",
       status: "sold",
       type: "2BHK",
       area: "1050 sq ft",
@@ -203,7 +203,7 @@ export const unitData = {
       direction: "North-West",
     },
     {
-      name: ["Box003", "Box003-roof"],
+      name: "Box003",
       status: "available",
       type: "2BHK",
       area: "1050 sq ft",
@@ -212,7 +212,7 @@ export const unitData = {
       direction: "North-West",
     },
     {
-      name: ["Box004", "Box004-roof"],
+      name: "Box004",
       status: "sold",
       type: "2BHK",
       area: "1050 sq ft",
@@ -221,7 +221,7 @@ export const unitData = {
       direction: "North-West",
     },
     {
-      name: ["Box005", "Box005-roof"],
+      name: "Box005",
       status: "available",
       type: "1BHK",
       area: "750 sq ft",
@@ -230,7 +230,7 @@ export const unitData = {
       direction: "North-East",
     },
     {
-      name: ["Box006", "Box006-roof"],
+      name: "Box006",
       status: "sold",
       type: "2BHK",
       area: "1050 sq ft",
@@ -357,16 +357,20 @@ export const statusType = {
 
 export const UNIT_COLORS = {
   available: {
-    base: new THREE.Color("#6B8EB5"), // muted steel-blue (subtle tint)
-    hover: new THREE.Color("#3B8BF5"), // bright vivid blue (hover pop)
-    baseOpacity: 0.1, // subtle see-through
-    hoverOpacity: 0.6, // clearly visible bright blue
+    base: new THREE.Color("#6B8EB5"),
+    hover: new THREE.Color("#51A5F0"),
+    selected: new THREE.Color("#3794EB"),
+    baseOpacity: 0.1,
+    hoverOpacity: 0.6,
+    selectedOpacity: 0.8,
   },
   sold: {
-    base: new THREE.Color("#D0D0D0"), // faint white-grey
-    hover: new THREE.Color("#FF0000"), // bright white
-    baseOpacity: 0.1, // barely visible
-    hoverOpacity: 0.6, // clearly visible white
+    base: new THREE.Color("#D0D0D0"),
+    hover: new THREE.Color("#F87171"),
+    selected: new THREE.Color("#EF4444"),
+    baseOpacity: 0.1,
+    hoverOpacity: 0.5,
+    selectedOpacity: 0.7,
   },
 };
 export const OUTLINE_KEY = "__edgeLines";
