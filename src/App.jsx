@@ -12,6 +12,7 @@ import AdaptiveControls from "./features/adaptive-controls";
 import DirectionLabel from "./features/direction-label";
 import Building from "./features/building";
 import BuildingTooltip from "./features/building-tooltip";
+import CameraStabilizer from "./features/camera-stabilizer";
 
 function App() {
   const dispatch = useDispatch();
@@ -27,8 +28,12 @@ function App() {
     dispatch(resetBuilding());
   };
 
+  const isMobile =
+    typeof window !== "undefined" && window.innerWidth < 768;
+
+  // Calculate canvas height: shrink when bottom sheet is at snap 1
   const canvasHeight =
-    snapIndex === 1
+    isMobile && snapIndex === 1
       ? typeof height === "number"
         ? height <= 1
           ? `calc(100% - ${height * 100}%)`
@@ -42,12 +47,10 @@ function App() {
       {!isLoading && <InventorySidebar />}
 
       <div
-        className="relative flex-1 canvas-container transition-all duration-300 ease-in-out h-full"
+        className="relative flex-1 canvas-container h-full overflow-hidden"
         style={{
-          height:
-            typeof window !== "undefined" && window.innerWidth < 768
-              ? canvasHeight
-              : "100%",
+          height: canvasHeight,
+          transition: "height 0.4s cubic-bezier(0.33, 1, 0.68, 1)",
         }}
       >
         {/* Hide TopNavigation until loading completes completely */}
@@ -58,13 +61,14 @@ function App() {
           frameloop="always"
           gl={{
             antialias: true,
-            toneMapping: THREE.LinearToneMapping, // Essential for preventing the "blown out" white clipping
+            toneMapping: THREE.LinearToneMapping,
             toneMappingExposure: 1.0,
             powerPreference: "high-performance",
             outputColorSpace: THREE.SRGBColorSpace,
           }}
           shadows
         >
+          {isMobile && <CameraStabilizer />}
           <SceneEnvironment>
             <Building
               controlsRef={controlsRef}
@@ -83,3 +87,4 @@ function App() {
 }
 
 export default App;
+
