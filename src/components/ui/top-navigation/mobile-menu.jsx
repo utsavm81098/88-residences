@@ -34,12 +34,7 @@ const MobileMenu = ({
 
   const getSnapPoints = () => {
     const vh = window.visualViewport?.height || window.innerHeight;
-
-    return [
-      85,
-      vh * 0.4,
-      vh - 80, // 👈 THIS is calc(100vh - 70px)
-    ];
+    return [vh * 0.4];
   };
 
   const snapPoints = getSnapPoints();
@@ -47,7 +42,6 @@ const MobileMenu = ({
   // ✅ Animate
   const animateTo = (index) => {
     const height = snapPoints[index];
-
     dispatch(setSnap({ height, snapIndex: index }));
 
     gsap.to(sheetRef.current, {
@@ -60,126 +54,30 @@ const MobileMenu = ({
   // Sync initial height from Redux or default
   useEffect(() => {
     if (sheetRef.current) {
-      const initialHeight = snapPoints[snap.snapIndex] || snapPoints[0];
+      const initialHeight = snapPoints[0];
       gsap.set(sheetRef.current, { height: initialHeight });
+      dispatch(setSnap({ height: initialHeight, snapIndex: 0 }));
     }
   }, []);
-
-  // -------------------
-  // DRAG LOGIC (FIXED)
-  // -------------------
-  let startY = 0;
-  let startX = 0;
-  let startHeight = 0;
-  let isDragging = false;
-  let isVertical = null;
-
-  const onStart = (clientY, clientX) => {
-    startY = clientY;
-    startX = clientX;
-    startHeight = sheetRef.current.offsetHeight;
-
-    isDragging = true;
-    isVertical = null;
-  };
-
-  const onMove = (clientY, clientX) => {
-    if (!isDragging) return;
-
-    const deltaY = startY - clientY;
-    const deltaX = startX - clientX;
-
-    // 👇 detect direction once
-    if (isVertical === null) {
-      isVertical = Math.abs(deltaY) > Math.abs(deltaX);
-    }
-
-    // ❌ ignore horizontal swipe
-    if (!isVertical) return;
-
-    let newHeight = startHeight + deltaY;
-
-    const min = snapPoints[0];
-    const max = snapPoints[2];
-
-    if (newHeight < min) newHeight = min;
-    if (newHeight > max) newHeight = max;
-
-    gsap.set(sheetRef.current, { height: newHeight });
-  };
-
-  const onEnd = () => {
-    if (!isDragging) return;
-
-    isDragging = false;
-
-    // ❌ if horizontal gesture → ignore
-    if (!isVertical) return;
-
-    const currentHeight = sheetRef.current.offsetHeight;
-
-    const closestIndex = snapPoints.reduce((prev, curr, index) => {
-      return Math.abs(curr - currentHeight) <
-        Math.abs(snapPoints[prev] - currentHeight)
-        ? index
-        : prev;
-    }, 0);
-
-    animateTo(closestIndex);
-  };
-
-  // Touch
-  const handleTouchStart = (e) =>
-    onStart(e.touches[0].clientY, e.touches[0].clientX);
-
-  const handleTouchMove = (e) =>
-    onMove(e.touches[0].clientY, e.touches[0].clientX);
-
-  const handleTouchEnd = () => onEnd();
-
-  // Mouse
-  const handleMouseDown = (e) => {
-    onStart(e.clientY, e.clientX);
-
-    const move = (e) => onMove(e.clientY, e.clientX);
-    const up = () => {
-      onEnd();
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
-    };
-
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-  };
 
   const handleApi = useCallback(
     (apiInstance) => {
       if (!apiInstance) return;
-
       setApi(apiInstance);
-
       apiInstance.off("select");
-
       const updateActive = () => {
         const index = apiInstance.selectedScrollSnap();
-
         // 🚫 prevent loop conflict
         if (lastSyncedIndex.current === index) return;
-
         lastSyncedIndex.current = index;
-
         setActiveIndex(index);
-
         const unit = unitsRef.current[index];
-
         // ✅ only dispatch if different
         if (!selectedUnit || unit?.name !== selectedUnit?.name) {
           dispatch(setSelectedUnit(unit));
         }
       };
-
       apiInstance.on("select", updateActive);
-
       // ✅ initialize only if no selectedUnit
       if (!selectedUnit && unitsRef.current.length) {
         updateActive();
@@ -208,21 +106,16 @@ const MobileMenu = ({
 
     // ✅ update active UI
     setActiveIndex(finalIndex);
-
-    // ✅ FIX: ensure bottom sheet opens properly
-    if (snap.snapIndex !== 1) {
-      animateTo(1);
-    }
-  }, [selectedUnit, api, snap.snapIndex]);
+  }, [selectedUnit, api]);
 
   useEffect(() => {
     const handleResize = () => {
-      animateTo(snap.snapIndex);
+      animateTo(0);
     };
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [snap.snapIndex]);
+  }, []);
 
   return (
     <div className="flex md:hidden">
@@ -241,66 +134,53 @@ const MobileMenu = ({
       <div
         ref={sheetRef}
         className="fixed bottom-0 left-0 w-full bg-[#1f2530] rounded-t-3xl shadow-2xl overflow-hidden z-[1]"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onMouseDown={handleMouseDown}
       >
-        {/* Handle */}
-        <div className="flex justify-center py-3 cursor-grab active:cursor-grabbing">
-          <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
-        </div>
-
-        <div className="px-4 pb-6 overflow-y-auto h-full max-h-[100vh] flex flex-col items-center overflow-hidden">
+        <div className="px-4 py-2 overflow-y-auto h-full max-h-[100vh] flex flex-col gap-2 items-center overflow-hidden">
           {/* ── HEADER: Block Name + Navigation ── */}
-          {snap.snapIndex === 0 ? (
-            <div className="flex items-center justify-between relative w-full">
-              <button
-                className="p-3 text-white hover:bg-white/10 rounded-full transition-colors active:scale-95"
-                onClick={handlePrev}
-              >
-                <IconChevronLeft size={20} stroke={2.5} />
-              </button>
+          <div className="flex items-center justify-between relative w-full">
+            <button
+              className="p-3 text-white hover:bg-white/10 rounded-full transition-colors active:scale-95"
+              onClick={handlePrev}
+            >
+              <IconChevronLeft size={20} stroke={2.5} />
+            </button>
 
-              <div className="text-center cursor-pointer py-0.5 px-4 rounded-xl">
-                <span className="font-bold text-[16px] tracking-wide">
-                  Block {currentBuilding.name}
-                </span>
-                <span className="text-white/50 text-[13px] ml-1.5 font-medium">
-                  ({totalApt} apt.)
-                </span>
-              </div>
-
-              <button
-                className="p-3 text-white hover:bg-white/10 rounded-full transition-colors active:scale-95"
-                onClick={handleNext}
-              >
-                <IconChevronRight size={20} stroke={2.5} />
-              </button>
+            <div className="text-center cursor-pointer py-0.5 px-4 rounded-xl">
+              <span className="font-bold text-[16px] tracking-wide">
+                Block {currentBuilding.name}
+              </span>
+              <span className="text-white/50 text-[13px] ml-1.5 font-medium">
+                ({totalApt} apt.)
+              </span>
             </div>
-          ) : null}
 
-          {/* {snap.snapIndex === 1 ? ( */}
+            <button
+              className="p-3 text-white hover:bg-white/10 rounded-full transition-colors active:scale-95"
+              onClick={handleNext}
+            >
+              <IconChevronRight size={20} stroke={2.5} />
+            </button>
+          </div>
+
           <Carousel
             opts={{
               align: "center",
               loop: true,
             }}
             setApi={handleApi}
-            className="w-full pt-3"
+            className="w-full"
           >
-            <CarouselContent className="pb-6 pt-2" data-vaul-no-drag>
+            <CarouselContent data-vaul-no-drag>
               {buildingUnits.map((unit, idx) => (
                 <CarouselItem
                   key={`${unit.name}-${idx}`}
-                  className="pl-5 basis-[82%]"
+                  className="pl-3 basis-[85%]"
                 >
                   <ApartmentCard unit={unit} />
                 </CarouselItem>
               ))}
             </CarouselContent>
           </Carousel>
-          {/* ) : null} */}
         </div>
       </div>
     </div>

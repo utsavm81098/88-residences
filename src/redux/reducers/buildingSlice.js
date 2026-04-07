@@ -6,7 +6,7 @@ const initialState = {
   currentBuilding: BUILDING_CONFIG[0],
   isMenuOpen: false,
   selectedUnit: null,
-  snap: { height: "85px", snapIndex: 0 },
+  snap: { height: 0.4, snapIndex: 0 },
 };
 
 export const buildingSlice = createSlice({
@@ -40,7 +40,7 @@ export const buildingSlice = createSlice({
       state.currentBuilding = BUILDING_CONFIG[0];
       state.isMenuOpen = false;
       state.selectedUnit = null;
-      state.snap = { height: "85px", snapIndex: 0 };
+      state.snap = { height: 0.4, snapIndex: 0 };
     },
     setSelectedUnit: (state, action) => {
       state.selectedUnit = action.payload;

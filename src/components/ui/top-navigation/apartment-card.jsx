@@ -15,15 +15,11 @@ const ApartmentCard = ({ unit }) => {
 
   return (
     <div
-      //   onClick={() => dispatch(setSelectedUnit(unit))}
       className={`w-full snap-center bg-[#282932] border-2 ${
         isSelected ? "border-[#3b82f6]" : "border-transparent"
-      } rounded-[22px] p-5 flex flex-col gap-3.5 relative transition-all active:scale-[0.98] shadow-lg shrink-0`}
+      } rounded-[22px] p-4 flex flex-col gap-2.5 relative transition-all active:scale-[0.98] shadow-lg shrink-0`}
     >
       {/* Badge */}
-      <div className="absolute -top-3 right-5 bg-[#a855f7] text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-lg shadow-purple-500/30 tracking-wide uppercase">
-        presale price
-      </div>
 
       <div className="flex justify-between items-center mt-1">
         <span className="font-extrabold text-white text-[20px] tracking-tight">
@@ -38,7 +34,7 @@ const ApartmentCard = ({ unit }) => {
       </div>
 
       <div>
-        <span className="text-[28px] font-bold text-white tracking-tight">
+        <span className="text-[20px] font-bold text-white tracking-tight">
           {unit.price || "Contact Us"}
           {unit.price && " "}
         </span>
@@ -49,7 +45,7 @@ const ApartmentCard = ({ unit }) => {
         )}
       </div>
 
-      <div className="flex gap-3 mt-1.5">
+      <div className="flex gap-3 mt-1">
         <button className="flex-1 bg-transparent border border-white/10 hover:bg-white/5 text-white text-[13px] font-bold py-2.5 rounded-xl transition-colors">
           Floor plan
         </button>

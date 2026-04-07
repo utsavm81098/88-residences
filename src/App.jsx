@@ -5,20 +5,18 @@ import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import TopNavigation from "./components/ui/top-navigation";
 import InventorySidebar from "./components/ui/inventory-sidebar";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { resetBuilding } from "./redux/reducers/buildingSlice";
 import SceneEnvironment from "./features/scene-environment";
 import AdaptiveControls from "./features/adaptive-controls";
 import DirectionLabel from "./features/direction-label";
 import Building from "./features/building";
 import BuildingTooltip from "./features/building-tooltip";
-import CameraStabilizer from "./features/camera-stabilizer";
 
 function App() {
   const dispatch = useDispatch();
   const controlsRef = useRef();
   const modelRef = useRef();
-  const { height, snapIndex } = useSelector((state) => state.building.snap);
 
   // Check if all preloads and materials are done loading
   const { progress } = useProgress();
@@ -28,18 +26,8 @@ function App() {
     dispatch(resetBuilding());
   };
 
-  const isMobile =
-    typeof window !== "undefined" && window.innerWidth < 768;
-
-  // Calculate canvas height: shrink when bottom sheet is at snap 1
-  const canvasHeight =
-    isMobile && snapIndex === 1
-      ? typeof height === "number"
-        ? height <= 1
-          ? `calc(100% - ${height * 100}%)`
-          : `calc(100% - ${height}px)`
-        : `calc(100% - ${height})`
-      : "100%";
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const canvasHeight = isMobile ? "60%" : "100%";
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#050505] text-white">
@@ -68,7 +56,6 @@ function App() {
           }}
           shadows
         >
-          {isMobile && <CameraStabilizer />}
           <SceneEnvironment>
             <Building
               controlsRef={controlsRef}
@@ -87,4 +74,3 @@ function App() {
 }
 
 export default App;
-

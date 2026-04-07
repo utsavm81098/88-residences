@@ -8,9 +8,9 @@ const BREAKPOINTS = {
 
 const RESPONSIVE_CONFIG = {
   mobile: {
-    cameraZ: 120, // Pushed further back on mobile
-    orbit: { min: 80, max: 140 }, // Generous zoom limits for mobile
-    label: { distanceX: 25, distanceZ: 18, fontSize: 1.2 },
+    cameraZ: 85, // Adjusted from 120 to compensate for shorter canvas (60% height)
+    orbit: { min: 60, max: 80 }, // Generous zoom limits for mobilealed down zoom limits for closer camera
+    label: { distanceX: 22, distanceZ: 15, fontSize: 1.1 },
   },
   tablet: {
     cameraZ: 85, // Medium distance
