@@ -251,7 +251,7 @@ const MobileMenu = ({
           <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
         </div>
 
-        <div className="px-4 pb-6 overflow-y-auto h-full max-h-[100vh] flex flex-col items-center">
+        <div className="px-4 pb-6 overflow-y-auto h-full max-h-[100vh] flex flex-col items-center overflow-hidden">
           {/* ── HEADER: Block Name + Navigation ── */}
           {snap.snapIndex === 0 ? (
             <div className="flex items-center justify-between relative w-full">
