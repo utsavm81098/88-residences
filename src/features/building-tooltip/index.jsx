@@ -183,7 +183,7 @@ const BuildingTooltip = () => {
       </div>
 
       {/* ── Mobile Bottom Sheet (Hidden on desktop) ── */}
-      <div className="md:hidden">
+      {/* <div className="md:hidden">
         <div
           className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[9998] transition-opacity duration-300 ${selectedUnit ? "opacity-100 visible pointer-events-auto" : "opacity-0 invisible pointer-events-none"}`}
           onClick={() => dispatch(clearSelectedUnit())}
@@ -192,7 +192,6 @@ const BuildingTooltip = () => {
           className={`fixed bottom-0 left-0 right-0 z-[9999] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${selectedUnit ? "translate-y-0" : "translate-y-full"}`}
         >
           <div className="w-full h-auto bg-[#111116] rounded-t-3xl overflow-hidden pb-[env(safe-area-inset-bottom,16px)] border-t border-white/10">
-            {/* Drag Handle */}
             <div className="w-full flex justify-center pt-3 pb-1">
               <div className="w-12 h-1.5 rounded-full bg-white/20"></div>
             </div>
@@ -207,7 +206,7 @@ const BuildingTooltip = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </>
   );
 };

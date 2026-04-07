@@ -15,11 +15,8 @@ import {
   hideTooltip,
   updateTooltipPosition,
 } from "../../redux/reducers/tooltipSlice";
-import {
-  setSelectedUnit,
-  clearSelectedUnit,
-} from "../../redux/reducers/buildingSlice";
-// Preload ALL models in the configuration to prevent loading flickering during switches
+import { setSelectedUnit } from "../../redux/reducers/buildingSlice";
+
 BUILDING_CONFIG.forEach((b) => {
   useGLTF.preload(b.model);
 });
@@ -31,7 +28,6 @@ const useBuilding = ({ config, controlsRef }) => {
   const dispatch = useDispatch();
   const isDragging = useSelector((state) => state.drag.isDragging);
   const selectedUnit = useSelector((state) => state.building.selectedUnit);
-  console.log("selectedUnit: ", selectedUnit);
 
   // const selectedUnitRef = useRef(selectedUnit);
   // selectedUnitRef.current = selectedUnit;
@@ -73,20 +69,31 @@ const useBuilding = ({ config, controlsRef }) => {
       // Prevent hitboxes from casting or receiving shadows to preserve the building's original lighting
       child.castShadow = false;
       child.receiveShadow = false;
-      console.log("child", child.name === "Box005" ? child : "");
       const unit = unitMap[child.name];
       if (!unit) {
-        child.visible = false;
+        // child.visible = false;
+        child.material = new THREE.MeshBasicMaterial({
+          color: UNIT_COLORS.available.base,
+          transparent: true,
+          opacity: UNIT_COLORS.available.baseOpacity,
+          // opacity: 0,
+          depthWrite: false,
+          depthTest: true,
+          side: THREE.DoubleSide,
+          toneMapped: false,
+          blending: THREE.NormalBlending,
+        });
         return;
       }
       // Normalise status key; default to "available" for unknown values
       const statusKey = unit.status === "sold" ? "sold" : "available";
       const cfg = UNIT_COLORS[statusKey];
+
       // ── Main hitbox material (invisible by default, lighting-independent) ─────────────
       child.material = new THREE.MeshBasicMaterial({
-        color: cfg.base.clone(),
+        color: cfg.base.clone() || UNIT_COLORS.available.base,
         transparent: true,
-        opacity: cfg.baseOpacity,
+        opacity: cfg.baseOpacity || UNIT_COLORS.available.baseOpacity,
         // opacity: 0,
         depthWrite: false,
         depthTest: true,
@@ -122,69 +129,6 @@ const useBuilding = ({ config, controlsRef }) => {
     });
     return scene;
   }, [glassHitbox, unitMap]);
-
-  // useEffect(() => {
-  //   if (!glassScene) return;
-  //   let targetMesh = null;
-  //   glassScene.traverse((child) => {
-  //     if (!child.isMesh || !child.userData.status) return;
-  //     const isSelected =
-  //       selectedUnit &&
-  //       (Array.isArray(selectedUnit.name)
-  //         ? selectedUnit.name.includes(child.userData.unitName)
-  //         : selectedUnit.name === child.userData.unitName);
-  //     if (isSelected) {
-  //       if (!targetMesh) targetMesh = child;
-  //       gsap.killTweensOf(child.material.color);
-  //       gsap.killTweensOf(child.material);
-  //       gsap.to(child.material.color, {
-  //         r: child.userData.selectedColor.r,
-  //         g: child.userData.selectedColor.g,
-  //         b: child.userData.selectedColor.b,
-  //         duration: 0.25,
-  //       });
-  //       gsap.to(child.material, {
-  //         opacity: child.userData.selectedOpacity,
-  //         duration: 0.25,
-  //         ease: "power2.out",
-  //       });
-  //       const outline = child.userData[OUTLINE_KEY];
-  //       if (outline) {
-  //         gsap.killTweensOf(outline.material);
-  //         gsap.to(outline.material, {
-  //           opacity: 1.0,
-  //           duration: 0.22,
-  //           ease: "power2.out",
-  //         });
-  //       }
-  //     } else {
-  //       // Only revert if we are resetting an old selection. Hover states will
-  //       // be handled gracefully by mouse out.
-  //       gsap.killTweensOf(child.material.color);
-  //       gsap.killTweensOf(child.material);
-  //       gsap.to(child.material.color, {
-  //         r: child.userData.baseColor.r,
-  //         g: child.userData.baseColor.g,
-  //         b: child.userData.baseColor.b,
-  //         duration: 0.25,
-  //       });
-  //       gsap.to(child.material, {
-  //         opacity: child.userData.baseOpacity,
-  //         duration: 0.25,
-  //         ease: "power2.out",
-  //       });
-  //       const outline = child.userData[OUTLINE_KEY];
-  //       if (outline) {
-  //         gsap.killTweensOf(outline.material);
-  //         gsap.to(outline.material, {
-  //           opacity: 0.6,
-  //           duration: 0.2,
-  //           ease: "power2.in",
-  //         });
-  //       }
-  //     }
-  //   });
-  // }, [selectedUnit, glassScene, controlsRef, invalidate]);
 
   const focusCameraOnMesh = useCallback(
     (mesh) => {
@@ -250,6 +194,11 @@ const useBuilding = ({ config, controlsRef }) => {
 
       const mesh = e.object;
       if (!mesh.userData.status) return;
+
+      const isSelected =
+        selectedUnit && selectedUnit.name === mesh.userData.unitName;
+      if (isSelected || window.innerWidth < 768) return;
+
       document.body.style.cursor = "pointer";
       const unit = unitMap[mesh.userData.unitName];
       if (unit) {
@@ -287,7 +236,7 @@ const useBuilding = ({ config, controlsRef }) => {
         });
       }
     },
-    [unitMap, dispatch, isDragging],
+    [unitMap, dispatch, isDragging, selectedUnit],
   );
   // ── Pointer out → revert to base colour + hide outline ──────────────────────
   const handlePointerOut = useCallback(
@@ -295,10 +244,15 @@ const useBuilding = ({ config, controlsRef }) => {
       const mesh = e.object;
       if (!mesh.userData.status) return;
 
+      const isSelected =
+        selectedUnit && selectedUnit.name === mesh.userData.unitName;
+
       if (!isDragging) {
         document.body.style.cursor = "default";
       }
       dispatch(hideTooltip());
+
+      if (isSelected) return;
 
       gsap.killTweensOf(mesh.material.color);
       gsap.killTweensOf(mesh.material);
@@ -325,7 +279,7 @@ const useBuilding = ({ config, controlsRef }) => {
         });
       }
     },
-    [dispatch, isDragging],
+    [dispatch, isDragging, selectedUnit],
   );
   // ── Pointer move → update tooltip position ──────────────────────────────────
   const handlePointerMove = useCallback(
@@ -346,58 +300,82 @@ const useBuilding = ({ config, controlsRef }) => {
     (e) => {
       e.stopPropagation();
       if (e.delta > 2) return;
-      // const unit = unitMap[e.object.userData.unitName];
-      // console.log("unit: ", unit);
-      // if (!unit) return;
-      console.log("e.target.userData : ", e.object.userData);
-      dispatch(setSelectedUnit({ ...e.object.userData }));
-      focusCameraOnMesh(e.object);
-      // const currentSelected = selectedUnitRef.current;
-      // const isAlreadySelected =
-      //   currentSelected &&
-      //   (Array.isArray(currentSelected.name)
-      //     ? currentSelected.name.includes(unit.name) ||
-      //       currentSelected.name.includes(e.object.userData.unitName)
-      //     : currentSelected.name === unit.name ||
-      //       currentSelected.name === e.object.userData.unitName);
-
-      // if (isAlreadySelected) {
-      //   dispatch(clearSelectedUnit());
-      // } else {
-
-      // const matchingNames = Array.isArray(unit.name)
-      //   ? unit.name
-      //   : [unit.name];
-      // e.object.parent.traverse((child) => {
-      //   if (child.isMesh && matchingNames.includes(child.name)) {
-      //     gsap.killTweensOf(child.material.color);
-      //     gsap.killTweensOf(child.material);
-      //     gsap.to(child.material.color, {
-      //       r: child.userData.selectedColor.r,
-      //       g: child.userData.selectedColor.g,
-      //       b: child.userData.selectedColor.b,
-      //       duration: 0.25,
-      //     });
-      //     gsap.to(child.material, {
-      //       opacity: child.userData.selectedOpacity,
-      //       duration: 0.25,
-      //       ease: "power2.out",
-      //     });
-      //     const outline = child.userData[OUTLINE_KEY];
-      //     if (outline) {
-      //       gsap.killTweensOf(outline.material);
-      //       gsap.to(outline.material, {
-      //         opacity: 1.0,
-      //         duration: 0.22,
-      //         ease: "power2.out",
-      //       });
-      //     }
-      //   }
-      // });
-      // }
+      const unit = unitMap[e.object.userData.unitName];
+      if (!unit) return;
+      dispatch(setSelectedUnit({ ...unit }));
     },
-    [unitMap, dispatch, focusCameraOnMesh],
+    [unitMap, dispatch],
   );
+
+  const updateUnitColor = useCallback(
+    (selectedUnit) => {
+      let focusObj = null;
+      glassScene.traverse((child) => {
+        if (!child.isMesh || !child.userData.status) return;
+        const isSelected = selectedUnit
+          ? selectedUnit.name === child.name
+          : false;
+
+        if (isSelected) {
+          focusObj = child;
+          gsap.killTweensOf(child.material.color);
+          gsap.killTweensOf(child.material);
+          gsap.to(child.material.color, {
+            r: child.userData.selectedColor.r,
+            g: child.userData.selectedColor.g,
+            b: child.userData.selectedColor.b,
+            duration: 0.25,
+          });
+          gsap.to(child.material, {
+            opacity: child.userData.selectedOpacity,
+            duration: 0.25,
+            ease: "power2.out",
+          });
+          const outline = child.userData[OUTLINE_KEY];
+          if (outline) {
+            gsap.killTweensOf(outline.material);
+            gsap.to(outline.material, {
+              opacity: 1.0,
+              duration: 0.22,
+              ease: "power2.out",
+            });
+          }
+        } else {
+          gsap.killTweensOf(child.material.color);
+          gsap.killTweensOf(child.material);
+          gsap.to(child.material.color, {
+            r: child.userData.baseColor.r,
+            g: child.userData.baseColor.g,
+            b: child.userData.baseColor.b,
+            duration: 0.25,
+          });
+          gsap.to(child.material, {
+            opacity: child.userData.baseOpacity,
+            duration: 0.25,
+            ease: "power2.out",
+          });
+          const outline = child.userData[OUTLINE_KEY];
+          if (outline) {
+            gsap.killTweensOf(outline.material);
+            gsap.to(outline.material, {
+              opacity: 0.6,
+              duration: 0.2,
+              ease: "power2.in",
+            });
+          }
+        }
+      });
+      if (focusObj) {
+        focusCameraOnMesh(focusObj);
+      }
+    },
+    [glassScene, focusCameraOnMesh],
+  );
+
+  useEffect(() => {
+    updateUnitColor(selectedUnit);
+  }, [selectedUnit, updateUnitColor]);
+
   return {
     buildingScene,
     glassScene,

@@ -22,6 +22,7 @@ import { Tabs, TabsList, TabsTrigger } from "../tabs";
 import { cn } from "@/lib/utils";
 
 const InventorySidebar = () => {
+  const [activeAccordion, setActiveAccordion] = useState("Type F");
   const dispatch = useDispatch();
   const [filters, setFilters] = useState({
     rooms: "all",
@@ -65,7 +66,7 @@ const InventorySidebar = () => {
   };
 
   return (
-    <div className="hidden md:flex flex-col w-[380px] h-full bg-[#383838] border-r border-white/10 text-white overflow-hidden z-[50]">
+    <div className="hidden md:flex flex-col w-[380px] h-full bg-[#1f2530] border-r border-white/10 text-white overflow-hidden z-[50]">
       {/* Filters Section */}
       <div className="p-6 space-y-6">
         {/* Rooms Filter */}
@@ -157,7 +158,7 @@ const InventorySidebar = () => {
       </div>
 
       {/* Table Headers */}
-      <div className="grid grid-cols-[40px_40px_1fr_60px_60px_80px] gap-0 px-2 py-3 border-y border-white/10 bg-[#383838]">
+      <div className="grid grid-cols-[40px_40px_1fr_60px_60px_80px] gap-0 px-2 py-3 border-y border-white/10 bg-[#1f2530]">
         <div className="flex justify-center items-center">
           <IconHeart size={15} className="text-white/90" stroke={1.5} />
         </div>
@@ -194,21 +195,27 @@ const InventorySidebar = () => {
       </div>
 
       {/* Accordion List */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#383838]">
-        <Accordion type="single" collapsible className="border-none">
+      <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#1f2530]">
+        <Accordion
+          type="single"
+          collapsible
+          className="border-none"
+          value={activeAccordion}
+          onValueChange={setActiveAccordion}
+        >
           {Object.entries(groupedUnits).map(([building, units]) => (
             <AccordionItem
               key={building}
               value={building}
               className="border-none"
             >
-              <AccordionTrigger className="px-6 py-3.5 hover:no-underline bg-[#444444] border-b border-[#383838] flex justify-between text-white transition-colors">
+              <AccordionTrigger className="px-6 py-3.5 hover:no-underline bg-[#1f2530] border-b border-[#383838] flex justify-between text-white transition-colors">
                 <span className="text-[13px] font-medium tracking-wide">
                   building {building}
                 </span>
               </AccordionTrigger>
               <AccordionContent className="p-0 border-b border-white/5">
-                <div className="bg-[#383838]">
+                <div className="bg-[#1f2530]">
                   {units.map((unit, idx) => (
                     <div
                       key={`${building}-${unit.name}-${idx}`}

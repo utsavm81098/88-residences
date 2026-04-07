@@ -59,12 +59,6 @@
   }
 }
 
-/* Vaul Drawer Handle — tighten spacing */
-[data-vaul-handle] {
-  margin-top: 8px !important;
-  margin-bottom: 0 !important;
-}
-
 /* Hide scrollbars but keep functionality */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

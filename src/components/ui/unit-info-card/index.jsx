@@ -40,7 +40,7 @@ export default function UnitInfoCard({ unit, onClose }) {
   };
 
   return (
-    <div className="bg-[#111116] border border-white/10 rounded-2xl w-full h-full overflow-hidden text-white flex flex-col pointer-events-auto">
+    <div className="hidden md:flex md:flex-col bg-[#111116] border border-white/10 rounded-2xl w-full h-full overflow-hidden text-white pointer-events-auto">
       {/* ── Image Header ── */}
       <div className="relative h-40 w-full bg-slate-800">
         <img

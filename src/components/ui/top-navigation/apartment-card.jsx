@@ -49,24 +49,6 @@ const ApartmentCard = ({ unit }) => {
         )}
       </div>
 
-      <div className="text-[13px] font-semibold text-white/80">
-        {unit.floor && `${unit.floor} floor `}
-        {unit.building && `building ${unit.building}`}
-      </div>
-
-      <div className="flex gap-2 text-[12px] font-bold">
-        {unit.aptType && (
-          <span className="bg-[#1e1f26] px-3 py-1.5 rounded-lg text-white/70">
-            apt. type: {unit.aptType}
-          </span>
-        )}
-        {unit.area && (
-          <span className="bg-[#1e1f26] px-3 py-1.5 rounded-lg text-white/70">
-            {unit.area}
-          </span>
-        )}
-      </div>
-
       <div className="flex gap-3 mt-1.5">
         <button className="flex-1 bg-transparent border border-white/10 hover:bg-white/5 text-white text-[13px] font-bold py-2.5 rounded-xl transition-colors">
           Floor plan

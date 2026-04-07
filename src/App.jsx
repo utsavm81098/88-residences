@@ -5,7 +5,7 @@ import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import TopNavigation from "./components/ui/top-navigation";
 import InventorySidebar from "./components/ui/inventory-sidebar";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { resetBuilding } from "./redux/reducers/buildingSlice";
 import SceneEnvironment from "./features/scene-environment";
 import AdaptiveControls from "./features/adaptive-controls";
@@ -17,6 +17,7 @@ function App() {
   const dispatch = useDispatch();
   const controlsRef = useRef();
   const modelRef = useRef();
+  const { height, snapIndex } = useSelector((state) => state.building.snap);
 
   // Check if all preloads and materials are done loading
   const { progress } = useProgress();
@@ -26,12 +27,29 @@ function App() {
     dispatch(resetBuilding());
   };
 
+  const canvasHeight =
+    snapIndex === 1
+      ? typeof height === "number"
+        ? height <= 1
+          ? `calc(100% - ${height * 100}%)`
+          : `calc(100% - ${height}px)`
+        : `calc(100% - ${height})`
+      : "100%";
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#050505] text-white">
       {/* Filters Sidebar (Desktop Only) */}
       {!isLoading && <InventorySidebar />}
 
-      <div className="relative flex-1 canvas-container">
+      <div
+        className="relative flex-1 canvas-container transition-all duration-300 ease-in-out h-full"
+        style={{
+          height:
+            typeof window !== "undefined" && window.innerWidth < 768
+              ? canvasHeight
+              : "100%",
+        }}
+      >
         {/* Hide TopNavigation until loading completes completely */}
         {!isLoading && <TopNavigation onReset={handleResetCamera} />}
         <Canvas
@@ -46,8 +64,6 @@ function App() {
             outputColorSpace: THREE.SRGBColorSpace,
           }}
           shadows
-          fallback={<div>Sorry no WebGL supported!</div>}
-          style={{ width: "100%", height: "100%" }}
         >
           <SceneEnvironment>
             <Building
