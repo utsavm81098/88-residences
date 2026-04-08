@@ -1,19 +1,11 @@
 import { useSelector, useDispatch } from "react-redux";
-import { clearSelectedUnit } from "../../redux/reducers/buildingSlice";
+import { clearSelectedUnit } from "../../store/slices/building-slice";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 // Original simple stats for hover tooltip
-import {
-  IconLayoutGrid,
-  IconBed,
-  IconDimensions,
-  IconBuildingBridge2,
-  IconHome,
-  IconCoinMonero,
-  IconCompass,
-} from "@tabler/icons-react";
+import { ICONS } from "@/assets/icons";
 import StatCell from "./start-cell";
-import UnitInfoCard from "../../components/ui/unit-info-card";
+import UnitInfoCard from "../../containers/unit-info-card";
 
 const STATUS_CONFIG = {
   available: { label: "Available", color: "#22c55e" },
@@ -23,17 +15,16 @@ const STATUS_CONFIG = {
 
 const ICON_PROPS = { size: 15, stroke: 1.8 };
 const Icons = {
-  aptType: <IconLayoutGrid {...ICON_PROPS} />,
-  bedrooms: <IconBed {...ICON_PROPS} />,
-  area: <IconDimensions {...ICON_PROPS} />,
-  balcony: <IconBuildingBridge2 {...ICON_PROPS} />,
-  type: <IconHome {...ICON_PROPS} />,
-  price: <IconCoinMonero {...ICON_PROPS} />,
-  direction: <IconCompass {...ICON_PROPS} />,
+  aptType: <ICONS.AptType {...ICON_PROPS} />,
+  bedrooms: <ICONS.Bedrooms {...ICON_PROPS} />,
+  area: <ICONS.Area {...ICON_PROPS} />,
+  balcony: <ICONS.Balcony {...ICON_PROPS} />,
+  type: <ICONS.Type {...ICON_PROPS} />,
+  price: <ICONS.Price {...ICON_PROPS} />,
+  direction: <ICONS.Compass {...ICON_PROPS} />,
 };
 
 const BuildingTooltip = () => {
-  const dispatch = useDispatch();
   const tooltipState = useSelector((state) => state.tooltip);
   const selectedUnit = useSelector((state) => state.building.selectedUnit);
 
@@ -74,7 +65,7 @@ const BuildingTooltip = () => {
         }}
       >
         {unit && (
-          <div className="bg-[#0e0e14]/95 backdrop-blur-[16px] border border-white/10 rounded-xl px-4 py-3.5 min-w-[240px] max-w-[280px] shadow-[0_16px_48px_rgba(0,0,0,0.6),0_0_0_0.5px_rgba(255,255,255,0.04)] text-white">
+          <div className="bg-card-bg/95 backdrop-blur-[16px] border border-white/10 rounded-xl px-4 py-3.5 min-w-[240px] max-w-[280px] shadow-[0_16px_48px_rgba(0,0,0,0.6),0_0_0_0.5px_rgba(255,255,255,0.04)] text-white">
             <div className="flex justify-between items-center mb-2.5">
               <span className="text-[17px] font-bold tracking-tight">
                 {unit.name}
@@ -174,12 +165,7 @@ const BuildingTooltip = () => {
         ref={desktopPopupRef}
         className={`fixed right-6 top-24 z-[9999] w-[320px] hidden md:block ${selectedUnit ? "pointer-events-auto" : "pointer-events-none opacity-0"}`}
       >
-        {selectedUnit && (
-          <UnitInfoCard
-            unit={selectedUnit}
-            onClose={() => dispatch(clearSelectedUnit())}
-          />
-        )}
+        {selectedUnit && <UnitInfoCard unit={selectedUnit} />}
       </div>
 
       {/* ── Mobile Bottom Sheet (Hidden on desktop) ── */}
@@ -191,7 +177,7 @@ const BuildingTooltip = () => {
         <div
           className={`fixed bottom-0 left-0 right-0 z-[9999] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${selectedUnit ? "translate-y-0" : "translate-y-full"}`}
         >
-          <div className="w-full h-auto bg-[#111116] rounded-t-3xl overflow-hidden pb-[env(safe-area-inset-bottom,16px)] border-t border-white/10">
+          <div className="w-full h-auto bg-sidebar rounded-t-3xl overflow-hidden pb-[env(safe-area-inset-bottom,16px)] border-t border-white/10">
             <div className="w-full flex justify-center pt-3 pb-1">
               <div className="w-12 h-1.5 rounded-full bg-white/20"></div>
             </div>

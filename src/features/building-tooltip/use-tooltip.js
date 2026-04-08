@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react";
 import { useDispatch } from "react-redux";
-import { showTooltip as showAction, hideTooltip as hideAction } from "../../redux/reducers/tooltipSlice";
+import { showTooltip as showAction, hideTooltip as hideAction } from "../../store/slices/tooltip-slice";
 
 const useTooltip = () => {
   const dispatch = useDispatch();

@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import gsap from "gsap";
 import React, { useCallback, useMemo } from "react";
-import useResponsiveConfig from "../../hooks/useResponsiveConfig";
+import useResponsiveConfig from "../../hooks/use-responsive-config";
 
 // ✅ Module-level reusable vectors
 const _newPos = new THREE.Vector3();

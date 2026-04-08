@@ -11,10 +11,11 @@ import {
 } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { EffectComposer, SMAA } from "@react-three/postprocessing";
-import useResponsiveConfig from "../../hooks/useResponsiveConfig";
+import useResponsiveConfig from "../../hooks/use-responsive-config";
 import { GRID_CONFIG } from "../../utils/config";
 import { useSelector } from "react-redux";
-import { BUILDING_CONFIG } from "../../utils/constant";
+import { logger } from "../../utils/logger";
+import { BUILDING_CONFIG } from "@/utils/constant";
 
 BUILDING_CONFIG.forEach((config) => {
   if (config.environment) {
@@ -25,8 +26,12 @@ BUILDING_CONFIG.forEach((config) => {
 const SceneEnvironment = ({ children }) => {
   const { currentBuilding } = useSelector((state) => state.building);
   const { environment, lighting = {} } = currentBuilding || {};
-  const { directIntensity = 1.0, ambientIntensity = 0.36, exposure = 1.0 } = lighting;
-  
+  const {
+    directIntensity = 1.0,
+    ambientIntensity = 0.36,
+    exposure = 1.0,
+  } = lighting;
+
   const config = useResponsiveConfig();
   const { gl } = useThree();
 
@@ -38,10 +43,10 @@ const SceneEnvironment = ({ children }) => {
     <Fragment>
       <PerformanceMonitor
         onDecline={() => {
-          console.log("Performance dropped");
+          logger.warn("Performance dropped");
         }}
         onIncline={() => {
-          console.log("Performance improved");
+          logger.info("Performance improved");
         }}
       />
       <AdaptiveDpr />

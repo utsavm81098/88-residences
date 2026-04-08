@@ -85,16 +85,15 @@ const BuildingInstance = ({
       // We keep non-active models in the scene but toggle visibility to ensure instantaneous switching
     >
       <primitive object={buildingScene} renderOrder={renderOrder} />
-      {active && (
-        <primitive
-          object={glassScene}
-          renderOrder={renderOrder + 1}
-          onPointerOver={handlePointerOver}
-          onPointerOut={handlePointerOut}
-          onPointerMove={handlePointerMove}
-          onClick={handleClick}
-        />
-      )}
+      <primitive
+        object={glassScene}
+        visible={active}
+        renderOrder={renderOrder + 1}
+        onPointerOver={handlePointerOver}
+        onPointerOut={handlePointerOut}
+        onPointerMove={handlePointerMove}
+        onClick={handleClick}
+      />
     </group>
   );
 };

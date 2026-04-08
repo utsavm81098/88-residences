@@ -1,16 +1,5 @@
-import {
-  IconLayoutGrid,
-  IconBed,
-  IconDimensions,
-  IconBuildingBridge2,
-  IconHome,
-  IconCoinMonero,
-  IconCompass,
-  IconX,
-} from "@tabler/icons-react";
-import { useDispatch } from "react-redux";
+import { ICONS } from "@/assets/icons";
 import StatCell from "../../../features/building-tooltip/start-cell";
-import { clearSelectedUnit } from "../../../redux/reducers/buildingSlice";
 
 const STATUS_CONFIG = {
   available: { label: "Available", color: "#22c55e" },
@@ -18,20 +7,19 @@ const STATUS_CONFIG = {
   reserved: { label: "Reserved", color: "#f59e0b" },
 };
 
-const ICON_PROPS = { size: 15, stroke: 1.8 };
+const ICON_PROPS = { size: 15, strokeWidth: 1.8 };
 
 const Icons = {
-  aptType: <IconLayoutGrid {...ICON_PROPS} />,
-  bedrooms: <IconBed {...ICON_PROPS} />,
-  area: <IconDimensions {...ICON_PROPS} />,
-  balcony: <IconBuildingBridge2 {...ICON_PROPS} />,
-  type: <IconHome {...ICON_PROPS} />,
-  price: <IconCoinMonero {...ICON_PROPS} />,
-  direction: <IconCompass {...ICON_PROPS} />,
+  aptType: <ICONS.AptType {...ICON_PROPS} />,
+  bedrooms: <ICONS.Bedrooms {...ICON_PROPS} />,
+  area: <ICONS.Area {...ICON_PROPS} />,
+  balcony: <ICONS.Balcony {...ICON_PROPS} />,
+  type: <ICONS.Type {...ICON_PROPS} />,
+  price: <ICONS.Price {...ICON_PROPS} />,
+  direction: <ICONS.Compass {...ICON_PROPS} />,
 };
 
 export default function UnitInfoCard({ unit, onClose }) {
-  const dispatch = useDispatch();
   if (!unit) return null;
 
   const statusInfo = STATUS_CONFIG[unit.status] ?? {
@@ -40,7 +28,7 @@ export default function UnitInfoCard({ unit, onClose }) {
   };
 
   return (
-    <div className="hidden md:flex md:flex-col bg-[#111116] border border-white/10 rounded-2xl w-full h-full overflow-hidden text-white pointer-events-auto">
+    <div className="hidden md:flex md:flex-col bg-card-bg border border-white/10 rounded-2xl w-full h-full overflow-hidden text-white pointer-events-auto">
       {/* ── Image Header ── */}
       <div className="relative h-40 w-full bg-slate-800">
         <img
@@ -53,10 +41,10 @@ export default function UnitInfoCard({ unit, onClose }) {
         />
         {onClose && (
           <button
-            onClick={() => dispatch(clearSelectedUnit())}
+            onClick={onClose}
             className="absolute top-3 right-3 p-1.5 bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-md transition-colors"
           >
-            <IconX size={16} className="text-white" />
+            <ICONS.X size={16} className="text-white" />
           </button>
         )}
       </div>
@@ -129,7 +117,7 @@ export default function UnitInfoCard({ unit, onClose }) {
         </div>
 
         <div className="mt-auto flex gap-3">
-          <button className="flex-1 bg-[#FACC15] hover:bg-[#EAB308] text-black font-bold py-2.5 rounded-xl transition-colors text-[14px]">
+          <button className="flex-1 bg-accent-yellow hover:opacity-90 text-black font-bold py-2.5 rounded-xl transition-colors text-[14px]">
             View property
           </button>
           <button className="flex-1 bg-white/10 hover:bg-white/15 border border-white/10 text-white font-semibold py-2.5 rounded-xl transition-colors text-[14px]">
@@ -140,3 +128,4 @@ export default function UnitInfoCard({ unit, onClose }) {
     </div>
   );
 }
+

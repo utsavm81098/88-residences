@@ -1,12 +1,12 @@
 import { useRef } from "react";
-import "./App.css";
+import "./app.css";
 import { useProgress } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
-import TopNavigation from "./components/ui/top-navigation";
-import InventorySidebar from "./components/ui/inventory-sidebar";
+import TopNavigation from "./containers/top-navigation";
+import InventorySidebar from "./containers/inventory-sidebar";
 import { useDispatch } from "react-redux";
-import { resetBuilding } from "./redux/reducers/buildingSlice";
+import { resetBuilding } from "./store/slices/building-slice";
 import SceneEnvironment from "./features/scene-environment";
 import AdaptiveControls from "./features/adaptive-controls";
 import DirectionLabel from "./features/direction-label";
@@ -30,7 +30,7 @@ function App() {
   const canvasHeight = isMobile ? "60%" : "100%";
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#050505] text-white">
+    <div className="flex h-screen w-screen overflow-hidden bg-background text-white">
       {/* Filters Sidebar (Desktop Only) */}
       {!isLoading && <InventorySidebar />}
 

@@ -14,8 +14,8 @@ import {
   showTooltip,
   hideTooltip,
   updateTooltipPosition,
-} from "../../redux/reducers/tooltipSlice";
-import { setSelectedUnit } from "../../redux/reducers/buildingSlice";
+} from "../../store/slices/tooltip-slice";
+import { setSelectedUnit } from "../../store/slices/building-slice";
 
 BUILDING_CONFIG.forEach((b) => {
   useGLTF.preload(b.model);
@@ -24,6 +24,29 @@ const _Y_AXIS = new THREE.Vector3(0, 1, 0);
 const _hitPoint = new THREE.Vector3();
 const _dir = new THREE.Vector3();
 const _temp = new THREE.Vector3();
+
+// ── Shared Materials (Performance Optimization) ──────────────────────────────
+// Reusing these for all non-interactive states to reduce draw calls
+const BASE_MATERIALS = {
+  available: new THREE.MeshBasicMaterial({
+    color: UNIT_COLORS.available.base,
+    transparent: true,
+    opacity: UNIT_COLORS.available.baseOpacity,
+    depthWrite: false,
+    depthTest: true,
+    side: THREE.FrontSide, // Optimized from DoubleSide
+    toneMapped: false,
+  }),
+  sold: new THREE.MeshBasicMaterial({
+    color: UNIT_COLORS.sold.base,
+    transparent: true,
+    opacity: UNIT_COLORS.sold.baseOpacity,
+    depthWrite: false,
+    depthTest: true,
+    side: THREE.FrontSide, // Optimized from DoubleSide
+    toneMapped: false,
+  }),
+};
 const useBuilding = ({ config, controlsRef }) => {
   const dispatch = useDispatch();
   const isDragging = useSelector((state) => state.drag.isDragging);
@@ -89,18 +112,11 @@ const useBuilding = ({ config, controlsRef }) => {
       const statusKey = unit.status === "sold" ? "sold" : "available";
       const cfg = UNIT_COLORS[statusKey];
 
-      // ── Main hitbox material (invisible by default, lighting-independent) ─────────────
-      child.material = new THREE.MeshBasicMaterial({
-        color: cfg.base.clone() || UNIT_COLORS.available.base,
-        transparent: true,
-        opacity: cfg.baseOpacity || UNIT_COLORS.available.baseOpacity,
-        // opacity: 0,
-        depthWrite: false,
-        depthTest: true,
-        side: THREE.DoubleSide,
-        toneMapped: false,
-        blending: THREE.NormalBlending,
-      });
+      // ── Assign Shared Base Material (Initial State) ─────────────
+      // We start with a shared material for performance. 
+      // Individual materials are assigned dynamically during interaction.
+      child.material = BASE_MATERIALS[statusKey].clone();
+      
       // Store references in userData for pointer handlers
       child.userData.status = unit.status;
       child.userData.unitName = child.name;

@@ -2,6 +2,8 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useRef } from "react";
 
 const BASE_FOV = 35; // Must match the PerspectiveCamera fov in scene-environment
+// Pre-calculate tangent of half-FOV at module level to avoid re-computing every frame
+const HALF_BASE_RAD_TAN = Math.tan((BASE_FOV * Math.PI) / 360);
 
 /**
  * CameraStabilizer
@@ -50,9 +52,7 @@ const CameraStabilizer = () => {
     const ratio = currentHeight / fullHeight.current;
 
     if (ratio > 0.1) {
-      const halfBaseRad = (BASE_FOV * Math.PI) / 360; // half FOV in radians
-      const newFov =
-        (2 * Math.atan(Math.tan(halfBaseRad) * ratio) * 180) / Math.PI;
+      const newFov = (2 * Math.atan(HALF_BASE_RAD_TAN * ratio) * 180) / Math.PI;
 
       // Only update if meaningful change (avoids unnecessary projection recalcs)
       if (Math.abs(camera.fov - newFov) > 0.05) {
