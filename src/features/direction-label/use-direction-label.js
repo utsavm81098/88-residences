@@ -1,16 +1,56 @@
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import gsap from "gsap";
-import React, { useCallback, useMemo } from "react";
-import useResponsiveConfig from "../../hooks/use-responsive-config";
+import React, { useCallback, useMemo, useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
+import useResponsiveConfig from "@/hooks/use-responsive-config";
 
 // ✅ Module-level reusable vectors
 const _newPos = new THREE.Vector3();
 const _offset = new THREE.Vector3();
 
+export const useLabel = ({ isDragging, dir, onMoveCamera }) => {
+  const textRef = useRef();
+
+  useEffect(() => {
+    let tween;
+    if (textRef.current && textRef.current.material) {
+      textRef.current.material.transparent = true;
+      tween = gsap.fromTo(
+        textRef.current.material,
+        { opacity: 0 },
+        { opacity: 1, duration: 1, ease: "power2.out" }
+      );
+    }
+    // Cleanup tween to prevent memory leaks or animation artifacts on unmount
+    return () => {
+      if (tween) tween.kill();
+    };
+  }, []);
+
+  const handleClick = useCallback((e) => {
+    e.stopPropagation();
+    if (e.delta <= 2) onMoveCamera(dir);
+  }, [dir, onMoveCamera]);
+
+  const handlePointerOver = useCallback((e) => {
+    e.stopPropagation();
+    if (!isDragging) document.body.style.cursor = "pointer";
+  }, [isDragging]);
+
+  const handlePointerOut = useCallback((e) => {
+    e.stopPropagation();
+    if (!isDragging) document.body.style.cursor = "auto";
+  }, [isDragging]);
+
+  return { textRef, handleClick, handlePointerOver, handlePointerOut };
+};
+
 const useDirectionLabel = ({ controlsRef }) => {
   const { camera } = useThree();
   const config = useResponsiveConfig();
+  const isDragging = useSelector((state) => state.drag.isDragging);
+  const isTransitioning = useSelector((state) => state.building.isTransitioning);
 
   const { distanceX, distanceZ, fontSize } = config.label;
 
@@ -83,7 +123,7 @@ const useDirectionLabel = ({ controlsRef }) => {
     [camera, controlsRef],
   );
 
-  return { positions, fontSize, moveCamera };
+  return { positions, fontSize, moveCamera, isDragging, isTransitioning };
 };
 
 export default useDirectionLabel;

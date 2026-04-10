@@ -6,7 +6,12 @@ const initialState = {
   currentBuilding: BUILDING_CONFIG[0],
   isMenuOpen: false,
   selectedUnit: null,
+  mobileSelectedUnit: null,
   snap: { height: 0.4, snapIndex: 0 },
+  // ── Transition state (carousel circle rotation) ──
+  isTransitioning: false,
+  previousBuildingIndex: null,
+  transitionDirection: null, // "next" | "prev"
 };
 
 export const buildingSlice = createSlice({
@@ -14,19 +19,36 @@ export const buildingSlice = createSlice({
   initialState,
   reducers: {
     nextBuilding: (state) => {
+      state.previousBuildingIndex = state.currentBuildingIndex;
+      state.transitionDirection = "next";
+      state.isTransitioning = true;
       state.currentBuildingIndex =
         (state.currentBuildingIndex + 1) % BUILDING_CONFIG.length;
       state.currentBuilding = BUILDING_CONFIG[state.currentBuildingIndex];
     },
     prevBuilding: (state) => {
+      state.previousBuildingIndex = state.currentBuildingIndex;
+      state.transitionDirection = "prev";
+      state.isTransitioning = true;
       state.currentBuildingIndex =
         (state.currentBuildingIndex - 1 + BUILDING_CONFIG.length) %
         BUILDING_CONFIG.length;
       state.currentBuilding = BUILDING_CONFIG[state.currentBuildingIndex];
     },
     setBuilding: (state, action) => {
-      state.currentBuildingIndex = action.payload;
-      state.currentBuilding = BUILDING_CONFIG[action.payload];
+      const newIndex = action.payload;
+      if (newIndex === state.currentBuildingIndex) {
+        state.isMenuOpen = false;
+        return;
+      }
+      state.previousBuildingIndex = state.currentBuildingIndex;
+      // Determine shortest rotation direction
+      const total = BUILDING_CONFIG.length;
+      const diff = (newIndex - state.currentBuildingIndex + total) % total;
+      state.transitionDirection = diff <= total / 2 ? "next" : "prev";
+      state.isTransitioning = true;
+      state.currentBuildingIndex = newIndex;
+      state.currentBuilding = BUILDING_CONFIG[newIndex];
       state.isMenuOpen = false;
     },
     toggleMenu: (state) => {
@@ -40,10 +62,22 @@ export const buildingSlice = createSlice({
       state.currentBuilding = BUILDING_CONFIG[0];
       state.isMenuOpen = false;
       state.selectedUnit = null;
+      state.mobileSelectedUnit = null;
       state.snap = { height: 0.4, snapIndex: 0 };
+      state.isTransitioning = false;
+      state.previousBuildingIndex = null;
+      state.transitionDirection = null;
+    },
+    endTransition: (state) => {
+      state.isTransitioning = false;
+      state.previousBuildingIndex = null;
+      state.transitionDirection = null;
     },
     setSelectedUnit: (state, action) => {
       state.selectedUnit = action.payload;
+    },
+    setMobileSelectedUnit: (state, action) => {
+      state.mobileSelectedUnit = action.payload;
     },
     clearSelectedUnit: (state) => {
       state.selectedUnit = null;
@@ -61,7 +95,9 @@ export const {
   toggleMenu,
   closeMenu,
   resetBuilding,
+  endTransition,
   setSelectedUnit,
+  setMobileSelectedUnit,
   clearSelectedUnit,
   setSnap,
 } = buildingSlice.actions;

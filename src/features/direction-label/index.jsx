@@ -1,7 +1,6 @@
 import { Text, Billboard } from "@react-three/drei";
-import useDirectionLabel from "./use-direction-label";
-import { memo } from "react";
-import { useSelector } from "react-redux";
+import useDirectionLabel, { useLabel } from "./use-direction-label";
+import React, { memo } from "react";
 
 const DIRECTION_NAMES = {
   N: "NORTH",
@@ -10,54 +9,57 @@ const DIRECTION_NAMES = {
   W: "WEST",
 };
 
-const Label = ({ children, position, onClick, fontSize, isDragging }) => (
-  <Billboard
-    position={position}
-    follow
-    lockX={false}
-    lockY={false}
-    lockZ={false}
-  >
-    <Text
-      fontSize={fontSize}
-      color="white"
-      anchorX="center"
-      anchorY="middle"
-      depthTest={false}
-      renderOrder={100}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (e.delta <= 2) onClick();
-      }}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        if (!isDragging) document.body.style.cursor = "pointer";
-      }}
-      onPointerOut={(e) => {
-        e.stopPropagation();
-        if (!isDragging) document.body.style.cursor = "auto";
-      }}
+const Label = memo(({ children, position, onMoveCamera, dir, fontSize, isDragging }) => {
+  const { textRef, handleClick, handlePointerOver, handlePointerOut } = useLabel({
+    isDragging,
+    dir,
+    onMoveCamera,
+  });
+
+  return (
+    <Billboard
+      position={position}
+      follow
+      lockX={false}
+      lockY={false}
+      lockZ={false}
     >
-      {children}
-    </Text>
-  </Billboard>
-);
+      <Text
+        ref={textRef}
+        fontSize={fontSize}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+        depthTest={false}
+        renderOrder={100}
+        onClick={handleClick}
+        onPointerOver={handlePointerOver}
+        onPointerOut={handlePointerOut}
+      >
+        {children}
+      </Text>
+    </Billboard>
+  );
+});
 
 const DirectionLabel = ({ controlsRef }) => {
-  const { positions, fontSize, moveCamera } = useDirectionLabel({
+  const { positions, fontSize, moveCamera, isDragging, isTransitioning } = useDirectionLabel({
     controlsRef,
   });
-  const isDragging = useSelector((state) => state.drag.isDragging);
+
+  // Hide labels immediately while the building transitions
+  if (isTransitioning) return null;
 
   return (
     <group>
       {Object.entries(positions).map(([dir, pos]) => (
         <Label
           key={dir}
+          dir={dir}
           position={pos}
           fontSize={fontSize}
           isDragging={isDragging}
-          onClick={() => moveCamera(dir)}
+          onMoveCamera={moveCamera}
         >
           {DIRECTION_NAMES[dir]}
         </Label>

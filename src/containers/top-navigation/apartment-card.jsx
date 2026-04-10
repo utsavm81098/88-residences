@@ -1,5 +1,6 @@
 import React, { memo } from "react";
 import { ICONS } from "@/assets/icons";
+import { Button } from "@/components/ui/button";
 
 const ApartmentCard = ({ unit, isSelected }) => {
   const dispName = Array.isArray(unit.name) ? unit.name.join(", ") : unit.name;
@@ -37,12 +38,17 @@ const ApartmentCard = ({ unit, isSelected }) => {
       </div>
 
       <div className="flex gap-3 mt-1">
-        <button className="flex-1 bg-transparent border border-white/10 hover:bg-white/5 text-white text-[13px] font-bold py-2.5 rounded-xl transition-colors">
+        <Button 
+          variant="outline" 
+          className="flex-1 bg-transparent border border-white/10 text-white text-[13px] font-bold h-11 rounded-xl"
+        >
           Floor plan
-        </button>
-        <button className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-[13px] font-bold py-2.5 rounded-xl transition-colors shadow-lg shadow-blue-500/20">
+        </Button>
+        <Button 
+          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-[13px] font-bold h-11 rounded-xl shadow-lg shadow-blue-500/20 border-0"
+        >
           View property
-        </button>
+        </Button>
       </div>
     </div>
   );

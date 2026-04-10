@@ -378,9 +378,10 @@ export const OUTLINE_KEY = "__edgeLines";
 export const BUILDING_CONFIG = [
   {
     name: "Type F",
-    model: "/models/type-f.glb",
+    model: "/models/type-f-1024.glb",
     hitbox: "/models/type-f-hitbox.glb",
     environment: { preset: "city", background: false },
+    // heroAngle: Math.PI / 0, // 45° — front-right corner view
   },
   {
     name: "Type D",
@@ -397,6 +398,7 @@ export const BUILDING_CONFIG = [
       ambientIntensity: 0.8, // Ambient base lift
       exposure: 1.0,
     },
+    // heroAngle: Math.PI / 3, // 60° — slightly more rotated
   },
   {
     name: "Type A",
@@ -407,6 +409,7 @@ export const BUILDING_CONFIG = [
       preset: "city",
       background: false,
     },
+    // heroAngle: -Math.PI / 5, // -36° — front-left view
   },
   {
     name: "Type G",
@@ -417,6 +420,7 @@ export const BUILDING_CONFIG = [
       preset: "city",
       background: false,
     },
+    // heroAngle: Math.PI / 6, // 30° — subtle right angle
   },
   {
     name: "Type B",
@@ -427,5 +431,6 @@ export const BUILDING_CONFIG = [
       preset: "city",
       background: false,
     },
+    // heroAngle: -Math.PI / 4, // -45° — front-left corner view
   },
 ];

@@ -1,11 +1,8 @@
-import { useSelector, useDispatch } from "react-redux";
-import { clearSelectedUnit } from "../../store/slices/building-slice";
-import { useEffect, useRef } from "react";
-import gsap from "gsap";
-// Original simple stats for hover tooltip
-import { ICONS } from "@/assets/icons";
-import StatCell from "./start-cell";
+import React from "react";
+import StatCell from "./stat-cell";
 import UnitInfoCard from "../../containers/unit-info-card";
+import useBuildingTooltip from "./use-building-tooltip";
+import { ICONS } from "@/assets/icons";
 
 const STATUS_CONFIG = {
   available: { label: "Available", color: "#22c55e" },
@@ -13,7 +10,7 @@ const STATUS_CONFIG = {
   reserved: { label: "Reserved", color: "#f59e0b" },
 };
 
-const ICON_PROPS = { size: 15, stroke: 1.8 };
+const ICON_PROPS = { size: 15, strokeWidth: 1.8 };
 const Icons = {
   aptType: <ICONS.AptType {...ICON_PROPS} />,
   bedrooms: <ICONS.Bedrooms {...ICON_PROPS} />,
@@ -25,34 +22,20 @@ const Icons = {
 };
 
 const BuildingTooltip = () => {
-  const tooltipState = useSelector((state) => state.tooltip);
-  const selectedUnit = useSelector((state) => state.building.selectedUnit);
-
-  const { visible, unit, x, y } = tooltipState;
-
-  // Do not render hover tooltip for the currently selected unit
-  const showHoverTooltip =
-    visible && unit && (!selectedUnit || selectedUnit.name !== unit.name);
-
-  // Reference for GSAP animation
-  const desktopPopupRef = useRef(null);
-
-  useEffect(() => {
-    if (selectedUnit && desktopPopupRef.current) {
-      gsap.fromTo(
-        desktopPopupRef.current,
-        { opacity: 0, y: -40, scale: 0.95, transformOrigin: "top right" },
-        { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.2)" },
-      );
-    }
-  }, [selectedUnit]);
+  const {
+    unit,
+    x,
+    y,
+    selectedUnit,
+    showHoverTooltip,
+    desktopPopupRef,
+    OFFSET_X,
+    OFFSET_Y,
+  } = useBuildingTooltip();
 
   const statusInfo = unit
     ? (STATUS_CONFIG[unit.status] ?? { label: unit.status, color: "#94a3b8" })
     : null;
-
-  const OFFSET_X = 16;
-  const OFFSET_Y = 16;
 
   return (
     <>
@@ -73,12 +56,12 @@ const BuildingTooltip = () => {
               <span
                 className="text-[11px] font-bold px-2.5 py-0.5 rounded-full tracking-wider uppercase"
                 style={{
-                  color: statusInfo.color,
-                  background: `${statusInfo.color}22`,
-                  border: `1px solid ${statusInfo.color}55`,
+                  color: statusInfo?.color,
+                  background: `${statusInfo?.color}22`,
+                  border: `1px solid ${statusInfo?.color}55`,
                 }}
               >
-                {statusInfo.label}
+                {statusInfo?.label}
               </span>
             </div>
 
@@ -102,7 +85,7 @@ const BuildingTooltip = () => {
             )}
 
             {/* ── Stats Grid ── */}
-            <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
               {unit.aptType && (
                 <StatCell
                   icon={Icons.aptType}
@@ -138,24 +121,6 @@ const BuildingTooltip = () => {
                 />
               )}
             </div>
-
-            {/* ── Price row ── */}
-            {unit.price && (
-              <>
-                <div className="h-[1px] bg-white/10 my-3" />
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-600">{Icons.price}</span>
-                    <span className="text-[11px] text-slate-500 uppercase tracking-wider">
-                      price
-                    </span>
-                  </div>
-                  <span className="text-[17px] font-bold text-violet-400 tracking-tight">
-                    {unit.price}
-                  </span>
-                </div>
-              </>
-            )}
           </div>
         )}
       </div>
@@ -163,36 +128,10 @@ const BuildingTooltip = () => {
       {/* ── Desktop Top-Right Popup (Hidden on mobile) ── */}
       <div
         ref={desktopPopupRef}
-        className={`fixed right-6 top-24 z-[9999] w-[320px] hidden md:block ${selectedUnit ? "pointer-events-auto" : "pointer-events-none opacity-0"}`}
+        className={`fixed right-6 top-24 z-[9999] w-[270px] hidden md:block ${selectedUnit ? "pointer-events-auto" : "pointer-events-none opacity-0"}`}
       >
         {selectedUnit && <UnitInfoCard unit={selectedUnit} />}
       </div>
-
-      {/* ── Mobile Bottom Sheet (Hidden on desktop) ── */}
-      {/* <div className="md:hidden">
-        <div
-          className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[9998] transition-opacity duration-300 ${selectedUnit ? "opacity-100 visible pointer-events-auto" : "opacity-0 invisible pointer-events-none"}`}
-          onClick={() => dispatch(clearSelectedUnit())}
-        />
-        <div
-          className={`fixed bottom-0 left-0 right-0 z-[9999] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${selectedUnit ? "translate-y-0" : "translate-y-full"}`}
-        >
-          <div className="w-full h-auto bg-sidebar rounded-t-3xl overflow-hidden pb-[env(safe-area-inset-bottom,16px)] border-t border-white/10">
-            <div className="w-full flex justify-center pt-3 pb-1">
-              <div className="w-12 h-1.5 rounded-full bg-white/20"></div>
-            </div>
-
-            <div className="p-4">
-              {selectedUnit && (
-                <UnitInfoCard
-                  unit={selectedUnit}
-                  onClose={() => dispatch(clearSelectedUnit())}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      </div> */}
     </>
   );
 };

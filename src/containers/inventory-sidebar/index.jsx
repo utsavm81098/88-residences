@@ -1,6 +1,6 @@
 import React from "react";
 import { useInventorySidebar } from "./use-inventory-sidebar";
-import InventorySidebarUI from "../../components/ui/inventory-sidebar";
+import InventorySidebarUI from "./inventory-sidebar-ui";
 
 const InventorySidebarContainer = () => {
   const {
@@ -12,6 +12,7 @@ const InventorySidebarContainer = () => {
     handleClearFilters,
     onUnitSelect,
     onFilterChange,
+    scrollContainerRef,
   } = useInventorySidebar();
 
   return (
@@ -24,6 +25,7 @@ const InventorySidebarContainer = () => {
       handleClearFilters={handleClearFilters}
       onUnitSelect={onUnitSelect}
       onFilterChange={onFilterChange}
+      scrollContainerRef={scrollContainerRef}
     />
   );
 };

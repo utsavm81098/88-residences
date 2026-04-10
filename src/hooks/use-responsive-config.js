@@ -8,8 +8,8 @@ const BREAKPOINTS = {
 
 const RESPONSIVE_CONFIG = {
   mobile: {
-    cameraZ: 120, // Pushed further back on mobile
-    orbit: { min: 80, max: 140 }, // Generous zoom limits for mobile
+    cameraZ: 80, // Pushed further back on mobile
+    orbit: { min: 50, max: 140 }, // Generous zoom limits for mobile
     label: { distanceX: 25, distanceZ: 18, fontSize: 1.2 },
   },
   tablet: {
@@ -18,7 +18,7 @@ const RESPONSIVE_CONFIG = {
     label: { distanceX: 28, distanceZ: 20, fontSize: 1.2 },
   },
   desktop: {
-    cameraZ: 60, // Closest default distance
+    cameraZ: 70, // Closest default distance
     orbit: { min: 60, max: 90 }, // Tighter zoom limits on desktop
     label: { distanceX: 30, distanceZ: 20, fontSize: 1.5 },
   },

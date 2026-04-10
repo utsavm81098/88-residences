@@ -1,23 +1,21 @@
-import React, { memo, useRef, useEffect } from "react";
-import gsap from "gsap";
+import React, { memo } from "react";
 import useBuilding from "./use-building";
 import { BUILDING_CONFIG } from "../../utils/constant";
-import { useSelector } from "react-redux";
+import useBuildingModel from "./use-building-model";
 
-// This wrapper component pre-renders ALL models but only reveals the active one.
-// This prevents the "Loading..." flickering because all models are already in the scene graph.
 const BuildingModel = ({
   controlsRef,
   position = [0, 0, 0],
   renderOrder = 0,
 }) => {
-  const { currentBuilding } = useSelector((state) => state.building);
+  const { currentBuilding, groupRefs } = useBuildingModel({ controlsRef });
 
   return (
     <group position={position}>
-      {BUILDING_CONFIG.map((config) => (
+      {BUILDING_CONFIG.map((config, index) => (
         <BuildingInstance
           key={config.name}
+          groupRef={(el) => (groupRefs.current[index] = el)}
           config={config}
           active={currentBuilding.name === config.name}
           controlsRef={controlsRef}
@@ -33,6 +31,7 @@ const BuildingInstance = ({
   active,
   controlsRef,
   renderOrder,
+  groupRef,
 }) => {
   const {
     buildingScene,
@@ -42,57 +41,20 @@ const BuildingInstance = ({
     handlePointerMove,
     handleClick,
   } = useBuilding({
-    config, // Pass the specific config to the hook
+    config,
     controlsRef,
   });
 
-  // const groupRef = useRef();
-
-  // // Add scale & slide animation when model becomes active
-  // useEffect(() => {
-  //   if (!groupRef.current) return;
-
-  //   if (active) {
-  //     // Kill any previous tweens if user clicked fast
-  //     gsap.killTweensOf(groupRef.current.scale);
-  //     gsap.killTweensOf(groupRef.current.position);
-
-  //     // Start small and low
-  //     groupRef.current.scale.set(0.01, 0.01, 0.01);
-  //     groupRef.current.position.y = -20;
-
-  //     // Pop in dynamically
-  //     gsap.to(groupRef.current.scale, {
-  //       x: 1,
-  //       y: 1,
-  //       z: 1,
-  //       duration: 1.2,
-  //       ease: "elastic.out(1, 0.75)",
-  //     });
-
-  //     gsap.to(groupRef.current.position, {
-  //       y: 0,
-  //       duration: 0.8,
-  //       ease: "power3.out",
-  //     });
-  //   }
-  // }, [active]);
-
   return (
-    <group
-      // ref={groupRef}
-      visible={active}
-      // We keep non-active models in the scene but toggle visibility to ensure instantaneous switching
-    >
+    <group ref={groupRef} visible={active}>
       <primitive object={buildingScene} renderOrder={renderOrder} />
       <primitive
         object={glassScene}
-        visible={active}
         renderOrder={renderOrder + 1}
-        onPointerOver={handlePointerOver}
-        onPointerOut={handlePointerOut}
-        onPointerMove={handlePointerMove}
-        onClick={handleClick}
+        onPointerOver={active ? handlePointerOver : undefined}
+        onPointerOut={active ? handlePointerOut : undefined}
+        onPointerMove={active ? handlePointerMove : undefined}
+        onClick={active ? handleClick : undefined}
       />
     </group>
   );

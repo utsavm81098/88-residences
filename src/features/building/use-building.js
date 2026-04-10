@@ -15,7 +15,11 @@ import {
   hideTooltip,
   updateTooltipPosition,
 } from "../../store/slices/tooltip-slice";
-import { setSelectedUnit } from "../../store/slices/building-slice";
+import {
+  setSelectedUnit,
+  setMobileSelectedUnit,
+} from "../../store/slices/building-slice";
+import { useIsMobile } from "../../hooks/use-mobile";
 
 BUILDING_CONFIG.forEach((b) => {
   useGLTF.preload(b.model);
@@ -50,10 +54,16 @@ const BASE_MATERIALS = {
 const useBuilding = ({ config, controlsRef }) => {
   const dispatch = useDispatch();
   const isDragging = useSelector((state) => state.drag.isDragging);
-  const selectedUnit = useSelector((state) => state.building.selectedUnit);
+  const { selectedUnit, mobileSelectedUnit } = useSelector(
+    (state) => state.building,
+  );
 
-  // const selectedUnitRef = useRef(selectedUnit);
-  // selectedUnitRef.current = selectedUnit;
+  const isMobile = useIsMobile();
+
+  // Determine which unit should be highlighted based on viewport
+  const activeSelection = useMemo(() => {
+    return isMobile ? mobileSelectedUnit : selectedUnit;
+  }, [selectedUnit, mobileSelectedUnit, isMobile]);
 
   const building = useGLTF(config.model);
   const glassHitbox = useGLTF(config.hitbox);
@@ -113,10 +123,10 @@ const useBuilding = ({ config, controlsRef }) => {
       const cfg = UNIT_COLORS[statusKey];
 
       // ── Assign Shared Base Material (Initial State) ─────────────
-      // We start with a shared material for performance. 
+      // We start with a shared material for performance.
       // Individual materials are assigned dynamically during interaction.
       child.material = BASE_MATERIALS[statusKey].clone();
-      
+
       // Store references in userData for pointer handlers
       child.userData.status = unit.status;
       child.userData.unitName = child.name;
@@ -212,8 +222,8 @@ const useBuilding = ({ config, controlsRef }) => {
       if (!mesh.userData.status) return;
 
       const isSelected =
-        selectedUnit && selectedUnit.name === mesh.userData.unitName;
-      if (isSelected || window.innerWidth < 768) return;
+        activeSelection && activeSelection.name === mesh.userData.unitName;
+      if (isSelected || isMobile) return;
 
       document.body.style.cursor = "pointer";
       const unit = unitMap[mesh.userData.unitName];
@@ -252,7 +262,7 @@ const useBuilding = ({ config, controlsRef }) => {
         });
       }
     },
-    [unitMap, dispatch, isDragging, selectedUnit],
+    [unitMap, dispatch, isDragging, activeSelection, isMobile],
   );
   // ── Pointer out → revert to base colour + hide outline ──────────────────────
   const handlePointerOut = useCallback(
@@ -261,7 +271,7 @@ const useBuilding = ({ config, controlsRef }) => {
       if (!mesh.userData.status) return;
 
       const isSelected =
-        selectedUnit && selectedUnit.name === mesh.userData.unitName;
+        activeSelection && activeSelection.name === mesh.userData.unitName;
 
       if (!isDragging) {
         document.body.style.cursor = "default";
@@ -295,13 +305,12 @@ const useBuilding = ({ config, controlsRef }) => {
         });
       }
     },
-    [dispatch, isDragging, selectedUnit],
+    [dispatch, isDragging, activeSelection],
   );
   // ── Pointer move → update tooltip position ──────────────────────────────────
   const handlePointerMove = useCallback(
     (e) => {
-      if (!e.object.userData.status || isDragging || window.innerWidth < 768)
-        return;
+      if (!e.object.userData.status || isDragging || isMobile) return;
       dispatch(
         updateTooltipPosition({
           x: e.nativeEvent.clientX,
@@ -309,7 +318,7 @@ const useBuilding = ({ config, controlsRef }) => {
         }),
       );
     },
-    [dispatch, isDragging],
+    [dispatch, isDragging, isMobile],
   );
 
   const handleClick = useCallback(
@@ -318,19 +327,21 @@ const useBuilding = ({ config, controlsRef }) => {
       if (e.delta > 2) return;
       const unit = unitMap[e.object.userData.unitName];
       if (!unit) return;
-      dispatch(setSelectedUnit({ ...unit }));
+      if (isMobile) {
+        dispatch(setMobileSelectedUnit({ ...unit }));
+      } else {
+        dispatch(setSelectedUnit({ ...unit }));
+      }
     },
-    [unitMap, dispatch],
+    [unitMap, dispatch, isMobile],
   );
 
   const updateUnitColor = useCallback(
-    (selectedUnit) => {
+    (unit) => {
       let focusObj = null;
       glassScene.traverse((child) => {
         if (!child.isMesh || !child.userData.status) return;
-        const isSelected = selectedUnit
-          ? selectedUnit.name === child.name
-          : false;
+        const isSelected = unit ? unit.name === child.name : false;
 
         if (isSelected) {
           focusObj = child;
@@ -389,8 +400,8 @@ const useBuilding = ({ config, controlsRef }) => {
   );
 
   useEffect(() => {
-    updateUnitColor(selectedUnit);
-  }, [selectedUnit, updateUnitColor]);
+    updateUnitColor(activeSelection);
+  }, [activeSelection, updateUnitColor]);
 
   return {
     buildingScene,

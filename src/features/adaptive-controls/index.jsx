@@ -1,25 +1,9 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { OrbitControls } from "@react-three/drei";
-import useResponsiveConfig from "../../hooks/use-responsive-config";
-import { useDispatch } from "react-redux";
-import { setDragging } from "../../store/slices/drag-slice";
-import { hideTooltip } from "../../store/slices/tooltip-slice";
-
-const POLAR = { min: 1.1, max: 1.5 };
-const TARGET = [0, 10, 0];
+import useAdaptiveControls from "./use-adaptive-controls";
 
 const AdaptiveControls = ({ controlsRef }) => {
-  const config = useResponsiveConfig();
-  const dispatch = useDispatch();
-
-  const onStart = useCallback(() => {
-    dispatch(setDragging(true));
-    dispatch(hideTooltip());
-  }, [dispatch]);
-
-  const onEnd = useCallback(() => {
-    dispatch(setDragging(false));
-  }, [dispatch]);
+  const { config, onStart, onEnd, POLAR, TARGET } = useAdaptiveControls();
 
   return (
     <OrbitControls

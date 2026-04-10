@@ -1,7 +1,7 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import { clearSelectedUnit } from "../../store/slices/building-slice";
-import UnitInfoCardUI from "../../components/ui/unit-info-card";
+import UnitInfoCardUI from "./unit-info-card-ui";
 
 const UnitInfoCardContainer = ({ unit }) => {
   const dispatch = useDispatch();

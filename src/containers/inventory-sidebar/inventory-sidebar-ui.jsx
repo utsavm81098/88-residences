@@ -4,8 +4,10 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "../accordion";
+} from "../../components/ui/accordion";
 import { cn } from "@/lib/utils";
+
+import { Button } from "@/components/ui/button";
 
 const InventorySidebar = ({
   activeAccordion,
@@ -16,6 +18,7 @@ const InventorySidebar = ({
   handleClearFilters,
   onUnitSelect,
   onFilterChange,
+  scrollContainerRef,
 }) => {
   return (
     <div className="hidden md:flex flex-col w-[380px] h-full bg-sidebar border-r border-white/10 text-white overflow-hidden z-[50]">
@@ -26,18 +29,19 @@ const InventorySidebar = ({
           <label className="text-[13px] font-medium text-white/90">Rooms</label>
           <div className="flex bg-transparent rounded-[3px] border border-filter-border overflow-hidden">
             {["1", "2", "3", "4"].map((num) => (
-              <button
+              <Button
                 key={num}
+                variant="ghost"
                 onClick={() => onFilterChange("rooms", num)}
                 className={cn(
-                  "w-10 h-8 flex items-center justify-center text-[13px] font-medium transition-colors border-r border-filter-border last:border-r-0",
+                  "w-10 h-8 flex items-center justify-center text-[13px] font-medium transition-colors border-r border-filter-border last:border-r-0 rounded-none",
                   filters.rooms === num
                     ? "bg-filter-active text-white shadow-[inset_0_1px_3px_rgba(0,0,0,0.1)]"
                     : "text-white/70 hover:bg-filter-hover",
                 )}
               >
                 {num}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -47,18 +51,19 @@ const InventorySidebar = ({
           <label className="text-[13px] font-medium text-white/90">Type</label>
           <div className="flex bg-transparent rounded-[3px] border border-filter-border overflow-hidden">
             {["Gdn. Apt.", "Apt.", "PH"].map((t) => (
-              <button
+              <Button
                 key={t}
+                variant="ghost"
                 onClick={() => onFilterChange("type", t)}
                 className={cn(
-                  "px-3 h-8 flex items-center justify-center text-[13px] font-medium whitespace-nowrap transition-colors border-r border-filter-border last:border-r-0",
+                  "px-3 h-8 flex items-center justify-center text-[13px] font-medium whitespace-nowrap transition-colors border-r border-filter-border last:border-r-0 rounded-none",
                   filters.type === t
                     ? "bg-filter-active text-white shadow-[inset_0_1px_3px_rgba(0,0,0,0.1)]"
                     : "text-white/70 hover:bg-filter-hover",
                 )}
               >
                 {t}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -70,35 +75,39 @@ const InventorySidebar = ({
           </label>
           <div className="flex bg-transparent rounded-[3px] border border-filter-border overflow-hidden">
             {["Pool View", "Valley View"].map((e) => (
-              <button
+              <Button
                 key={e}
+                variant="ghost"
                 onClick={() => onFilterChange("exposure", e)}
                 className={cn(
-                  "px-3 h-9 flex items-center justify-center text-[11px] font-medium leading-[1.1] transition-colors text-center border-r border-filter-border last:border-r-0",
+                  "px-3 h-9 flex flex-col items-center justify-center text-[11px] font-medium leading-[1.1] transition-colors text-center border-r border-filter-border last:border-r-0 rounded-none",
                   filters.exposure === e
                     ? "bg-filter-active text-white shadow-[inset_0_1px_3px_rgba(0,0,0,0.1)]"
                     : "text-white/70 hover:bg-filter-hover",
                 )}
               >
-                {e.split(" ")[0]}
-                <br />
-                {e.split(" ")[1]}
-              </button>
+                <span>{e.split(" ")[0]}</span>
+                <span>{e.split(" ")[1]}</span>
+              </Button>
             ))}
           </div>
         </div>
 
         {/* Clear/More Actions */}
         <div className="flex items-center justify-between pt-1">
-          <button className="text-[12px] font-medium text-white/80 hover:underline underline-offset-2">
+          <Button 
+            variant="link" 
+            className="h-auto p-0 text-[12px] font-medium text-white/80 hover:text-white"
+          >
             More filters
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="link"
             onClick={handleClearFilters}
-            className="text-[12px] font-bold text-white hover:underline underline-offset-2"
+            className="h-auto p-0 text-[12px] font-bold text-white uppercase tracking-wider"
           >
             Clear all
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -147,9 +156,12 @@ const InventorySidebar = ({
       </div>
 
       {/* Accordion List */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar bg-sidebar">
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto custom-scrollbar bg-sidebar"
+      >
         <Accordion
-          type="single"
+          type="multiple"
           collapsible
           className="border-none"
           value={activeAccordion}
@@ -161,7 +173,10 @@ const InventorySidebar = ({
               value={building}
               className="border-none"
             >
-              <AccordionTrigger className="px-6 py-3.5 hover:no-underline bg-sidebar border-b border-sidebar-border flex justify-between text-white transition-colors">
+              <AccordionTrigger 
+                data-building={building}
+                className="px-6 py-3.5 hover:no-underline bg-sidebar border-b border-sidebar-border flex justify-between text-white transition-colors"
+              >
                 <span className="text-[13px] font-medium tracking-wide">
                   building {building}
                 </span>

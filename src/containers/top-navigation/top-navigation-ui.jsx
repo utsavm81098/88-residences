@@ -1,5 +1,6 @@
 import { ICONS } from "@/assets/icons";
 import MobileMenu from "./mobile-menu";
+import { Button } from "@/components/ui/button";
 
 const TopNavigation = ({
   currentBuilding,
@@ -18,12 +19,14 @@ const TopNavigation = ({
       <div className="hidden md:flex absolute top-6 right-6 items-center gap-3 pointer-events-none z-[1000] select-none">
         <div className="relative pointer-events-auto">
           <div className="flex items-center justify-between min-w-[200px] h-12 px-3 bg-nav/85 backdrop-blur-md border border-white/10 rounded-full shadow-2xl transition-all duration-200 hover:border-white/20">
-            <button
-              className="p-1 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all active:scale-95"
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className="text-white/70 hover:text-white rounded-full border-0"
               onClick={handlePrev}
             >
               <ICONS.ChevronLeft size={20} strokeWidth={2} />
-            </button>
+            </Button>
 
             <div
               className="mx-4 text-white font-outfit font-semibold text-base tracking-wider cursor-pointer hover:text-white/80 transition-colors"
@@ -32,15 +35,18 @@ const TopNavigation = ({
               {currentBuilding.name}
             </div>
 
-            <button
-              className="p-1 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all active:scale-95"
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className="text-white/70 hover:text-white rounded-full border-0"
               onClick={handleNext}
             >
               <ICONS.ChevronRight size={20} strokeWidth={2} />
-            </button>
+            </Button>
           </div>
 
           {/* Dropdown Menu */}
+          {/* ... existing dropdown ... */}
           {isMenuOpen && (
             <div className="absolute top-[52px] left-1/2 -translate-x-1/2 w-[85%] bg-nav/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="max-h-[240px] overflow-y-auto custom-scrollbar">
@@ -61,12 +67,14 @@ const TopNavigation = ({
             </div>
           )}
         </div>
-        <button
-          className="flex items-center justify-center w-12 h-12 bg-nav/85 backdrop-blur-md border border-white/10 rounded-full text-white shadow-2xl pointer-events-auto transition-all duration-200 hover:bg-white/10 hover:text-white hover:-translate-y-0.5 active:scale-95 translate-y-0"
+        <Button
+          variant="ghost"
+          size="icon-lg"
+          className="bg-nav/85 backdrop-blur-md border border-white/10 rounded-full text-white shadow-2xl pointer-events-auto hover:-translate-y-0.5"
           onClick={onReset}
         >
           <ICONS.RotateCw size={20} strokeWidth={2} />
-        </button>
+        </Button>
       </div>
 
       {/* Mobile Top Bar */}

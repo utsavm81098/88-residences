@@ -24,4 +24,10 @@ export default defineConfig({
   optimizeDeps: {
     include: ["three", "@react-three/fiber", "@react-three/drei"],
   },
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: ["./src/test-setup.js"],
+    include: ["src/**/*.test.{js,jsx}"],
+  },
 });
