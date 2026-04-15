@@ -13,6 +13,7 @@ const TopNavigationContainer = ({ onReset }) => {
     handlePrev,
     handleSelect,
     onToggleMenu,
+    menuRef,
   } = useTopNavigation();
 
   return (
@@ -27,6 +28,7 @@ const TopNavigationContainer = ({ onReset }) => {
       onToggleMenu={onToggleMenu}
       onReset={onReset}
       buildings={BUILDING_CONFIG}
+      menuRef={menuRef}
     />
   );
 };

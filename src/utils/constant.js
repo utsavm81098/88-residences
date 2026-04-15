@@ -268,6 +268,24 @@ export const unitData = {
       direction: "North-West",
     },
     {
+      name: "Line005",
+      status: "available",
+      type: "2BHK",
+      area: "1050 sq ft",
+      price: "$350,000",
+      floor: 4,
+      direction: "North-West",
+    },
+    {
+      name: "Line006",
+      status: "available",
+      type: "2BHK",
+      area: "1050 sq ft",
+      price: "$350,000",
+      floor: 4,
+      direction: "North-West",
+    },
+    {
       name: "Line028",
       status: "sold",
       type: "2BHK",
@@ -376,6 +394,13 @@ export const UNIT_COLORS = {
 export const OUTLINE_KEY = "__edgeLines";
 
 export const BUILDING_CONFIG = [
+  // {
+  //   name: "Type A",
+  //   model: "/models/type-a-1024.glb",
+  //   hitbox: "/models/a-hitbox.glb",
+  //   environment: { preset: "city", background: false },
+  // },
+
   {
     name: "Type F",
     model: "/models/type-f-1024.glb",

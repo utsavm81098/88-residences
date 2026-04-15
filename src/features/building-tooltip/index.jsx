@@ -24,13 +24,10 @@ const Icons = {
 const BuildingTooltip = () => {
   const {
     unit,
-    x,
-    y,
     selectedUnit,
     showHoverTooltip,
     desktopPopupRef,
-    OFFSET_X,
-    OFFSET_Y,
+    hoverTooltipRef,
   } = useBuildingTooltip();
 
   const statusInfo = unit
@@ -41,10 +38,10 @@ const BuildingTooltip = () => {
     <>
       {/* ── Desktop Hover Tooltip (Hidden on mobile) ── */}
       <div
-        className={`fixed top-0 left-0 pointer-events-none z-[9990] will-change-transform transition-opacity duration-150 ease-in-out hidden md:block`}
+        ref={hoverTooltipRef}
+        className={`fixed top-0 left-0 pointer-events-none z-[9990] will-change-transform transition-opacity duration-75 ease-in-out hidden md:block`}
         style={{
           opacity: showHoverTooltip ? 1 : 0,
-          transform: `translate(${x + OFFSET_X}px, ${y + OFFSET_Y}px)`,
         }}
       >
         {unit && (

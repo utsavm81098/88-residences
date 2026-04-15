@@ -1,8 +1,9 @@
+import { memo } from "react";
 import { ICONS } from "@/assets/icons";
 import MobileMenu from "./mobile-menu";
 import { Button } from "@/components/ui/button";
 
-const TopNavigation = ({
+const TopNavigation = memo(({
   currentBuilding,
   isMenuOpen,
   totalApt,
@@ -13,11 +14,12 @@ const TopNavigation = ({
   onToggleMenu,
   onReset,
   buildings,
+  menuRef,
 }) => {
   return (
     <>
       <div className="hidden md:flex absolute top-6 right-6 items-center gap-3 pointer-events-none z-[1000] select-none">
-        <div className="relative pointer-events-auto">
+        <div className="relative pointer-events-auto" ref={menuRef}>
           <div className="flex items-center justify-between min-w-[200px] h-12 px-3 bg-nav/85 backdrop-blur-md border border-white/10 rounded-full shadow-2xl transition-all duration-200 hover:border-white/20">
             <Button
               variant="ghost"
@@ -46,7 +48,6 @@ const TopNavigation = ({
           </div>
 
           {/* Dropdown Menu */}
-          {/* ... existing dropdown ... */}
           {isMenuOpen && (
             <div className="absolute top-[52px] left-1/2 -translate-x-1/2 w-[85%] bg-nav/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="max-h-[240px] overflow-y-auto custom-scrollbar">
@@ -79,17 +80,15 @@ const TopNavigation = ({
 
       {/* Mobile Top Bar */}
       <MobileMenu
-        {...{
-          handleNext,
-          handlePrev,
-          currentBuilding,
-          totalApt,
-          buildingUnits,
-        }}
+        handleNext={handleNext}
+        handlePrev={handlePrev}
+        currentBuilding={currentBuilding}
+        totalApt={totalApt}
+        buildingUnits={buildingUnits}
       />
     </>
   );
-};
+});
 
 export default TopNavigation;
 

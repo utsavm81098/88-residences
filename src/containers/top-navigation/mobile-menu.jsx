@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useMemo } from "react";
 import ApartmentCard from "./apartment-card";
 import { ICONS } from "@/assets/icons";
 import {
@@ -8,18 +8,33 @@ import {
 } from "../../components/ui/carousel";
 import useMobileMenu from "./use-mobile-menu";
 import { Button } from "@/components/ui/button";
+import FilterOverlay from "../filter-overlay";
+import { cn } from "@/lib/utils";
 
-const MobileMenu = ({
+const MobileMenu = memo(({
   handleNext,
   handlePrev,
   currentBuilding,
   totalApt,
   buildingUnits,
 }) => {
-  const { sheetRef, mobileSelectedUnit, activeIndex, handleApi } =
-    useMobileMenu({
-      buildingUnits,
-    });
+  const { 
+    sheetRef, 
+    mobileSelectedUnit, 
+    handleApi, 
+    isFilterOpen, 
+    openFilter,
+    closeFilter,
+    displayUnits,
+    activeFiltersCount 
+  } = useMobileMenu({
+    buildingUnits,
+  });
+
+  const carouselOpts = useMemo(() => ({
+    align: "center",
+    loop: displayUnits.length > 1,
+  }), [displayUnits.length]);
 
   return (
     <div className="flex md:hidden">
@@ -32,12 +47,26 @@ const MobileMenu = ({
         >
           <ICONS.ChevronLeft size={28} strokeWidth={2.5} />
         </Button>
-        <div className="flex items-center gap-3 bg-sidebar px-5 py-2.5 rounded-full border border-white/10 text-white font-medium text-[15px] shadow-xl w-[60%] justify-center border-b-2 border-b-white/5">
+        <div 
+          className="flex items-center gap-3 bg-sidebar px-5 py-2.5 rounded-full border border-white/10 text-white font-medium text-[15px] shadow-xl w-[60%] justify-center border-b-2 border-b-white/5 cursor-pointer active:scale-95 transition-all relative"
+          onClick={openFilter}
+        >
           <ICONS.Search size={18} className="text-white/60" />
           Find property
+          
+          {activeFiltersCount > 0 && (
+            <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-accent-yellow flex items-center justify-center text-[11px] font-bold text-black border-2 border-sidebar">
+              {activeFiltersCount}
+            </div>
+          )}
         </div>
         <div className="w-[36px]"></div>
       </div>
+
+      <FilterOverlay 
+        isOpen={isFilterOpen} 
+        onClose={closeFilter} 
+      />
 
       <div
         ref={sheetRef}
@@ -59,7 +88,7 @@ const MobileMenu = ({
                 Block {currentBuilding.name}
               </span>
               <span className="text-white/50 text-[13px] ml-1.5 font-medium">
-                ({totalApt} apt.)
+                ({displayUnits.length} apt.)
               </span>
             </div>
 
@@ -73,25 +102,30 @@ const MobileMenu = ({
             </Button>
           </div>
 
-          {buildingUnits.length > 0 ? (
+          {displayUnits.length > 0 ? (
             <Carousel
-              opts={{
-                align: "center",
-                loop: true,
-              }}
+              opts={carouselOpts}
               setApi={handleApi}
               className="w-full pb-2"
             >
-              <CarouselContent data-vaul-no-drag>
-                {buildingUnits.map((unit, idx) => (
+              <CarouselContent 
+                data-vaul-no-drag
+                className={cn(displayUnits.length === 1 && "justify-center ml-0")}
+              >
+                {displayUnits.map((unit, idx) => (
                   <CarouselItem
                     key={`${unit.name}-${idx}`}
-                    className="pl-3 basis-[85%]"
+                    className={cn(
+                      "pl-3 basis-[85%]",
+                      displayUnits.length === 1 && "pl-0 basis-full flex justify-center"
+                    )}
                   >
-                    <ApartmentCard
-                      unit={unit}
-                      isSelected={mobileSelectedUnit?.name === unit.name}
-                    />
+                    <div className={cn(displayUnits.length === 1 && "w-[85%]")}>
+                      <ApartmentCard
+                        unit={unit}
+                        isSelected={mobileSelectedUnit?.name === unit.name}
+                      />
+                    </div>
                   </CarouselItem>
                 ))}
               </CarouselContent>
@@ -105,6 +139,6 @@ const MobileMenu = ({
       </div>
     </div>
   );
-};
+});
 
 export default MobileMenu;

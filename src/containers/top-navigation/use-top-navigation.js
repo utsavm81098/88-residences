@@ -1,13 +1,16 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   nextBuilding,
   prevBuilding,
   setBuilding,
   toggleMenu,
+  closeMenu,
   clearSelectedUnit,
+  clearFilters,
 } from "../../store/slices/building-slice";
 import { unitData } from "../../utils/constant";
+import { useClickOutside } from "../../hooks/use-click-outside";
 
 export const useTopNavigation = () => {
   const dispatch = useDispatch();
@@ -15,20 +18,31 @@ export const useTopNavigation = () => {
     (state) => state.building,
   );
 
+  const menuRef = useRef(null);
+
+  useClickOutside(menuRef, () => {
+    if (isMenuOpen) {
+      dispatch(closeMenu());
+    }
+  });
+
   const handleNext = useCallback(() => {
     dispatch(nextBuilding());
     dispatch(clearSelectedUnit());
+    dispatch(clearFilters());
   }, [dispatch]);
 
   const handlePrev = useCallback(() => {
     dispatch(prevBuilding());
     dispatch(clearSelectedUnit());
+    dispatch(clearFilters());
   }, [dispatch]);
 
   const handleSelect = useCallback(
     (index) => {
       dispatch(setBuilding(index));
       dispatch(clearSelectedUnit());
+      dispatch(clearFilters());
     },
     [dispatch],
   );
@@ -57,5 +71,6 @@ export const useTopNavigation = () => {
     handlePrev,
     handleSelect,
     onToggleMenu,
+    menuRef,
   };
 };

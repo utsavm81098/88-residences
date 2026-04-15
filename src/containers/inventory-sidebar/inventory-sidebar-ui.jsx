@@ -35,7 +35,7 @@ const InventorySidebar = ({
                 onClick={() => onFilterChange("rooms", num)}
                 className={cn(
                   "w-10 h-8 flex items-center justify-center text-[13px] font-medium transition-colors border-r border-filter-border last:border-r-0 rounded-none",
-                  filters.rooms === num
+                  filters.rooms.includes(num)
                     ? "bg-filter-active text-white shadow-[inset_0_1px_3px_rgba(0,0,0,0.1)]"
                     : "text-white/70 hover:bg-filter-hover",
                 )}
@@ -57,7 +57,7 @@ const InventorySidebar = ({
                 onClick={() => onFilterChange("type", t)}
                 className={cn(
                   "px-3 h-8 flex items-center justify-center text-[13px] font-medium whitespace-nowrap transition-colors border-r border-filter-border last:border-r-0 rounded-none",
-                  filters.type === t
+                  filters.type.includes(t)
                     ? "bg-filter-active text-white shadow-[inset_0_1px_3px_rgba(0,0,0,0.1)]"
                     : "text-white/70 hover:bg-filter-hover",
                 )}
@@ -81,7 +81,7 @@ const InventorySidebar = ({
                 onClick={() => onFilterChange("exposure", e)}
                 className={cn(
                   "px-3 h-9 flex flex-col items-center justify-center text-[11px] font-medium leading-[1.1] transition-colors text-center border-r border-filter-border last:border-r-0 rounded-none",
-                  filters.exposure === e
+                  filters.exposure.includes(e)
                     ? "bg-filter-active text-white shadow-[inset_0_1px_3px_rgba(0,0,0,0.1)]"
                     : "text-white/70 hover:bg-filter-hover",
                 )}

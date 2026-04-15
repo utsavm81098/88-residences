@@ -49,7 +49,7 @@ function App() {
         <Canvas
           dpr={[1.5, Math.min(window.devicePixelRatio, 2)]}
           performance={{ min: 0.5, debounce: 200 }}
-          frameloop="always"
+          frameloop="demand"
           gl={{
             antialias: true,
             toneMapping: THREE.LinearToneMapping,

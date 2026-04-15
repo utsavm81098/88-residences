@@ -1,10 +1,11 @@
-import { useState, useCallback, useRef, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useDispatch } from "react-redux";
 import gsap from "gsap";
 import {
   setMobileSelectedUnit,
   setSnap,
 } from "@/store/slices/building-slice";
+import useInventory from "@/hooks/use-inventory";
 
 /**
  * Hook for the mobile bottom sheet menu.
@@ -14,18 +15,32 @@ export const useMobileMenu = ({ buildingUnits }) => {
   const lastSyncedIndex = useRef(-1);
   const dispatch = useDispatch();
 
-  // Optimized selective selectors to minimize re-renders
-  const mobileSelectedUnit = useSelector((state) => state.building.mobileSelectedUnit);
-  const selectedUnit = useSelector((state) => state.building.selectedUnit);
+  const {
+    currentBuildingUnits,
+    activeFiltersCount,
+    selectedUnit,
+    filters,
+    mobileSelectedUnit
+  } = useInventory();
+
+  // On mobile, if no filters are active, we show all units of the current building
+  // If filters are active, we show the intersection
+  const displayUnits = useMemo(() => {
+    return activeFiltersCount > 0 ? currentBuildingUnits : buildingUnits;
+  }, [activeFiltersCount, currentBuildingUnits, buildingUnits]);
+
+  // Keep units in ref for stable callback access
+  const unitsRef = useRef(displayUnits);
+  useEffect(() => {
+    unitsRef.current = displayUnits;
+  }, [displayUnits]);
 
   const [api, setApi] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
-
-  // Keep units in ref for stable callback access
-  const unitsRef = useRef(buildingUnits);
-  useEffect(() => {
-    unitsRef.current = buildingUnits;
-  }, [buildingUnits]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  
+  const openFilter = useCallback(() => setIsFilterOpen(true), []);
+  const closeFilter = useCallback(() => setIsFilterOpen(false), []);
 
   const animateTo = useCallback(
     (height) => {
@@ -83,20 +98,30 @@ export const useMobileMenu = ({ buildingUnits }) => {
 
   // Sync carousel position & handle building changes
   useEffect(() => {
-    if (!api || !unitsRef.current.length) return;
+    if (!api) return;
 
-    const currentUnit = selectedUnit || mobileSelectedUnit;
+    if (!unitsRef.current.length) {
+      if (mobileSelectedUnit) {
+        dispatch(setMobileSelectedUnit(null));
+      }
+      return;
+    }
 
-    // Check if the current unit belongs to the active building
+    // Use a stable reference for the current selected unit to sync carousel
+    const currentUnit = mobileSelectedUnit; 
+
     const foundIndex = currentUnit 
       ? unitsRef.current.findIndex((u) => u.name === currentUnit.name)
       : -1;
 
     if (foundIndex === -1) {
-      // Logic for building change or invalid selection: default to first unit
-      api.scrollTo(0, true);
-      lastSyncedIndex.current = 0;
-      setActiveIndex(0);
+      if (lastSyncedIndex.current !== 0) {
+        api.scrollTo(0, true);
+        lastSyncedIndex.current = 0;
+        setActiveIndex(0);
+      }
+      // Always ensure the first unit is selected when the previous selection becomes invalid
+      // This fixes the issue where changing buildings or applying filters leaves no valid selection
       const firstUnit = unitsRef.current[0];
       if (firstUnit) {
         dispatch(setMobileSelectedUnit(firstUnit));
@@ -104,21 +129,12 @@ export const useMobileMenu = ({ buildingUnits }) => {
       return;
     }
 
-    // Sync if needed
     if (lastSyncedIndex.current !== foundIndex) {
       lastSyncedIndex.current = foundIndex;
       api.scrollTo(foundIndex, true);
       setActiveIndex(foundIndex);
     }
-
-    // Secondary sync: ensure Redux mobileSelectedUnit stays in sync with selectedUnit
-    if (
-      selectedUnit &&
-      (!mobileSelectedUnit || selectedUnit.name !== mobileSelectedUnit.name)
-    ) {
-      dispatch(setMobileSelectedUnit(selectedUnit));
-    }
-  }, [buildingUnits, selectedUnit, mobileSelectedUnit, api, dispatch]);
+  }, [displayUnits, mobileSelectedUnit, api, dispatch]);
 
   // Re-snap logic
   useEffect(() => {
@@ -129,9 +145,14 @@ export const useMobileMenu = ({ buildingUnits }) => {
 
   return {
     sheetRef,
-    mobileSelectedUnit,
     activeIndex,
     handleApi,
+    isFilterOpen,
+    openFilter,
+    closeFilter: () => setIsFilterOpen(false),
+    displayUnits,
+    activeFiltersCount,
+    mobileSelectedUnit, // Restore this
   };
 };
 

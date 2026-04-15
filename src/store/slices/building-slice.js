@@ -12,6 +12,14 @@ const initialState = {
   isTransitioning: false,
   previousBuildingIndex: null,
   transitionDirection: null, // "next" | "prev"
+  // ── Filter state ──
+  filters: {
+    rooms: [],
+    budget: null,
+    type: [],
+    exposure: [],
+    buildings: null,
+  },
 };
 
 export const buildingSlice = createSlice({
@@ -81,9 +89,22 @@ export const buildingSlice = createSlice({
     },
     clearSelectedUnit: (state) => {
       state.selectedUnit = null;
+      state.mobileSelectedUnit = null;
     },
     setSnap: (state, action) => {
       state.snap = action.payload;
+    },
+    setFilters: (state, action) => {
+      state.filters = { ...state.filters, ...action.payload };
+    },
+    clearFilters: (state) => {
+      state.filters = {
+        rooms: [],
+        budget: null,
+        type: [],
+        exposure: [],
+        buildings: null,
+      };
     },
   },
 });
@@ -100,5 +121,7 @@ export const {
   setMobileSelectedUnit,
   clearSelectedUnit,
   setSnap,
+  setFilters,
+  clearFilters,
 } = buildingSlice.actions;
 export default buildingSlice.reducer;
