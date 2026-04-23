@@ -2,8 +2,8 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import * as THREE from "three";
 import { useSelector, useDispatch } from "react-redux";
-import { endTransition } from "../../store/slices/building-slice";
-import { BUILDING_CONFIG } from "../../utils/constant";
+import { endTransition } from "@/store/slices/building-slice";
+import { BUILDING_CONFIG } from "@/utils/constant";
 import { useThree } from "@react-three/fiber";
 
 // ── Reusable Three.js objects (module-level to avoid GC pressure) ──────────

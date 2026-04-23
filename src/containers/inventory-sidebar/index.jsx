@@ -13,6 +13,11 @@ const InventorySidebarContainer = () => {
     onUnitSelect,
     onFilterChange,
     scrollContainerRef,
+    selectedUnit,
+    favorites,
+    onToggleFavorite,
+    sortConfig,
+    onSort,
   } = useInventorySidebar();
 
   return (
@@ -26,6 +31,11 @@ const InventorySidebarContainer = () => {
       onUnitSelect={onUnitSelect}
       onFilterChange={onFilterChange}
       scrollContainerRef={scrollContainerRef}
+      selectedUnit={selectedUnit}
+      favorites={favorites}
+      onToggleFavorite={onToggleFavorite}
+      sortConfig={sortConfig}
+      onSort={onSort}
     />
   );
 };

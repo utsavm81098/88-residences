@@ -8,9 +8,9 @@ import {
   closeMenu,
   clearSelectedUnit,
   clearFilters,
-} from "../../store/slices/building-slice";
-import { unitData } from "../../utils/constant";
-import { useClickOutside } from "../../hooks/use-click-outside";
+} from "@/store/slices/building-slice";
+import { unitData } from "@/utils/constant";
+import { useClickOutside } from "@/hooks/use-click-outside";
 
 export const useTopNavigation = () => {
   const dispatch = useDispatch();

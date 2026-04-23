@@ -1,17 +1,22 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import App from "./app.jsx";
+import AppProviders from "./app.jsx";
 import { Provider } from "react-redux";
-import { store } from "./store";
-import { GlobalErrorBoundary } from "./components/error-boundary";
+import { store } from "@/store";
+import { initPromise } from "@/i18n";
 
-createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <GlobalErrorBoundary>
+const root = createRoot(document.getElementById("root"));
+
+/**
+ * Wait for i18n to be fully initialised before mounting React.
+ */
+initPromise.finally(() => {
+  root.render(
+    <StrictMode>
       <Provider store={store}>
-        <App />
+        <AppProviders />
       </Provider>
-    </GlobalErrorBoundary>
-  </StrictMode>,
-);
+    </StrictMode>,
+  );
+});

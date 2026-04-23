@@ -60,11 +60,24 @@ The file name must match the primary exported entity:
 - Use `husky` + `lint-staged` for automatic pre-commit formatting.
 - Lint must pass in CI.
 
+## Import Rules (Mandatory)
+
+The project uses the `@/` alias to represent the `src/` directory (configured in `vite.config.js`).
+
+1. **Internal Absolute Imports**: MUST use the `@/` alias for any files outside the current directory.
+   - ✅ `import { useBuilding } from "@/features/building/use-building";`
+   - ✅ `import { ICONS } from "@/assets/icons";`
+   - ❌ `import { useBuilding } from "../../features/building/use-building";`
+
+2. **Relative Imports**: MUST be used ONLY for files within the same directory or its immediate children.
+   - ✅ `import { LocalComponent } from "./local-component";`
+   - ✅ `import { styles } from "./index.css";`
+
 ## Import Order (Recommended)
 
-1. React / framework imports
-2. Third-party libraries
-3. Internal absolute imports (`@/store/...`, `@/hooks/...`)
+1. React / framework imports (e.g., `react`, `@react-three/fiber`)
+2. Third-party libraries (e.g., `gsap`, `axios`, `lucide-react`)
+3. Internal absolute imports (`@/store/...`, `@/hooks/...`, `@/utils/...`)
 4. Relative imports (`./`, `../`)
 5. Style imports
 

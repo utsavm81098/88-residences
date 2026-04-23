@@ -1,6 +1,6 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-import { useFilterOverlay } from "../use-filter-overlay";
+import { useFilterOverlay } from "@/containers/filter-overlay/use-filter-overlay";
 
 // Mock constant data to ensure stable test environment
 vi.mock("@/utils/constant", () => ({

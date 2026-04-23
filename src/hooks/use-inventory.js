@@ -5,9 +5,9 @@ import {
   setBuilding,
   setFilters,
   clearFilters as clearReduxFilters 
-} from "../store/slices/building-slice";
-import { BUILDING_CONFIG } from "../utils/constant";
-import { ALL_UNITS, filterUnits, getActiveFiltersCount } from "../utils/filter-helper";
+} from "@/store/slices/building-slice";
+import { BUILDING_CONFIG } from "@/utils/constant";
+import { ALL_UNITS, filterUnits, getActiveFiltersCount } from "@/utils/filter-helper";
 
 /**
  * Unified hook for inventory logic across Desktop Sidebar and Mobile Filter Overlay.

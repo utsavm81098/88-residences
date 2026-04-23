@@ -1,6 +1,6 @@
 import React from "react";
 import { useTopNavigation } from "./use-top-navigation";
-import { BUILDING_CONFIG } from "../../utils/constant";
+import { BUILDING_CONFIG } from "@/utils/constant";
 import TopNavigationUI from "./top-navigation-ui";
 
 const TopNavigationContainer = ({ onReset }) => {

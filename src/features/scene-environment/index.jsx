@@ -8,19 +8,25 @@ import {
   AdaptiveEvents,
 } from "@react-three/drei";
 import { EffectComposer, SMAA } from "@react-three/postprocessing";
-import { GRID_CONFIG } from "../../utils/config";
+import { GRID_CONFIG } from "@/utils/config";
 import useSceneEnvironment from "./use-scene-environment";
+import { Preset } from "@/utils/constant";
 
 const SceneEnvironment = ({ children }) => {
   const {
     environment,
     lighting,
     directIntensity,
+    directColor,
     ambientIntensity,
+    ambientColor,
+    preset,
     config,
     onPerformanceDecline,
     onPerformanceIncline,
   } = useSceneEnvironment();
+
+  const isAssetGenerator = preset === Preset.ASSET_GENERATOR;
 
   return (
     <Fragment>
@@ -37,26 +43,40 @@ const SceneEnvironment = ({ children }) => {
         near={0.5}
         far={2000}
         position={[0, 10, config.cameraZ]}
-      />
-      {/* Stationary light replacing the camera headlamp */}
-      <directionalLight
-        position={[30, 40, 30]}
-        intensity={directIntensity}
-        color="#ffffff"
-        castShadow
-      />
-      {/* Counter-Fill light pointing inward from North-West to kill shadows */}
-      {lighting.fillIntensity && (
-        <directionalLight
-          position={[-30, 40, -30]}
-          intensity={lighting.fillIntensity}
-          color="#ffffff"
-          castShadow={false}
-        />
+      >
+        {lighting.punctualLights && !isAssetGenerator && (
+          <Fragment>
+            <ambientLight
+              intensity={ambientIntensity}
+              color={ambientColor}
+              name="ambient_light"
+            />
+            <directionalLight
+              position={[5, -23, 10]}
+              intensity={directIntensity}
+              color={directColor}
+              name="main_light"
+            />
+          </Fragment>
+        )}
+      </PerspectiveCamera>
+
+      {isAssetGenerator && <hemisphereLight name="hemi_light" />}
+
+      {!lighting.punctualLights && !isAssetGenerator && (
+        <Fragment>
+          <ambientLight intensity={ambientIntensity} color={ambientColor} />
+          <directionalLight
+            position={[30, 40, 30]}
+            intensity={directIntensity}
+            color={directColor}
+            castShadow
+          />
+        </Fragment>
       )}
+
       <Environment {...environment} />
-      <ambientLight intensity={ambientIntensity} color="#ffffff" />
-      <Grid {...GRID_CONFIG} raycast={() => null} />
+      <Grid {...GRID_CONFIG} />
       {children}
       <EffectComposer multisampling={8} stencilBuffer={false}>
         <SMAA />

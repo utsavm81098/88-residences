@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import useBuilding from "./use-building";
-import { BUILDING_CONFIG } from "../../utils/constant";
+import { BUILDING_CONFIG } from "@/utils/constant";
 import useBuildingModel from "./use-building-model";
 
 const BuildingModel = ({

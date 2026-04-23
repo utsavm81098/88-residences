@@ -13,6 +13,11 @@ import {
   RotateCw,
   Sun,
   X,
+  Info,
+  Image,
+  MapPin,
+  Phone,
+  MessageCircle,
 } from "lucide-react";
 
 export const ICONS = {
@@ -32,4 +37,10 @@ export const ICONS = {
   Sun,
   Close: X,
   X,
+  Home,
+  Info,
+  Image,
+  MapPin,
+  Phone,
+  MessageCircle,
 };

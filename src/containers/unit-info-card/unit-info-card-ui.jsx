@@ -1,6 +1,14 @@
 import { ICONS } from "@/assets/icons";
 import StatCell from "@/features/building-tooltip/stat-cell";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const STATUS_CONFIG = {
   available: { label: "Available", color: "#22c55e" },
@@ -29,7 +37,7 @@ export default function UnitInfoCard({ unit, onClose }) {
   };
 
   return (
-    <div className="hidden md:flex md:flex-col bg-card-bg/95 backdrop-blur-xl border border-white/10 rounded-2xl w-full overflow-hidden text-white pointer-events-auto shadow-2xl">
+    <Card className="hidden md:flex md:flex-col gap-4 bg-card-bg/95 !p-0 backdrop-blur-xl border border-white/10 w-full overflow-hidden text-white pointer-events-auto shadow-2xl rounded-2xl">
       {/* ── Image Header ── (Reduced height from h-40 to h-32) */}
       <div className="relative h-32 w-full bg-slate-800">
         <img
@@ -45,34 +53,37 @@ export default function UnitInfoCard({ unit, onClose }) {
             variant="ghost"
             size="icon-xs"
             onClick={onClose}
-            className="absolute top-2.5 right-2.5 bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-md text-white border-0"
+            className="absolute top-2.5 ltr:right-2.5 rtl:left-2.5 bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-md text-white border-0"
           >
             <ICONS.X size={14} />
           </Button>
         )}
       </div>
 
-      <div className="p-3.5 flex flex-col">
-        {/* ... existing header ... */}
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-xl font-bold tracking-tight">
+      <CardHeader className="px-3.5 space-y-1">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-xl font-bold tracking-tight text-white">
             Apt. {unit.name}
-          </span>
-          <span
-            className="text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider uppercase"
-            style={{
-              color: statusInfo.color,
-              background: `${statusInfo.color}15`,
-              border: `1px solid ${statusInfo.color}33`,
-            }}
+          </CardTitle>
+          <Badge
+            variant={
+              unit.status === "available"
+                ? "success"
+                : unit.status === "sold"
+                  ? "destructive"
+                  : "warning"
+            }
+            className="text-[10px] uppercase tracking-wider px-2 py-0"
           >
             {statusInfo.label}
-          </span>
+          </Badge>
         </div>
+      </CardHeader>
 
+      <CardContent className="px-3.5 flex flex-col">
         {/* ... existing price ... */}
         {unit.price && (
-          <div className="mb-3">
+          <div className="mb-1.5">
             <span className="text-[17px] font-bold tracking-tight flex items-baseline gap-1">
               {unit.price}{" "}
               <span className="text-[11px] font-medium text-slate-500 uppercase tracking-widest opacity-60">
@@ -84,7 +95,7 @@ export default function UnitInfoCard({ unit, onClose }) {
 
         {/* ... existing floor row ... */}
         {(unit.building || unit.floor) && (
-          <div className="text-[11px] font-medium text-slate-500 mb-4 flex items-center gap-2 uppercase tracking-wider">
+          <div className="text-[11px] font-medium text-slate-500 mb-3 flex items-center gap-2 uppercase tracking-wider">
             {unit.building && <span>Bldg {unit.building}</span>}
             {unit.building && unit.floor && (
               <span className="text-white/10">•</span>
@@ -94,7 +105,7 @@ export default function UnitInfoCard({ unit, onClose }) {
         )}
 
         {/* ... existing stats grid ... */}
-        <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 mb-5 bg-white/[0.03] p-2.5 rounded-xl border border-white/5">
+        <div className="grid grid-cols-2 gap-x-2 gap-y-2.5 bg-white/[0.03] p-2 rounded-xl border border-white/5">
           {unit.aptType && (
             <StatCell
               icon={Icons.aptType}
@@ -116,19 +127,19 @@ export default function UnitInfoCard({ unit, onClose }) {
             <StatCell icon={Icons.type} value={unit.type} label="type" />
           )}
         </div>
+      </CardContent>
 
-        <div className="flex gap-2">
-          <Button className="flex-1 text-black bg-accent-yellow hover:bg-accent-yellow/80 font-bold h-10 rounded-lg text-[13px] border-0 transition-colors">
-            View property
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1 h-10 rounded-lg text-[13px] border-white/10 text-white/90 hover:bg-white/5"
-          >
-            Floor plan
-          </Button>
-        </div>
-      </div>
-    </div>
+      <CardFooter className="px-3.5 pb-4 flex gap-2">
+        <Button className="flex-1 text-black bg-accent-yellow hover:bg-accent-yellow/80 font-bold h-10 rounded-lg text-[13px] border-0 transition-colors">
+          View property
+        </Button>
+        <Button
+          variant="outline"
+          className="flex-1 h-10 rounded-lg text-[13px] border-white/10 text-white/90 hover:bg-white/5"
+        >
+          Floor plan
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }

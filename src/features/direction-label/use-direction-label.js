@@ -19,7 +19,7 @@ export const useLabel = ({ isDragging, dir, onMoveCamera }) => {
       tween = gsap.fromTo(
         textRef.current.material,
         { opacity: 0 },
-        { opacity: 1, duration: 1, ease: "power2.out" }
+        { opacity: 1, duration: 1, ease: "power2.out" },
       );
     }
     // Cleanup tween to prevent memory leaks or animation artifacts on unmount
@@ -28,20 +28,29 @@ export const useLabel = ({ isDragging, dir, onMoveCamera }) => {
     };
   }, []);
 
-  const handleClick = useCallback((e) => {
-    e.stopPropagation();
-    if (e.delta <= 2) onMoveCamera(dir);
-  }, [dir, onMoveCamera]);
+  const handleClick = useCallback(
+    (e) => {
+      e.stopPropagation();
+      if (e.delta <= 2) onMoveCamera(dir);
+    },
+    [dir, onMoveCamera],
+  );
 
-  const handlePointerOver = useCallback((e) => {
-    e.stopPropagation();
-    if (!isDragging) document.body.style.cursor = "pointer";
-  }, [isDragging]);
+  const handlePointerOver = useCallback(
+    (e) => {
+      e.stopPropagation();
+      if (!isDragging) document.body.style.cursor = "pointer";
+    },
+    [isDragging],
+  );
 
-  const handlePointerOut = useCallback((e) => {
-    e.stopPropagation();
-    if (!isDragging) document.body.style.cursor = "auto";
-  }, [isDragging]);
+  const handlePointerOut = useCallback(
+    (e) => {
+      e.stopPropagation();
+      if (!isDragging) document.body.style.cursor = "auto";
+    },
+    [isDragging],
+  );
 
   return { textRef, handleClick, handlePointerOver, handlePointerOut };
 };
@@ -50,7 +59,9 @@ const useDirectionLabel = ({ controlsRef }) => {
   const { camera } = useThree();
   const config = useResponsiveConfig();
   const isDragging = useSelector((state) => state.drag.isDragging);
-  const isTransitioning = useSelector((state) => state.building.isTransitioning);
+  const isTransitioning = useSelector(
+    (state) => state.building.isTransitioning,
+  );
 
   const { distanceX, distanceZ, fontSize } = config.label;
 

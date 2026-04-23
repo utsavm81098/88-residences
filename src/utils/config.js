@@ -9,17 +9,11 @@ export const CAMERA_CONFIG = {
   far: 2000,
 };
 // ── Canvas GL ──────────────────────────────────────────────────────────────────
-export const CANVAS_GL_CONFIG = {
-  antialias: true,
-  toneMapping: THREE.ACESFilmicToneMapping,
-  toneMappingExposure: 1.0,
-  powerPreference: "high-performance",
-  outputColorSpace: THREE.SRGBColorSpace,
-};
+
 // ── Grid ───────────────────────────────────────────────────────────────────────
 export const GRID_CONFIG = {
   position: [0, 0.01, 0],
-  args: [300, 300],
+  args: [100, 100],
   cellSize: 2,
   cellThickness: 0,
   sectionSize: 10,

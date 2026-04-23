@@ -6,7 +6,7 @@ import {
   UNIT_COLORS,
   OUTLINE_KEY,
   BUILDING_CONFIG,
-} from "../../utils/constant";
+} from "@/utils/constant";
 import { useGLTF } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { useDispatch, useSelector } from "react-redux";
@@ -14,15 +14,30 @@ import {
   showTooltip,
   hideTooltip,
   updateTooltipPosition,
-} from "../../store/slices/tooltip-slice";
+} from "@/store/slices/tooltip-slice";
 import {
   setSelectedUnit,
   setMobileSelectedUnit,
-} from "../../store/slices/building-slice";
-import { useIsMobile } from "../../hooks/use-mobile";
+} from "@/store/slices/building-slice";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
+import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
+
+const THREE_PATH = "https://unpkg.com/three@0.172.0";
+const DRACO_PATH = `${THREE_PATH}/examples/jsm/libs/draco/gltf/`;
+const BASIS_PATH = `${THREE_PATH}/examples/jsm/libs/basis/`;
+
+const configureLoader = (loader) => {
+  const dracoLoader = new DRACOLoader().setDecoderPath(DRACO_PATH);
+  const ktx2Loader = new KTX2Loader().setTranscoderPath(BASIS_PATH);
+  loader.setDRACOLoader(dracoLoader);
+  loader.setKTX2Loader(ktx2Loader);
+  loader.setMeshoptDecoder(MeshoptDecoder);
+};
 
 BUILDING_CONFIG.forEach((b) => {
-  useGLTF.preload(b.model);
+  useGLTF.preload(b.model, DRACO_PATH, false, configureLoader);
 });
 const _Y_AXIS = new THREE.Vector3(0, 1, 0);
 const _hitPoint = new THREE.Vector3();
@@ -32,7 +47,7 @@ const _temp = new THREE.Vector3();
 // ── Shared Materials (Performance Optimization) ──────────────────────────────
 // Reusing these for all non-interactive states to reduce draw calls
 const BASE_MATERIALS = {
-  available: new THREE.MeshBasicMaterial({
+  available: new THREE.MeshPhongMaterial({
     color: UNIT_COLORS.available.base,
     transparent: true,
     opacity: UNIT_COLORS.available.baseOpacity,
@@ -40,8 +55,10 @@ const BASE_MATERIALS = {
     depthTest: true,
     side: THREE.FrontSide, // Optimized from DoubleSide
     toneMapped: false,
+    shininess: 30,
+    specular: new THREE.Color(0x111111),
   }),
-  sold: new THREE.MeshBasicMaterial({
+  sold: new THREE.MeshPhongMaterial({
     color: UNIT_COLORS.sold.base,
     transparent: true,
     opacity: UNIT_COLORS.sold.baseOpacity,
@@ -49,9 +66,11 @@ const BASE_MATERIALS = {
     depthTest: true,
     side: THREE.FrontSide, // Optimized from DoubleSide
     toneMapped: false,
+    shininess: 30,
+    specular: new THREE.Color(0x111111),
   }),
 };
-const useBuilding = ({ config, controlsRef }) => {
+const useBuilding = ({ config, controlsRef, active }) => {
   const dispatch = useDispatch();
   const isDragging = useSelector((state) => state.drag.isDragging);
   const { selectedUnit, mobileSelectedUnit } = useSelector(
@@ -65,8 +84,13 @@ const useBuilding = ({ config, controlsRef }) => {
     return isMobile ? mobileSelectedUnit : selectedUnit;
   }, [selectedUnit, mobileSelectedUnit, isMobile]);
 
-  const building = useGLTF(config.model);
-  const glassHitbox = useGLTF(config.hitbox);
+  const building = useGLTF(config.model, DRACO_PATH, false, configureLoader);
+  const glassHitbox = useGLTF(
+    config.hitbox,
+    DRACO_PATH,
+    false,
+    configureLoader,
+  );
   const rotationTween = useRef(null);
   const { invalidate } = useThree();
 
@@ -105,7 +129,7 @@ const useBuilding = ({ config, controlsRef }) => {
       const unit = unitMap[child.name];
       if (!unit) {
         // child.visible = false;
-        child.material = new THREE.MeshBasicMaterial({
+        child.material = new THREE.MeshPhongMaterial({
           color: UNIT_COLORS.available.base,
           transparent: true,
           opacity: UNIT_COLORS.available.baseOpacity,
@@ -115,6 +139,8 @@ const useBuilding = ({ config, controlsRef }) => {
           side: THREE.DoubleSide,
           toneMapped: false,
           blending: THREE.NormalBlending,
+          shininess: 30,
+          specular: new THREE.Color(0x111111),
         });
         return;
       }

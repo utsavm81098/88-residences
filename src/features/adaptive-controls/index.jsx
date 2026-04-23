@@ -3,7 +3,8 @@ import { OrbitControls } from "@react-three/drei";
 import useAdaptiveControls from "./use-adaptive-controls";
 
 const AdaptiveControls = ({ controlsRef }) => {
-  const { config, onStart, onEnd, POLAR, TARGET } = useAdaptiveControls();
+  const { config, onStart, onEnd, POLAR, TARGET } =
+    useAdaptiveControls(controlsRef);
 
   return (
     <OrbitControls

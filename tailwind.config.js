@@ -14,6 +14,7 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         sidebar: "hsl(var(--sidebar-bg))",
+        "sidebar-bg": "hsl(var(--sidebar-bg))",
         nav: "hsl(var(--nav-bg))",
         "card-bg": "hsl(var(--card-bg))",
         "accent-yellow": "hsl(var(--accent-yellow))",

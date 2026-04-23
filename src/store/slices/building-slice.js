@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { BUILDING_CONFIG } from "../../utils/constant";
+import { BUILDING_CONFIG } from "@/utils/constant";
 
 const initialState = {
   currentBuildingIndex: 0,
@@ -20,6 +20,7 @@ const initialState = {
     exposure: [],
     buildings: null,
   },
+  favorites: [], // Array of unit identifiers (e.g. "Type F-Box001")
 };
 
 export const buildingSlice = createSlice({
@@ -106,6 +107,15 @@ export const buildingSlice = createSlice({
         buildings: null,
       };
     },
+    toggleFavorite: (state, action) => {
+      const unitId = action.payload;
+      const index = state.favorites.indexOf(unitId);
+      if (index >= 0) {
+        state.favorites.splice(index, 1);
+      } else {
+        state.favorites.push(unitId);
+      }
+    },
   },
 });
 
@@ -123,5 +133,6 @@ export const {
   setSnap,
   setFilters,
   clearFilters,
+  toggleFavorite,
 } = buildingSlice.actions;
 export default buildingSlice.reducer;

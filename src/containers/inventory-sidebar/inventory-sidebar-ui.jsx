@@ -19,25 +19,30 @@ const InventorySidebar = ({
   onUnitSelect,
   onFilterChange,
   scrollContainerRef,
+  selectedUnit,
+  favorites,
+  onToggleFavorite,
+  sortConfig,
+  onSort,
 }) => {
   return (
-    <div className="hidden md:flex flex-col w-[380px] h-full bg-sidebar border-r border-white/10 text-white overflow-hidden z-[50]">
+    <div className="hidden md:flex flex-col flex-1 h-full bg-sidebar-bg border-r border-white/5 text-white overflow-hidden z-[50]">
       {/* Filters Section */}
-      <div className="p-6 space-y-6">
+      <div className="p-5 space-y-5">
         {/* Rooms Filter */}
         <div className="flex items-center justify-between">
-          <label className="text-[13px] font-medium text-white/90">Rooms</label>
-          <div className="flex bg-transparent rounded-[3px] border border-filter-border overflow-hidden">
+          <label className="text-[13px] font-medium text-white/70">Rooms</label>
+          <div className="flex bg-transparent rounded-[4px] border border-white/10 overflow-hidden">
             {["1", "2", "3", "4"].map((num) => (
               <Button
                 key={num}
                 variant="ghost"
                 onClick={() => onFilterChange("rooms", num)}
                 className={cn(
-                  "w-10 h-8 flex items-center justify-center text-[13px] font-medium transition-colors border-r border-filter-border last:border-r-0 rounded-none",
+                  "w-10 h-8 flex items-center justify-center text-[12px] font-bold transition-colors border-r border-white/10 last:border-r-0 rounded-none",
                   filters.rooms.includes(num)
-                    ? "bg-filter-active text-white shadow-[inset_0_1px_3px_rgba(0,0,0,0.1)]"
-                    : "text-white/70 hover:bg-filter-hover",
+                    ? "bg-accent-yellow text-black"
+                    : "text-white/60 hover:bg-white/5",
                 )}
               >
                 {num}
@@ -48,18 +53,18 @@ const InventorySidebar = ({
 
         {/* Type Filter */}
         <div className="flex items-center justify-between">
-          <label className="text-[13px] font-medium text-white/90">Type</label>
-          <div className="flex bg-transparent rounded-[3px] border border-filter-border overflow-hidden">
+          <label className="text-[13px] font-medium text-white/70">Type</label>
+          <div className="flex bg-transparent rounded-[4px] border border-white/10 overflow-hidden">
             {["Gdn. Apt.", "Apt.", "PH"].map((t) => (
               <Button
                 key={t}
                 variant="ghost"
                 onClick={() => onFilterChange("type", t)}
                 className={cn(
-                  "px-3 h-8 flex items-center justify-center text-[13px] font-medium whitespace-nowrap transition-colors border-r border-filter-border last:border-r-0 rounded-none",
+                  "px-3 h-8 flex items-center justify-center text-[11px] font-bold whitespace-nowrap transition-colors border-r border-white/10 last:border-r-0 rounded-none",
                   filters.type.includes(t)
-                    ? "bg-filter-active text-white shadow-[inset_0_1px_3px_rgba(0,0,0,0.1)]"
-                    : "text-white/70 hover:bg-filter-hover",
+                    ? "bg-accent-yellow text-black"
+                    : "text-white/60 hover:bg-white/5",
                 )}
               >
                 {t}
@@ -70,24 +75,23 @@ const InventorySidebar = ({
 
         {/* Exposure Filter */}
         <div className="flex items-center justify-between">
-          <label className="text-[13px] font-medium text-white/90">
+          <label className="text-[13px] font-medium text-white/70">
             Exposure
           </label>
-          <div className="flex bg-transparent rounded-[3px] border border-filter-border overflow-hidden">
+          <div className="flex bg-transparent rounded-[4px] border border-white/10 overflow-hidden">
             {["Pool View", "Valley View"].map((e) => (
               <Button
                 key={e}
                 variant="ghost"
                 onClick={() => onFilterChange("exposure", e)}
                 className={cn(
-                  "px-3 h-9 flex flex-col items-center justify-center text-[11px] font-medium leading-[1.1] transition-colors text-center border-r border-filter-border last:border-r-0 rounded-none",
+                  "px-4 h-8 flex items-center justify-center text-[11px] font-bold whitespace-nowrap transition-colors border-r border-white/10 last:border-r-0 rounded-none",
                   filters.exposure.includes(e)
-                    ? "bg-filter-active text-white shadow-[inset_0_1px_3px_rgba(0,0,0,0.1)]"
-                    : "text-white/70 hover:bg-filter-hover",
+                    ? "bg-accent-yellow text-black"
+                    : "text-white/60 hover:bg-white/5",
                 )}
               >
-                <span>{e.split(" ")[0]}</span>
-                <span>{e.split(" ")[1]}</span>
+                {e === "Pool View" ? "Pool" : "Valley"}
               </Button>
             ))}
           </div>
@@ -95,16 +99,16 @@ const InventorySidebar = ({
 
         {/* Clear/More Actions */}
         <div className="flex items-center justify-between pt-1">
-          <Button 
-            variant="link" 
-            className="h-auto p-0 text-[12px] font-medium text-white/80 hover:text-white"
+          <Button
+            variant="link"
+            className="h-auto p-0 text-[11px] font-medium text-white/40 hover:text-white"
           >
             More filters
           </Button>
           <Button
             variant="link"
             onClick={handleClearFilters}
-            className="h-auto p-0 text-[12px] font-bold text-white uppercase tracking-wider"
+            className="h-auto p-0 text-[11px] font-bold text-white/80 uppercase tracking-widest hover:text-white"
           >
             Clear all
           </Button>
@@ -112,58 +116,110 @@ const InventorySidebar = ({
       </div>
 
       {/* Results Header */}
-      <div className="px-6 py-4">
-        <h3 className="text-[15px] font-bold text-white/95">
-          {filteredUnits.length} available apartments found
+      <div className="px-5 py-3 border-t border-white/5 bg-white/[0.02]">
+        <h3 className="text-[13px] font-bold text-white/80">
+          {filteredUnits.length} apartments found
         </h3>
       </div>
 
       {/* Table Headers */}
-      <div className="grid grid-cols-[40px_40px_1fr_60px_60px_80px] gap-0 px-2 py-3 border-y border-white/10 bg-sidebar">
-        <div className="flex justify-center items-center">
-          <ICONS.Heart size={15} className="text-white/90" strokeWidth={1.5} />
+      <div className="grid grid-cols-[40px_40px_1fr_45px_55px_75px] gap-0 px-1 py-3 border-y border-white/10 bg-sidebar-bg">
+        <div className="flex justify-center items-center opacity-40">
+          <ICONS.Heart size={14} />
         </div>
-        <div className="flex justify-center items-center gap-1">
-          <span className="text-[12px] text-amber-400 font-bold">↑</span>
-          <span className="text-[12px] text-amber-400 font-bold">#</span>
-        </div>
-        <div className="flex flex-col items-center justify-center gap-[2px]">
-          <ICONS.Compass size={14} className="text-white/80" strokeWidth={1.5} />
-          <span className="text-[9px] text-white/60 lowercase tracking-wide">
-            Exposure
+        <button
+          onClick={() => onSort("name")}
+          className="flex justify-center items-center gap-0.5 hover:text-accent-yellow transition-colors"
+        >
+          <span
+            className={cn(
+              "text-[11px] font-bold",
+              sortConfig.key === "name"
+                ? "text-accent-yellow"
+                : "text-white/40",
+            )}
+          >
+            #
           </span>
-        </div>
-        <div className="flex flex-col items-center justify-center gap-[2px]">
-          <ICONS.Bedrooms size={14} className="text-white/80" strokeWidth={1.5} />
-          <span className="text-[9px] text-white/60 lowercase tracking-wide">
-            Rooms
+          {sortConfig.key === "name" && (
+            <span className="text-[8px]">
+              {sortConfig.direction === "asc" ? "↑" : "↓"}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => onSort("direction")}
+          className="flex flex-col items-center justify-center gap-0.5 hover:text-accent-yellow transition-colors"
+        >
+          <ICONS.Compass
+            size={13}
+            className={
+              sortConfig.key === "direction"
+                ? "text-accent-yellow"
+                : "text-white/40"
+            }
+          />
+          <span className="text-[8px] text-white/30 uppercase tracking-tighter">
+            Exp.
           </span>
-        </div>
-        <div className="flex flex-col items-center justify-center gap-[2px]">
-          <ICONS.Area size={14} className="text-white/80" strokeWidth={1.5} />
-          <span className="text-[9px] text-white/60 lowercase tracking-wide">
+        </button>
+        <button
+          onClick={() => onSort("type")}
+          className="flex flex-col items-center justify-center gap-0.5 hover:text-accent-yellow transition-colors"
+        >
+          <ICONS.Bedrooms
+            size={13}
+            className={
+              sortConfig.key === "type" ? "text-accent-yellow" : "text-white/40"
+            }
+          />
+          <span className="text-[8px] text-white/30 uppercase tracking-tighter">
+            Rms
+          </span>
+        </button>
+        <button
+          onClick={() => onSort("area")}
+          className="flex flex-col items-center justify-center gap-0.5 hover:text-accent-yellow transition-colors"
+        >
+          <ICONS.Area
+            size={13}
+            className={
+              sortConfig.key === "area" ? "text-accent-yellow" : "text-white/40"
+            }
+          />
+          <span className="text-[8px] text-white/30 uppercase tracking-tighter">
             Area
           </span>
-        </div>
-        <div className="flex flex-col items-center justify-center gap-[2px]">
-          <span className="text-[14px] text-white/80 font-medium leading-none">
+        </button>
+        <button
+          onClick={() => onSort("price")}
+          className="flex flex-col items-center justify-center gap-0.5 hover:text-accent-yellow transition-colors"
+        >
+          <span
+            className={cn(
+              "text-[12px] font-bold",
+              sortConfig.key === "price"
+                ? "text-accent-yellow"
+                : "text-white/40",
+            )}
+          >
             €
           </span>
-          <span className="text-[9px] text-white/60 lowercase tracking-wide">
+          <span className="text-[8px] text-white/30 uppercase tracking-tighter">
             Price
           </span>
-        </div>
+        </button>
       </div>
 
       {/* Accordion List */}
-      <div 
+      <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto custom-scrollbar bg-sidebar"
+        className="flex-1 overflow-y-auto custom-scrollbar bg-sidebar-bg"
       >
         <Accordion
           type="multiple"
           collapsible
-          className="border-none"
+          className="border-none rounded-none"
           value={activeAccordion}
           onValueChange={setActiveAccordion}
         >
@@ -173,51 +229,67 @@ const InventorySidebar = ({
               value={building}
               className="border-none"
             >
-              <AccordionTrigger 
+              <AccordionTrigger
                 data-building={building}
-                className="px-6 py-3.5 hover:no-underline bg-sidebar border-b border-sidebar-border flex justify-between text-white transition-colors"
+                className="px-5 py-3 hover:no-underline border-b border-white/5 flex justify-between text-white/90 transition-colors"
               >
-                <span className="text-[13px] font-medium tracking-wide">
-                  building {building}
+                <span className="text-[12px] font-bold tracking-widest uppercase">
+                  Block {building}
                 </span>
               </AccordionTrigger>
               <AccordionContent className="p-0 border-b border-white/5">
-                <div className="bg-sidebar">
-                  {units.map((unit, idx) => (
-                    <div
-                      key={`${building}-${unit.name}-${idx}`}
-                      className="grid grid-cols-[40px_40px_1fr_60px_60px_80px] gap-0 px-2 py-3 items-center hover:bg-white/5 cursor-pointer transition-colors group"
-                      onClick={() => onUnitSelect(unit)}
-                    >
-                      <div className="flex justify-center items-center">
-                        <ICONS.Heart
-                          size={16}
-                          strokeWidth={1.5}
-                          className={cn(
-                            "text-red-500",
-                            unit.status === "sold"
-                              ? "fill-red-500"
-                              : "fill-transparent",
-                          )}
-                        />
+                <div className="bg-sidebar-bg">
+                  {units.map((unit, idx) => {
+                    const unitId = `${unit.buildingName}-${unit.name}`;
+                    const isSelected =
+                      selectedUnit?.name === unit.name &&
+                      selectedUnit?.buildingName === unit.buildingName;
+                    const isFavorite = favorites.includes(unitId);
+
+                    return (
+                      <div
+                        key={unitId}
+                        className={cn(
+                          "grid grid-cols-[40px_40px_1fr_45px_55px_75px] gap-0 px-1 py-3.5 items-center cursor-pointer transition-all border-l-2",
+                          isSelected
+                            ? "bg-accent-yellow/20 border-accent-yellow text-accent-yellow"
+                            : "hover:bg-white/5 border-transparent text-white/80",
+                        )}
+                        onClick={() => onUnitSelect(unit)}
+                      >
+                        <div className="flex justify-center items-center">
+                          <button
+                            onClick={(e) => onToggleFavorite(unitId, e)}
+                            className="hover:scale-110 transition-transform"
+                          >
+                            <ICONS.Heart
+                              size={15}
+                              className={cn(
+                                isFavorite
+                                  ? "fill-red-500 text-red-500"
+                                  : "text-white/20",
+                              )}
+                            />
+                          </button>
+                        </div>
+                        <div className="text-[12px] font-bold text-center">
+                          {unit.name?.replace(/\D/g, "") || idx + 1}
+                        </div>
+                        <div className="text-[11px] text-center opacity-70">
+                          {unit.direction?.split("-")[0] || "Pool"}
+                        </div>
+                        <div className="text-[11px] text-center font-bold">
+                          {unit.rooms || "1"}
+                        </div>
+                        <div className="text-[11px] text-center opacity-70">
+                          {unit.area?.split(" ")[0] || "42.3"}
+                        </div>
+                        <div className="text-[12px] font-bold text-right pr-4">
+                          {unit.price || "285,000"}
+                        </div>
                       </div>
-                      <div className="text-[13px] font-bold text-center text-white/90">
-                        {unit.name?.replace(/\D/g, "") || idx + 1}
-                      </div>
-                      <div className="text-[13px] text-white/90 text-center font-medium">
-                        {unit.direction?.split("-")[0] || "Pool"}
-                      </div>
-                      <div className="text-[13px] text-white/90 text-center font-medium">
-                        {unit.type?.charAt(0) || "2"}
-                      </div>
-                      <div className="text-[13px] text-white/90 text-center font-medium">
-                        {unit.area?.split(" ")[0] || "79"}
-                      </div>
-                      <div className="text-[13px] font-medium text-white/90 text-right pr-4">
-                        {unit.price?.replace(/[^\d,]/g, "") || "475,875"}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -229,5 +301,3 @@ const InventorySidebar = ({
 };
 
 export default InventorySidebar;
-
-

@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as THREE from "three/webgpu";
 
 export const unitData = {
   "Type F": [
@@ -373,6 +373,10 @@ export const statusType = {
   AVAILABLE: "available",
 };
 
+export const Preset = {
+  ASSET_GENERATOR: "asset-generator",
+};
+
 export const UNIT_COLORS = {
   available: {
     base: new THREE.Color("#6B8EB5"),
@@ -393,69 +397,95 @@ export const UNIT_COLORS = {
 };
 export const OUTLINE_KEY = "__edgeLines";
 
-export const BUILDING_CONFIG = [
-  // {
-  //   name: "Type A",
-  //   model: "/models/type-a-1024.glb",
-  //   hitbox: "/models/a-hitbox.glb",
-  //   environment: { preset: "city", background: false },
-  // },
+export const EXPOSURE = -1.4;
 
+export const CANVAS_GL_CONFIG = {
+  antialias: true,
+  toneMapping: THREE.LinearToneMapping,
+  toneMappingExposure: Math.pow(2, EXPOSURE),
+  powerPreference: "high-performance",
+  outputColorSpace: THREE.SRGBColorSpace,
+};
+
+export const BUILDING_CONFIG = [
   {
     name: "Type F",
     model: "/models/type-f-1024.glb",
     hitbox: "/models/type-f-hitbox.glb",
-    environment: { preset: "city", background: false },
-    // heroAngle: Math.PI / 0, // 45° — front-right corner view
-  },
-  {
-    name: "Type D",
-    model: "/models/type-d-1024.glb",
-    hitbox: "/models/d-hitbox.glb",
     environment: {
-      files: "/hdr/kloofendal_48d_partly_cloudy_puresky_2k.hdr",
+      files: [
+        "/Standard-Cube-Map/py.png", // Right
+        "/Standard-Cube-Map/py.png", // Left
+        "/Standard-Cube-Map/pz.png", // Top
+        "/Standard-Cube-Map/px.png", // Bottom
+        "/Standard-Cube-Map/py.png", // Back
+        "/Standard-Cube-Map/py.png", // Front
+      ],
       background: false,
-      environmentIntensity: 0.25, // Reduce the HDR's overpowering sun
+      rotation: [0, 0, 0],
+      backgroundRotation: [0, 0, 0],
+      intensity: 2.0,
     },
     lighting: {
-      directIntensity: 1.0, // Sun-side stationary light
-      fillIntensity: 1.5, // Opposite side stationary light (North-West) to kill HDR shadows
-      ambientIntensity: 0.8, // Ambient base lift
-      exposure: 1.0,
+      // Match reference viewer (Math.PI * 0.8 ≈ 2.51) to get the bright specular highlight on glass
+      directIntensity: 1.5,
+      directColor: "#ffffff",
+      ambientIntensity: 0.8, // Match ref viewer
+      ambientColor: "#ffffff",
+      punctualLights: true,
     },
-    // heroAngle: Math.PI / 3, // 60° — slightly more rotated
   },
-  {
-    name: "Type A",
-    // model: "/models/type-a.glb",
-    model: "/models/type-a-1024.glb",
-    hitbox: "/models/a-hitbox.glb",
-    environment: {
-      preset: "city",
-      background: false,
-    },
-    // heroAngle: -Math.PI / 5, // -36° — front-left view
-  },
-  {
-    name: "Type G",
-    // model: "/models/type-a.glb",
-    model: "/models/type-g.glb",
-    hitbox: "/models/g-hitbox.glb",
-    environment: {
-      preset: "city",
-      background: false,
-    },
-    // heroAngle: Math.PI / 6, // 30° — subtle right angle
-  },
-  {
-    name: "Type B",
-    // model: "/models/type-a.glb",
-    model: "/models/type-b.glb",
-    hitbox: "/models/a-hitbox.glb",
-    environment: {
-      preset: "city",
-      background: false,
-    },
-    // heroAngle: -Math.PI / 4, // -45° — front-left corner view
-  },
+
+  // {
+  //   name: "Type D",
+  //   model: "/models/type-d-1024.glb",
+  //   hitbox: "/models/d-hitbox.glb",
+  //   environment: {
+  //     files: "/hdr/kloofendal_48d_partly_cloudy_puresky_2k.hdr",
+  //     background: false,
+  //     environmentIntensity: 0.25, // Reduce the HDR's overpowering sun
+  //   },
+  //   lighting: {
+  //     directIntensity: 1.0, // Sun-side stationary light
+  //     fillIntensity: 1.5, // Opposite side stationary light (North-West) to kill HDR shadows
+  //     ambientIntensity: 0.8, // Ambient base lift
+  //     exposure: 1.0,
+  //   },
+  //   // heroAngle: Math.PI / 3, // 60° — slightly more rotated
+  // },
+  // {
+  //   name: "Type A",
+  //   // model: "/models/type-a.glb",
+  //   model: "/models/type-a-1024.glb",
+  //   hitbox: "/models/a-hitbox.glb",
+  //   environment: {
+  //     preset: "city",
+  //     background: false,
+  //   },
+  //   // heroAngle: -Math.PI / 5, // -36° — front-left view
+  // },
+  // {
+  //   name: "Type G",
+  //   // model: "/models/type-a.glb",
+  //   model: "/models/type-g.glb",
+  //   hitbox: "/models/g-hitbox.glb",
+  //   environment: {
+  //     preset: "city",
+  //     background: false,
+  //   },
+  //   // heroAngle: Math.PI / 6, // 30° — subtle right angle
+  // },
+  // {
+  //   name: "Type B",
+  //   // model: "/models/type-a.glb",
+  //   model: "/models/type-b.glb",
+  //   hitbox: "/models/a-hitbox.glb",
+  //   environment: {
+  //     preset: "city",
+  //     background: false,
+  //   },
+  //   // heroAngle: -Math.PI / 4, // -45° — front-left corner view
 ];
+
+export const DEFAULT_STALE_TIME = 1000 * 60 * 5;
+
