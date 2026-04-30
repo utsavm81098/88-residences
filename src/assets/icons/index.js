@@ -2,7 +2,7 @@ import {
   Compass,
   CircleDollarSign,
   LayoutGrid,
-  Bed,
+  BedDouble,
   Ruler,
   Building,
   Home,
@@ -18,15 +18,18 @@ import {
   MapPin,
   Phone,
   MessageCircle,
+  User,
+  Menu,
 } from "lucide-react";
 
 export const ICONS = {
   Compass,
   Price: CircleDollarSign,
   AptType: LayoutGrid,
-  Bedrooms: Bed,
+  Bedrooms: BedDouble,
   Area: Ruler,
   Balcony: Building,
+  Building,
   Type: Home,
   Heart,
   Search,
@@ -43,4 +46,6 @@ export const ICONS = {
   MapPin,
   Phone,
   MessageCircle,
+  User,
+  Menu,
 };

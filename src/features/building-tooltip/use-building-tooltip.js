@@ -1,25 +1,32 @@
 import { useSelector } from "react-redux";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import gsap from "gsap";
 
 export const useBuildingTooltip = () => {
-  // Use granular selectors to avoid re-rendering when other tooltip properties (x, y) change
   const visible = useSelector((state) => state.tooltip.visible);
   const unit = useSelector((state) => state.tooltip.unit);
   const selectedUnit = useSelector((state) => state.building.selectedUnit);
+  const selectedBuilding = useSelector(
+    (state) => state.building.currentBuilding,
+  );
 
-  // Do not render hover tooltip for the currently selected unit
-  const showHoverTooltip =
-    visible && unit && (!selectedUnit || selectedUnit.name !== unit.name);
+  // Memoize derived boolean — avoids recalculation on unrelated renders
+  const showHoverTooltip = useMemo(() => {
+    if (!visible || !unit) return false;
+    if (!selectedUnit) return true;
+    const selectedId = selectedUnit.title || selectedUnit.apartment_number;
+    const hoveredId = unit.title || unit.apartment_number;
+    return selectedId !== hoveredId;
+  }, [visible, unit, selectedUnit]);
 
   // GSAP animation references
-  const desktopPopupRef = useRef(null);
   const hoverTooltipRef = useRef(null);
 
-  // Keep track of active state for the global event listener without requiring dependency arrays
+  // Keep track of active state for the global event listener without triggering re-renders
   const isActiveRef = useRef(showHoverTooltip);
   isActiveRef.current = showHoverTooltip;
 
+  // ── Mouse position → direct DOM mutation (bypasses React render cycle) ────
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isActiveRef.current || !hoverTooltipRef.current) return;
@@ -28,53 +35,83 @@ export const useBuildingTooltip = () => {
       const OFFSET_X = 16;
       const OFFSET_Y = 16;
 
-      let width = 280;
-      let height = 140;
-
-      // Extract accurate runtime sizes
-      if (hoverTooltipRef.current) {
-        width = hoverTooltipRef.current.offsetWidth || width;
-        height = hoverTooltipRef.current.offsetHeight || height;
-      }
+      const el = hoverTooltipRef.current;
+      const width = el.offsetWidth || 280;
+      const height = el.offsetHeight || 140;
 
       let posX = x + OFFSET_X;
       let posY = y + OFFSET_Y;
 
-      // Fallback 1: If too close to bottom, show tooltip above the cursor
-      if (typeof window !== "undefined" && posY + height > window.innerHeight) {
+      // Flip above cursor if too close to bottom
+      if (posY + height > window.innerHeight) {
         posY = y - height - OFFSET_Y;
       }
 
-      // Fallback 2: If too close to right edge, show tooltip left of cursor
-      if (typeof window !== "undefined" && posX + width > window.innerWidth) {
+      // Flip left of cursor if too close to right edge
+      if (posX + width > window.innerWidth) {
         posX = x - width - OFFSET_X;
       }
 
-      // Direct DOM mutation completely bypasses React Render Cycle for high-frequency updates
-      hoverTooltipRef.current.style.transform = `translate(${posX}px, ${posY}px)`;
+      // Direct DOM mutation — zero React overhead
+      el.style.transform = `translate(${posX}px, ${posY}px)`;
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
+  // ── Desktop popup entrance/exit animation (useEffect pattern) ──────────
+  const desktopPopupRef = useRef(null);
+
   useEffect(() => {
-    let tween;
-    if (selectedUnit && desktopPopupRef.current) {
-      tween = gsap.fromTo(
-        desktopPopupRef.current,
-        { opacity: 0, y: -40, scale: 0.95, transformOrigin: "top right" },
-        { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.2)" },
+    const node = desktopPopupRef.current;
+    if (!node) return;
+
+    // Clean up any ongoing animations to prevent conflict
+    gsap.killTweensOf(node);
+
+    if (selectedUnit) {
+      gsap.fromTo(
+        node,
+        {
+          opacity: 0,
+          y: -20,
+          scale: 0.95,
+          transformOrigin: "top right",
+          pointerEvents: "none",
+        },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.4,
+          ease: "back.out(1.2)",
+          pointerEvents: "auto",
+        },
       );
+    } else {
+      gsap.to(node, {
+        opacity: 0,
+        y: -20,
+        scale: 0.95,
+        duration: 0.3,
+        ease: "power2.in",
+        pointerEvents: "none",
+      });
     }
-    return () => {
-      if (tween) tween.kill();
-    };
   }, [selectedUnit]);
+
+  // Derive status from unit data
+  const status = useMemo(() => {
+    if (!unit) return null;
+    return unit.status || (unit.apartment_sold ? "sold" : "available");
+  }, [unit]);
 
   return {
     unit,
+    status,
     selectedUnit,
+    selectedBuilding,
     showHoverTooltip,
     desktopPopupRef,
     hoverTooltipRef,

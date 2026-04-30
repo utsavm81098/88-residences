@@ -55,3 +55,13 @@ export const isTokenActive = (token) => {
   const now = Math.floor(Date.now() / 1000);
   return decoded.exp > now;
 };
+
+export function getLocalizedString(obj, locale, fallback = "en") {
+  return obj?.[locale] || obj?.[fallback] || "";
+}
+
+export const extractDigit = (str) => {
+  if (!str) return "";
+  const match = str.match(/\d+/);
+  return match ? match[0] : str;
+};

@@ -1,66 +1,130 @@
-import { unitData } from "./constant";
+import { FILTER_OPTIONS } from "@/utils/constant";
 
-export const BUDGET_RANGES = {
-  "0 - 199K": [0, 199000],
-  "199K - 398K": [199000, 398000],
-  "398K - 596K": [398000, 596000],
-  "596K+": [596000, Infinity],
+export const normalizeInventory = (inventory) => {
+  if (!inventory) return [];
+
+  // Handle flat array from API
+  if (Array.isArray(inventory)) {
+    return inventory.map((unit) => ({
+      ...unit,
+      buildingName: unit.building_name || unit.building || unit.buildingName || "A",
+      rooms: unit.rooms || unit.type || "1",
+      price: unit.price || "0",
+      area: unit.area || "0",
+      direction: unit.direction || unit.property_direction || "Front",
+    }));
+  }
+
+  // Handle object keyed by building name
+  if (typeof inventory === "object" && Object.keys(inventory).length > 0) {
+    return Object.entries(inventory).flatMap(([buildingName, units]) => {
+      if (!Array.isArray(units)) return [];
+      return units.map((unit) => ({ 
+        ...unit, 
+        buildingName,
+        rooms: unit.rooms || unit.type || "1",
+        price: unit.price || "0",
+        area: unit.area || "0",
+        direction: unit.direction || unit.property_direction || "Front",
+      }));
+    });
+  }
+
+  return [];
 };
 
-export const ALL_UNITS = Object.entries(unitData).flatMap(([buildingName, units]) => {
-  if (!Array.isArray(units)) return [];
-  return units.map((unit) => ({ ...unit, buildingName }));
-});
+export const getActiveFiltersCount = (filters) => {
+  if (!filters) return 0;
+  let count = 0;
+
+  if (filters.status?.length > 0) count++;
+  if (filters.rooms?.length > 0) count++;
+  if (filters.direction?.length > 0) count++;
+
+  // Only count price if it's different from default range
+  if (filters.price?.length === 2) {
+    const isDefault = 
+      filters.price[0] === FILTER_OPTIONS.priceRange.min && 
+      filters.price[1] === FILTER_OPTIONS.priceRange.max;
+    if (!isDefault) count++;
+  }
+
+  // Only count areas if different from default range
+  if (filters.areas?.length === 2) {
+    const isDefault = 
+      filters.areas[0] === FILTER_OPTIONS.areaRange.min && 
+      filters.areas[1] === FILTER_OPTIONS.areaRange.max;
+    if (!isDefault) count++;
+  }
+  
+  if (filters.buildings) count++;
+
+  return count;
+};
 
 export const filterUnits = (units, selectedFilters) => {
+  if (!Array.isArray(units)) return [];
+  if (!selectedFilters) return units;
+
   return units.filter((unit) => {
-    // Rooms check
-    const roomMatch =
-      selectedFilters.rooms.length === 0 ||
-      selectedFilters.rooms.some((r) => unit.type?.startsWith(r));
-
-    // Type check
-    const typeMatch =
-      selectedFilters.type.length === 0 ||
-      selectedFilters.type.some((t) => {
-        if (t === "Gdn. Apt.") return unit.floor === 0;
-        if (t === "PH") return unit.floor > 10;
-        return unit.type === t || unit.type?.includes("Apartment");
-      });
-
-    // Exposure check
-    const exposureMatch =
-      selectedFilters.exposure.length === 0 ||
-      selectedFilters.exposure.some((e) =>
-        unit.direction?.includes(e.split(" ")[0]),
-      );
-
-    // Building check
-    const buildingMatch =
-      !selectedFilters.buildings ||
-      selectedFilters.buildings === unit.buildingName;
-
-    // Budget check
-    let budgetMatch = true;
-    if (selectedFilters.budget && BUDGET_RANGES[selectedFilters.budget]) {
-      const [min, max] = BUDGET_RANGES[selectedFilters.budget];
-      const price = parseInt(unit.price?.replace(/[^\d]/g, "") || "0");
-      budgetMatch = price >= min && price <= max;
+    // 1. Status Filter
+    if (selectedFilters.status?.length > 0) {
+      const status = unit.apartment_sold ? "sold" : unit.status || "available";
+      if (!selectedFilters.status.includes(status)) return false;
     }
 
-    return (
-      roomMatch &&
-      typeMatch &&
-      exposureMatch &&
-      buildingMatch &&
-      budgetMatch
-    );
-  });
-};
+    // 2. Rooms check
+    if (selectedFilters.rooms?.length > 0) {
+      const unitRoomStr = unit.bedrooms?.name?.en || unit.rooms || "";
+      const unitRoomVal = parseInt(unitRoomStr);
 
-export const getActiveFiltersCount = (selectedFilters) => {
-  return Object.values(selectedFilters).reduce((acc, current) => {
-    if (Array.isArray(current)) return acc + (current.length > 0 ? 1 : 0);
-    return acc + (current !== null ? 1 : 0);
-  }, 0);
+      const roomMatch = selectedFilters.rooms.some((r) => {
+        if (r === "studio")
+          return String(unitRoomStr).toLowerCase().includes("studio");
+        return parseInt(r) === unitRoomVal;
+      });
+      if (!roomMatch) return false;
+    }
+
+    // 3. Direction check
+    if (selectedFilters.direction?.length > 0) {
+      const unitDir = (
+        unit.property_direction?.name?.en ||
+        unit.direction ||
+        ""
+      ).toLowerCase();
+      const directionMatch = selectedFilters.direction.some((d) =>
+        unitDir.includes(d.toLowerCase()),
+      );
+      if (!directionMatch) return false;
+    }
+
+    // 4. Price Range check
+    if (selectedFilters.price?.length === 2) {
+      const price =
+        unit.apartment_price_raw ??
+        parseInt(String(unit.price || "0").replace(/[^\d]/g, ""), 10);
+      if (price < selectedFilters.price[0] || price > selectedFilters.price[1])
+        return false;
+    }
+
+    // 5. Area Range check
+    if (selectedFilters.areas?.length === 2) {
+      const area =
+        unit.apartment_area ??
+        parseFloat(String(unit.area || "0").split(" ")[0]);
+      if (area < selectedFilters.areas[0] || area > selectedFilters.areas[1])
+        return false;
+    }
+
+    // 6. Building check
+    if (
+      selectedFilters.buildings &&
+      selectedFilters.buildings !== unit.buildingName
+    ) {
+      return false;
+    }
+
+    return true;
+  });
 };

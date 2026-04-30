@@ -23,6 +23,9 @@ export default {
         "filter-border": "hsl(var(--filter-border))",
         "sidebar-border": "hsl(var(--sidebar-border))",
         "card-mobile": "hsl(var(--card-bg-mobile))",
+        available: "hsl(var(--available))",
+        sold: "hsl(var(--sold))",
+        reserved: "hsl(var(--reserved))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",

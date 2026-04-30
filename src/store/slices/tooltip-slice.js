@@ -17,7 +17,7 @@ const tooltipSlice = createSlice({
     },
     hideTooltip: (state) => {
       state.visible = false;
-      state.unit = null;
+      // state.unit = null; // Keep last unit to prevent unmount flicker
     },
     updateTooltipPosition: (state, action) => {
       state.x = action.payload.x;

@@ -1,11 +1,11 @@
 const StatCell = ({ icon: Icon, value, label }) => (
-  <div className="flex items-start gap-2 text-white">
-    <span className="text-slate-500 mt-1 shrink-0">
-      {Icon}
-    </span>
-    <div className="flex flex-col">
+  <div className="flex flex-col items-start gap-0.5 text-white">
+    <div className="flex items-center gap-1.5">
+      <span className="text-slate-500 shrink-0">{Icon}</span>
       <div className="text-sm font-semibold leading-tight">{value}</div>
-      <div className="text-[11px] text-slate-500 mt-0.5">{label}</div>
+    </div>
+    <div className="text-[11px] text-slate-500 font-medium normal-case">
+      {label}
     </div>
   </div>
 );

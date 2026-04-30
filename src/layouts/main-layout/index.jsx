@@ -1,4 +1,5 @@
 import SidebarNavContainer from "@/containers/sidebar-nav";
+import MobileNavContainer from "@/containers/mobile-nav";
 import { Outlet } from "react-router";
 
 /**
@@ -8,7 +9,7 @@ import { Outlet } from "react-router";
  */
 export default function MainLayout() {
   return (
-    <div className="flex h-screen w-screen bg-background text-white font-outfit overflow-hidden">
+    <div className="flex h-screen w-screen bg-background text-white font-outfit overflow-hidden relative">
       {/* 
           Navigation Rail Wrapper 
           Occupies fixed space in the layout flow to prevent shifting 
@@ -28,6 +29,11 @@ export default function MainLayout() {
             <Outlet />
           </div>
         </main>
+      </div>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="lg:hidden absolute bottom-0 left-0 right-0 z-[120] pointer-events-none">
+        <MobileNavContainer />
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { ICONS } from "@/assets/icons";
 import * as THREE from "three/webgpu";
 
 export const unitData = {
@@ -397,6 +398,42 @@ export const UNIT_COLORS = {
 };
 export const OUTLINE_KEY = "__edgeLines";
 
+export const STATUS_CONFIG = {
+  available: { label: "available" },
+  sold: { label: "sold" },
+  reserved: { label: "reserved" },
+};
+
+export const ICON_PROPS_DEFAULT = { size: 20, strokeWidth: 1.8 };
+
+export const UNIT_ICONS = {
+  aptType: ICONS.AptType,
+  bedrooms: ICONS.Bedrooms,
+  area: ICONS.Area,
+  balcony: ICONS.Balcony,
+  type: ICONS.Type,
+  price: ICONS.Price,
+  direction: ICONS.Compass,
+};
+
+export const NAV_ITEMS = [
+  { id: "home", label: "home", icon: ICONS.Home },
+  { id: "inventory", label: "inventory", icon: ICONS.Search },
+];
+
+export const NAV_ITEMS_MOBILE = [
+  { id: "home", label: "home", icon: ICONS.Home },
+  { id: "inventory", label: "inventory", icon: ICONS.Search },
+  { id: "more", label: "more", icon: ICONS.Menu },
+];
+
+export const FILTER_OPTIONS = {
+  rooms: ["1", "2", "3", "studio"],
+  direction: ["front", "rear", "side"],
+  priceRange: { min: 100000, max: 300000 },
+  areaRange: { min: 30, max: 120 },
+};
+
 export const EXPOSURE = -1.4;
 
 export const CANVAS_GL_CONFIG = {
@@ -407,85 +444,72 @@ export const CANVAS_GL_CONFIG = {
   outputColorSpace: THREE.SRGBColorSpace,
 };
 
+const typeAConfig = {
+  model: "/models/type-a-1024.glb",
+  hitbox: "/models/a-hitbox.glb",
+  environment: {
+    files: [
+      "/Standard-Cube-Map/py.png", // Right
+      "/Standard-Cube-Map/py.png", // Left
+      "/Standard-Cube-Map/pz.png", // Top
+      "/Standard-Cube-Map/px.png", // Bottom
+      "/Standard-Cube-Map/py.png", // Back
+      "/Standard-Cube-Map/py.png", // Front
+    ],
+    background: false,
+    rotation: [0, 0, 0],
+    backgroundRotation: [0, 0, 0],
+    intensity: 2.0,
+  },
+  lighting: {
+    // Match reference viewer (Math.PI * 0.8 ≈ 2.51) to get the bright specular highlight on glass
+    directIntensity: 1.5,
+    directColor: "#ffffff",
+    ambientIntensity: 0.8, // Match ref viewer
+    ambientColor: "#ffffff",
+    punctualLights: true,
+  },
+};
+
 export const BUILDING_CONFIG = [
   {
-    name: "Type F",
-    model: "/models/type-f-1024.glb",
-    hitbox: "/models/type-f-hitbox.glb",
-    environment: {
-      files: [
-        "/Standard-Cube-Map/py.png", // Right
-        "/Standard-Cube-Map/py.png", // Left
-        "/Standard-Cube-Map/pz.png", // Top
-        "/Standard-Cube-Map/px.png", // Bottom
-        "/Standard-Cube-Map/py.png", // Back
-        "/Standard-Cube-Map/py.png", // Front
-      ],
-      background: false,
-      rotation: [0, 0, 0],
-      backgroundRotation: [0, 0, 0],
-      intensity: 2.0,
-    },
-    lighting: {
-      // Match reference viewer (Math.PI * 0.8 ≈ 2.51) to get the bright specular highlight on glass
-      directIntensity: 1.5,
-      directColor: "#ffffff",
-      ambientIntensity: 0.8, // Match ref viewer
-      ambientColor: "#ffffff",
-      punctualLights: true,
-    },
+    name: "A",
+    ...typeAConfig,
   },
-
-  // {
-  //   name: "Type D",
-  //   model: "/models/type-d-1024.glb",
-  //   hitbox: "/models/d-hitbox.glb",
-  //   environment: {
-  //     files: "/hdr/kloofendal_48d_partly_cloudy_puresky_2k.hdr",
-  //     background: false,
-  //     environmentIntensity: 0.25, // Reduce the HDR's overpowering sun
-  //   },
-  //   lighting: {
-  //     directIntensity: 1.0, // Sun-side stationary light
-  //     fillIntensity: 1.5, // Opposite side stationary light (North-West) to kill HDR shadows
-  //     ambientIntensity: 0.8, // Ambient base lift
-  //     exposure: 1.0,
-  //   },
-  //   // heroAngle: Math.PI / 3, // 60° — slightly more rotated
-  // },
-  // {
-  //   name: "Type A",
-  //   // model: "/models/type-a.glb",
-  //   model: "/models/type-a-1024.glb",
-  //   hitbox: "/models/a-hitbox.glb",
-  //   environment: {
-  //     preset: "city",
-  //     background: false,
-  //   },
-  //   // heroAngle: -Math.PI / 5, // -36° — front-left view
-  // },
-  // {
-  //   name: "Type G",
-  //   // model: "/models/type-a.glb",
-  //   model: "/models/type-g.glb",
-  //   hitbox: "/models/g-hitbox.glb",
-  //   environment: {
-  //     preset: "city",
-  //     background: false,
-  //   },
-  //   // heroAngle: Math.PI / 6, // 30° — subtle right angle
-  // },
-  // {
-  //   name: "Type B",
-  //   // model: "/models/type-a.glb",
-  //   model: "/models/type-b.glb",
-  //   hitbox: "/models/a-hitbox.glb",
-  //   environment: {
-  //     preset: "city",
-  //     background: false,
-  //   },
-  //   // heroAngle: -Math.PI / 4, // -45° — front-left corner view
+  {
+    name: "B",
+    ...typeAConfig,
+    hitbox: "/models/b-hitbox.glb",
+  },
+  {
+    name: "C",
+    ...typeAConfig,
+    hitbox: "/models/c-hitbox.glb",
+  },
+  {
+    name: "D",
+    ...typeAConfig,
+    model: "/models/type-d-1024.glb",
+    hitbox: "/models/d-hitbox.glb",
+  },
+  {
+    name: "E",
+    ...typeAConfig,
+    model: "/models/type-f-1024.glb",
+    hitbox: "/models/e-hitbox.glb",
+  },
+  {
+    name: "F",
+    ...typeAConfig,
+    model: "/models/type-f-1024.glb",
+    hitbox: "/models/f-hitbox.glb",
+  },
+  {
+    name: "G",
+    ...typeAConfig,
+    model: "/models/type-g.glb",
+    hitbox: "/models/g-hitbox.glb",
+  },
 ];
 
 export const DEFAULT_STALE_TIME = 1000 * 60 * 5;
-

@@ -1,112 +1,101 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setFilters, toggleFavorite } from "@/store/slices/building-slice";
-import useInventory from "@/hooks/use-inventory";
-import { unitData } from "@/utils/constant";
-
-const ALL_BUILDING_NAMES = Object.keys(unitData);
+import {
+  setFilters,
+  setSelectedUnit,
+  setBuilding,
+  clearFilters,
+  selectFilteredInventory,
+} from "@/store/slices/building-slice";
+import { BUILDING_CONFIG } from "@/utils/constant";
 
 export const useInventorySidebar = () => {
   const dispatch = useDispatch();
-  const scrollContainerRef = useRef(null);
+  const scrollRef = useRef(null);
+  const itemRefs = useRef({});
+  const { selectedUnit, filters, inventory, currentBuilding } = useSelector(
+    (state) => state.building,
+  );
+  const filteredUnits = useSelector(selectFilteredInventory);
 
-  // Use central inventory logic
-  const {
-    filters,
-    groupedUnits,
-    allFilteredUnits,
-    currentBuilding,
-    onUnitSelect,
-    toggleFilter,
-    clearFilters,
-  } = useInventory();
+  const [activeAccordionState, setActiveAccordionState] = useState(null);
 
-  const selectedUnit = useSelector((state) => state.building.selectedUnit);
-  const favorites = useSelector((state) => state.building.favorites);
+  const activeAccordion = useMemo(() => {
+    return activeAccordionState ?? Object.keys(inventory || {});
+  }, [activeAccordionState, inventory]);
 
-  // Desktop specific state
-  const [activeAccordion, setActiveAccordion] = useState(ALL_BUILDING_NAMES);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const finalData = useMemo(() => {
+    // Group back by building name for the sidebar accordion
+    const grouped = filteredUnits.reduce((acc, unit) => {
+      const group = unit.buildingName;
+      if (!acc[group]) acc[group] = [];
+      acc[group].push(unit);
+      return acc;
+    }, {});
 
-  // Auto-scroll to selected building in sidebar
+    // Return as a pre-sorted array of [building, units] entries
+    return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
+  }, [filteredUnits]);
+
+  // Memoized Handlers
+  const onFilterChange = useCallback(
+    (key, value) => {
+      dispatch(setFilters({ [key]: value }));
+    },
+    [dispatch],
+  );
+
+  const onUnitSelect = useCallback(
+    (unit) => {
+      if (unit.buildingName === currentBuilding.name) {
+        dispatch(setSelectedUnit(unit));
+      } else {
+        const buildingIndex = BUILDING_CONFIG.findIndex(
+          (b) => b.name === unit.buildingName,
+        );
+        if (buildingIndex !== -1) {
+          dispatch(setBuilding(buildingIndex));
+          dispatch(setSelectedUnit(unit));
+        }
+      }
+    },
+    [dispatch, currentBuilding.name],
+  );
+
+  const handleClearFilters = useCallback(() => {
+    dispatch(clearFilters());
+  }, [dispatch]);
+
+  const totalApartments = useMemo(
+    () => (finalData || []).reduce((acc, [_, units]) => acc + units.length, 0),
+    [finalData],
+  );
+  // Auto-scroll to specific building when it changes
   useEffect(() => {
-    if (currentBuilding && scrollContainerRef.current) {
-      const trigger = scrollContainerRef.current.querySelector(
-        `[data-building="${currentBuilding.name}"]`
-      );
-      if (trigger) {
-        trigger.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (currentBuilding?.name && itemRefs.current[currentBuilding.name]) {
+      const container = scrollRef.current;
+      const element = itemRefs.current[currentBuilding.name];
+      if (container && element) {
+        container.scrollTo({
+          top: element.offsetTop,
+          behavior: "smooth",
+        });
       }
     }
-  }, [currentBuilding]);
-
-  // Map sidebar-specific "onFilterChange" to unified "toggleFilter"
-  const onFilterChange = (key, value) => {
-    if (value === "all") {
-      dispatch(setFilters({ [key]: [] }));
-    } else {
-      // Toggle logic or single select? 
-      // Based on reference, these look like toggle buttons.
-      // useInventory's toggleFilter handles the array logic.
-      toggleFilter(key, value);
-    }
-  };
-
-  const handleSort = (key) => {
-    setSortConfig((prev) => ({
-      key,
-      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
-    }));
-  };
-
-  const onToggleFavorite = (unitId, e) => {
-    e.stopPropagation();
-    dispatch(toggleFavorite(unitId));
-  };
-
-  // Compute sorted units
-  const sortedGroupedUnits = useMemo(() => {
-    if (!sortConfig.key) return groupedUnits;
-
-    const newGrouped = {};
-    Object.keys(groupedUnits).forEach((groupName) => {
-      const units = [...groupedUnits[groupName]];
-      units.sort((a, b) => {
-        const valA = a[sortConfig.key];
-        const valB = b[sortConfig.key];
-        
-        if (typeof valA === "number" && typeof valB === "number") {
-          return sortConfig.direction === "asc" ? valA - valB : valB - valA;
-        }
-        
-        const strA = String(valA || "").toLowerCase();
-        const strB = String(valB || "").toLowerCase();
-        
-        if (sortConfig.direction === "asc") {
-          return strA.localeCompare(strB);
-        } else {
-          return strB.localeCompare(strA);
-        }
-      });
-      newGrouped[groupName] = units;
-    });
-    return newGrouped;
-  }, [groupedUnits, sortConfig]);
+  }, [currentBuilding?.name]);
 
   return {
-    activeAccordion,
-    setActiveAccordion,
     filters,
-    filteredUnits: allFilteredUnits,
-    groupedUnits: sortedGroupedUnits,
-    handleClearFilters: clearFilters,
-    onUnitSelect,
     onFilterChange,
-    scrollContainerRef,
+    finalData,
+    totalApartments,
+    handleClearFilters,
+    activeAccordion,
+    setActiveAccordion: setActiveAccordionState,
+    onUnitSelect,
     selectedUnit,
-    favorites,
-    onToggleFavorite,
-    sortConfig,
-    onSort: handleSort,
+    currentBuilding,
+    scrollRef,
+    itemRefs,
   };
 };

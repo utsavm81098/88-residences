@@ -1,26 +1,61 @@
-import { createSlice } from "@reduxjs/toolkit";
+import {
+  createSlice,
+  createAsyncThunk,
+  createSelector,
+} from "@reduxjs/toolkit";
 import { BUILDING_CONFIG } from "@/utils/constant";
+import api from "@/services";
+import { normalizeInventory, filterUnits } from "@/utils/filter-helper";
+
+// Selectors
+export const selectBuildingState = (state) => state.building;
+
+export const selectNormalizedInventory = createSelector(
+  [selectBuildingState],
+  (building) => normalizeInventory(building.inventory),
+);
+
+export const selectFilteredInventory = createSelector(
+  [selectNormalizedInventory, (state) => state.building.filters],
+  (normalized, filters) => filterUnits(normalized, filters),
+);
+
+export const selectBuildingUnits = createSelector(
+  [selectFilteredInventory, (state) => state.building.currentBuilding.name],
+  (filtered, buildingName) =>
+    filtered.filter((u) => u.buildingName === buildingName),
+);
+
+export const fetchInventory = createAsyncThunk(
+  "building/fetchInventory",
+  async (params, { rejectWithValue }) => {
+    try {
+      const response = await api.inventory.getAll({ params });
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message || "Failed to fetch inventory");
+    }
+  },
+);
 
 const initialState = {
   currentBuildingIndex: 0,
   currentBuilding: BUILDING_CONFIG[0],
-  isMenuOpen: false,
   selectedUnit: null,
   mobileSelectedUnit: null,
-  snap: { height: 0.4, snapIndex: 0 },
-  // ── Transition state (carousel circle rotation) ──
+  snapHeight: 0,
   isTransitioning: false,
   previousBuildingIndex: null,
-  transitionDirection: null, // "next" | "prev"
-  // ── Filter state ──
+  transitionDirection: null,
   filters: {
     rooms: [],
-    budget: null,
-    type: [],
-    exposure: [],
-    buildings: null,
+    direction: [],
+    price: [],
+    areas: [],
   },
-  favorites: [], // Array of unit identifiers (e.g. "Type F-Box001")
+  inventory: {},
+  loading: false,
+  error: null,
 };
 
 export const buildingSlice = createSlice({
@@ -46,33 +81,23 @@ export const buildingSlice = createSlice({
     },
     setBuilding: (state, action) => {
       const newIndex = action.payload;
-      if (newIndex === state.currentBuildingIndex) {
-        state.isMenuOpen = false;
-        return;
-      }
+      if (newIndex === state.currentBuildingIndex) return;
       state.previousBuildingIndex = state.currentBuildingIndex;
-      // Determine shortest rotation direction
       const total = BUILDING_CONFIG.length;
       const diff = (newIndex - state.currentBuildingIndex + total) % total;
       state.transitionDirection = diff <= total / 2 ? "next" : "prev";
       state.isTransitioning = true;
       state.currentBuildingIndex = newIndex;
       state.currentBuilding = BUILDING_CONFIG[newIndex];
-      state.isMenuOpen = false;
-    },
-    toggleMenu: (state) => {
-      state.isMenuOpen = !state.isMenuOpen;
-    },
-    closeMenu: (state) => {
-      state.isMenuOpen = false;
+      state.selectedUnit = null;
+      state.mobileSelectedUnit = null;
     },
     resetBuilding: (state) => {
       state.currentBuildingIndex = 0;
       state.currentBuilding = BUILDING_CONFIG[0];
-      state.isMenuOpen = false;
       state.selectedUnit = null;
       state.mobileSelectedUnit = null;
-      state.snap = { height: 0.4, snapIndex: 0 };
+      state.snapHeight = 0;
       state.isTransitioning = false;
       state.previousBuildingIndex = null;
       state.transitionDirection = null;
@@ -92,30 +117,53 @@ export const buildingSlice = createSlice({
       state.selectedUnit = null;
       state.mobileSelectedUnit = null;
     },
-    setSnap: (state, action) => {
-      state.snap = action.payload;
+    setSnapHeight: (state, action) => {
+      state.snapHeight = action.payload;
     },
     setFilters: (state, action) => {
-      state.filters = { ...state.filters, ...action.payload };
+      state.filters = {
+        ...state.filters,
+        ...action.payload,
+      };
     },
     clearFilters: (state) => {
       state.filters = {
         rooms: [],
-        budget: null,
-        type: [],
-        exposure: [],
+        direction: [],
+        price: null,
+        areas: null,
         buildings: null,
       };
     },
-    toggleFavorite: (state, action) => {
-      const unitId = action.payload;
-      const index = state.favorites.indexOf(unitId);
-      if (index >= 0) {
-        state.favorites.splice(index, 1);
-      } else {
-        state.favorites.push(unitId);
-      }
-    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchInventory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchInventory.fulfilled, (state, action) => {
+        state.loading = false;
+        // Transform the inventory data to include buildingName in each unit
+        const rawData = action.payload || {};
+
+        state.inventory = Object.keys(rawData).reduce((acc, key) => {
+          const units = rawData[key];
+          if (Array.isArray(units)) {
+            acc[key] = units.map((item) => ({
+              ...item,
+              buildingName: key,
+            }));
+          } else {
+            acc[key] = units;
+          }
+          return acc;
+        }, {});
+      })
+      .addCase(fetchInventory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   },
 });
 
@@ -123,16 +171,14 @@ export const {
   nextBuilding,
   prevBuilding,
   setBuilding,
-  toggleMenu,
-  closeMenu,
   resetBuilding,
   endTransition,
   setSelectedUnit,
   setMobileSelectedUnit,
   clearSelectedUnit,
-  setSnap,
+  setSnapHeight,
   setFilters,
   clearFilters,
-  toggleFavorite,
 } = buildingSlice.actions;
+
 export default buildingSlice.reducer;

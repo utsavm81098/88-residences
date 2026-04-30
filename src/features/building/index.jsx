@@ -1,14 +1,17 @@
 import React, { memo } from "react";
 import useBuilding from "./use-building";
+import useBuildingInstance from "./use-building-instance";
 import { BUILDING_CONFIG } from "@/utils/constant";
-import useBuildingModel from "./use-building-model";
 
+/**
+ * Renders all buildings in the scene and manages their visibility and transitions.
+ */
 const BuildingModel = ({
   controlsRef,
   position = [0, 0, 0],
   renderOrder = 0,
 }) => {
-  const { currentBuilding, groupRefs } = useBuildingModel({ controlsRef });
+  const { currentBuilding, groupRefs } = useBuilding({ controlsRef });
 
   return (
     <group position={position}>
@@ -39,8 +42,9 @@ const BuildingInstance = ({
     handlePointerOver,
     handlePointerOut,
     handlePointerMove,
+    handlePointerLeave,
     handleClick,
-  } = useBuilding({
+  } = useBuildingInstance({
     config,
     controlsRef,
   });
@@ -49,11 +53,13 @@ const BuildingInstance = ({
     <group ref={groupRef} visible={active}>
       <primitive object={buildingScene} renderOrder={renderOrder} />
       <primitive
+        key={glassScene.uuid}
         object={glassScene}
         renderOrder={renderOrder + 1}
         onPointerOver={active ? handlePointerOver : undefined}
         onPointerOut={active ? handlePointerOut : undefined}
         onPointerMove={active ? handlePointerMove : undefined}
+        onPointerLeave={active ? handlePointerLeave : undefined}
         onClick={active ? handleClick : undefined}
       />
     </group>

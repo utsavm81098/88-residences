@@ -1,11 +1,13 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import gsap from "gsap";
 import {
   setMobileSelectedUnit,
-  setSnap,
+  setSnapHeight,
 } from "@/store/slices/building-slice";
-import useInventory from "@/hooks/use-inventory";
+import useToggleState from "@/hooks/use-toggle-state";
+
+import { getActiveFiltersCount } from "@/utils/filter-helper";
 
 /**
  * Hook for the mobile bottom sheet menu.
@@ -15,37 +17,28 @@ export const useMobileMenu = ({ buildingUnits }) => {
   const lastSyncedIndex = useRef(-1);
   const dispatch = useDispatch();
 
-  const {
-    currentBuildingUnits,
-    activeFiltersCount,
-    selectedUnit,
-    filters,
-    mobileSelectedUnit
-  } = useInventory();
+  const { mobileSelectedUnit, filters } = useSelector((state) => state.building);
 
-  // On mobile, if no filters are active, we show all units of the current building
-  // If filters are active, we show the intersection
-  const displayUnits = useMemo(() => {
-    return activeFiltersCount > 0 ? currentBuildingUnits : buildingUnits;
-  }, [activeFiltersCount, currentBuildingUnits, buildingUnits]);
+  const activeFiltersCount = useMemo(
+    () => getActiveFiltersCount(filters),
+    [filters],
+  );
 
   // Keep units in ref for stable callback access
-  const unitsRef = useRef(displayUnits);
+  const unitsRef = useRef(buildingUnits);
   useEffect(() => {
-    unitsRef.current = displayUnits;
-  }, [displayUnits]);
+    unitsRef.current = buildingUnits;
+  }, [buildingUnits]);
 
   const [api, setApi] = useState(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  
-  const openFilter = useCallback(() => setIsFilterOpen(true), []);
-  const closeFilter = useCallback(() => setIsFilterOpen(false), []);
+  const [isFilterOpen, openFilter, closeFilter] = useToggleState(false);
 
   const animateTo = useCallback(
     (height) => {
-      dispatch(setSnap({ height, snapIndex: 1 }));
+      if (!sheetRef.current) return;
+      dispatch(setSnapHeight(height));
 
+      gsap.killTweensOf(sheetRef.current);
       gsap.to(sheetRef.current, {
         height,
         duration: 0.35,
@@ -55,23 +48,46 @@ export const useMobileMenu = ({ buildingUnits }) => {
     [dispatch],
   );
 
-  // Safe height observer - only depends on mounting
+  // Capture initial height and observe changes
   useEffect(() => {
     if (!sheetRef.current) return;
 
+    const updateHeight = () => {
+      requestAnimationFrame(() => {
+        if (!sheetRef.current) return;
+        const height = sheetRef.current.scrollHeight;
+        if (height > 0) {
+          dispatch(setSnapHeight(height));
+          gsap.killTweensOf(sheetRef.current);
+          gsap.to(sheetRef.current, {
+            height,
+            duration: 0.3,
+            ease: "power2.out",
+          });
+        }
+      });
+    };
+
+    updateHeight();
+
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const height = entry.target.scrollHeight;
+        const height = entry.target.scrollHeight || entry.contentRect.height;
         if (height > 0) {
-          dispatch(setSnap({ height, snapIndex: 1 }));
-          gsap.to(sheetRef.current, { height, duration: 0.3, ease: "power2.out" });
+          dispatch(setSnapHeight(height));
+          gsap.killTweensOf(sheetRef.current);
+          gsap.to(sheetRef.current, {
+            height,
+            duration: 0.3,
+            ease: "power2.out",
+          });
         }
       }
     });
 
     observer.observe(sheetRef.current);
     return () => observer.disconnect();
-  }, [dispatch]);
+  }, [dispatch, buildingUnits]);
 
   const handleApi = useCallback(
     (apiInstance) => {
@@ -83,7 +99,6 @@ export const useMobileMenu = ({ buildingUnits }) => {
         if (lastSyncedIndex.current === index) return;
 
         lastSyncedIndex.current = index;
-        setActiveIndex(index);
         const unit = unitsRef.current[index];
 
         if (unit) {
@@ -98,32 +113,22 @@ export const useMobileMenu = ({ buildingUnits }) => {
 
   // Sync carousel position & handle building changes
   useEffect(() => {
-    if (!api) return;
-
-    if (!unitsRef.current.length) {
-      if (mobileSelectedUnit) {
-        dispatch(setMobileSelectedUnit(null));
-      }
-      return;
-    }
+    if (!api || !unitsRef.current.length) return;
 
     // Use a stable reference for the current selected unit to sync carousel
-    const currentUnit = mobileSelectedUnit; 
+    const currentUnit = mobileSelectedUnit;
 
-    const foundIndex = currentUnit 
-      ? unitsRef.current.findIndex((u) => u.name === currentUnit.name)
+    const foundIndex = currentUnit
+      ? unitsRef.current.findIndex((u) => u.id === currentUnit.id)
       : -1;
 
     if (foundIndex === -1) {
       if (lastSyncedIndex.current !== 0) {
         api.scrollTo(0, true);
         lastSyncedIndex.current = 0;
-        setActiveIndex(0);
       }
-      // Always ensure the first unit is selected when the previous selection becomes invalid
-      // This fixes the issue where changing buildings or applying filters leaves no valid selection
       const firstUnit = unitsRef.current[0];
-      if (firstUnit) {
+      if (firstUnit && mobileSelectedUnit?.id !== firstUnit.id) {
         dispatch(setMobileSelectedUnit(firstUnit));
       }
       return;
@@ -132,27 +137,29 @@ export const useMobileMenu = ({ buildingUnits }) => {
     if (lastSyncedIndex.current !== foundIndex) {
       lastSyncedIndex.current = foundIndex;
       api.scrollTo(foundIndex, true);
-      setActiveIndex(foundIndex);
     }
-  }, [displayUnits, mobileSelectedUnit, api, dispatch]);
+  }, [buildingUnits, mobileSelectedUnit, api, dispatch]);
 
-  // Re-snap logic
+  // Re-snap logic on window resize
   useEffect(() => {
-    const handleResize = () => animateTo(0);
+    const handleResize = () => {
+      if (sheetRef.current) {
+        const height = sheetRef.current.scrollHeight;
+        dispatch(setSnapHeight(height));
+      }
+    };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [animateTo]);
+  }, [dispatch]);
 
   return {
     sheetRef,
-    activeIndex,
     handleApi,
     isFilterOpen,
     openFilter,
-    closeFilter: () => setIsFilterOpen(false),
-    displayUnits,
+    closeFilter,
     activeFiltersCount,
-    mobileSelectedUnit, // Restore this
+    mobileSelectedUnit,
   };
 };
 

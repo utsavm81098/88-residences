@@ -13,7 +13,7 @@ const RESPONSIVE_CONFIG = {
     label: { distanceX: 25, distanceZ: 18, fontSize: 1.2 },
   },
   tablet: {
-    cameraZ: 85, // Medium distance
+    cameraZ: 60, // Medium distance
     orbit: { min: 60, max: 120 },
     label: { distanceX: 28, distanceZ: 20, fontSize: 1.2 },
   },

@@ -32,6 +32,9 @@
     --filter-border: 0 0% 33%;
     --sidebar-border: 0 0% 22%;
     --card-bg-mobile: 233 11% 18%;
+    --available: 142 70% 45%;
+    --sold: 0 84% 60%;
+    --reserved: 38 92% 50%;
     --radius: 0.625rem;
   }
 

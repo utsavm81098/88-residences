@@ -4,63 +4,49 @@ import {
   nextBuilding,
   prevBuilding,
   setBuilding,
-  toggleMenu,
-  closeMenu,
   clearSelectedUnit,
-  clearFilters,
+  selectBuildingUnits,
 } from "@/store/slices/building-slice";
-import { unitData } from "@/utils/constant";
+import useToggleState from "@/hooks/use-toggle-state";
 import { useClickOutside } from "@/hooks/use-click-outside";
 
 export const useTopNavigation = () => {
   const dispatch = useDispatch();
-  const { currentBuilding, isMenuOpen } = useSelector(
-    (state) => state.building,
-  );
+  const { currentBuilding } = useSelector((state) => state.building);
+  const buildingUnits = useSelector(selectBuildingUnits);
+  const { state: isMenuOpen, open, close, set: setMenuOpen } = useToggleState(false);
 
   const menuRef = useRef(null);
 
   useClickOutside(menuRef, () => {
     if (isMenuOpen) {
-      dispatch(closeMenu());
+      close();
     }
   });
 
   const handleNext = useCallback(() => {
     dispatch(nextBuilding());
     dispatch(clearSelectedUnit());
-    dispatch(clearFilters());
   }, [dispatch]);
 
   const handlePrev = useCallback(() => {
     dispatch(prevBuilding());
     dispatch(clearSelectedUnit());
-    dispatch(clearFilters());
   }, [dispatch]);
 
   const handleSelect = useCallback(
     (index) => {
       dispatch(setBuilding(index));
       dispatch(clearSelectedUnit());
-      dispatch(clearFilters());
     },
     [dispatch],
   );
 
-  const onToggleMenu = useCallback(() => {
-    dispatch(toggleMenu());
-  }, [dispatch]);
+  const onToggleMenu = useCallback((open) => {
+    setMenuOpen(open);
+  }, [setMenuOpen]);
 
-  // Calculate total apts for the current building
-  const buildingUnits = useMemo(() => {
-    return unitData[currentBuilding.name] || [];
-  }, [currentBuilding.name]);
-
-  const totalApt = useMemo(() => {
-    return buildingUnits.reduce((acc, unit) => {
-      return acc + (Array.isArray(unit.name) ? unit.name.length : 1);
-    }, 0);
-  }, [buildingUnits]);
+  const totalApt = useMemo(() => buildingUnits.length, [buildingUnits]);
 
   return {
     currentBuilding,
@@ -74,3 +60,5 @@ export const useTopNavigation = () => {
     menuRef,
   };
 };
+
+export default useTopNavigation;
