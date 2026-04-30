@@ -8,7 +8,11 @@ import MainLayout from "@/layouts/main-layout";
 import Inventory from "@/pages/inventory";
 
 const RootRedirect = () => {
-  return <Navigate to={`/${i18n.language || "en"}`} replace />;
+  // Normalize language (e.g., 'en-GB' -> 'en') and fallback to 'en' if unsupported
+  const detectedLang = i18n.language?.split("-")[0];
+  const targetLang = SUPPORTED_LANGS.includes(detectedLang) ? detectedLang : "en";
+  
+  return <Navigate to={`/${targetLang}`} replace />;
 };
 
 const LangGuard = () => {

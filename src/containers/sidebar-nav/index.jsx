@@ -32,7 +32,7 @@ const NavSidebar = ({
     <aside
       className={cn(
         "absolute top-0 bottom-0 bg-background z-[100] flex flex-col transition-all duration-300 ease-in-out overflow-hidden",
-        "ltr:left-0 ltr:border-r rtl:right-0 rtl:border-l border-white/10",
+        "start-0 border-e border-white/10",
         isExpanded ? "w-[225px]" : "w-[55px]",
       )}
       onMouseEnter={onMouseEnter}
