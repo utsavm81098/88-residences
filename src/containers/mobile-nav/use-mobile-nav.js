@@ -23,34 +23,46 @@ export function useMobileNav() {
     set: setIsMoreOpen,
   } = useToggleState(false);
 
-  // Nav is active on inventory page (root path) or home
-  const isInventoryPage =
-    location.pathname === `/${i18n.language}` ||
-    location.pathname === `/${i18n.language}/` ||
-    location.pathname === `/${i18n.language}/${WEB_ROUTES.landing.path}`;
+  // Nav is active on inventory page
+  const normalizedPath = location.pathname.replace(/\/$/, "") || "/";
+  const isInventoryPage = normalizedPath.endsWith("/inventory");
 
   // Sync Redux state with route
   useEffect(() => {
-    const targetPanel = isInventoryPage ? "inventory" : activePanel || "home";
-    if (activePanel !== targetPanel) {
-      dispatch(setActivePanel(targetPanel));
+    if (isInventoryPage) {
+      if (activePanel !== "inventory") {
+        dispatch(setActivePanel("inventory"));
+      }
+    } else {
+      if (activePanel !== null) {
+        dispatch(setActivePanel(null));
+      }
     }
   }, [isInventoryPage, activePanel, dispatch]);
 
   const onNavItemClick = useCallback(
     (id) => {
-      dispatch(setActivePanel(id));
-      if (id === "home") {
-        navigate(`/${i18n.language}/${WEB_ROUTES.home.path}`);
-      } else if (id === "inventory") {
-        navigate(`/${i18n.language}/${WEB_ROUTES.landing.path}`);
-      } else if (id === "more") {
+      if (id === "more") {
         openMore();
+        return;
       }
+
+      const lang = i18n.language?.split("-")[0].toLowerCase() || "en";
+      const path = id === "home" ? "" : id;
+      const targetPath = `/${lang}${path ? `/${path}` : ""}`;
+
+      if (
+        location.pathname !== targetPath &&
+        location.pathname !== `${targetPath}/`
+      ) {
+        navigate(targetPath);
+      }
+
+      dispatch(setActivePanel(id === "home" ? null : id));
     },
-    [dispatch, navigate, i18n.language],
+    [dispatch, navigate, i18n.language, location.pathname, openMore],
   );
- 
+
   const onLanguageChange = useCallback(
     (langCode) => {
       i18n.changeLanguage(langCode);
@@ -70,7 +82,7 @@ export function useMobileNav() {
     [i18n, location.pathname, navigate],
   );
 
-  const currentActiveId = isInventoryPage ? "inventory" : activePanel || "home";
+  const currentActiveId = isInventoryPage ? "inventory" : "home";
 
   return {
     activeNavItem: currentActiveId,
@@ -78,7 +90,7 @@ export function useMobileNav() {
     isMoreOpen,
     setIsMoreOpen,
     languages: LANGUAGES,
-    activeLanguage: i18n.language,
+    activeLanguage: i18n.language?.split("-")[0].toLowerCase() || "en",
     onLanguageChange,
     navItems: NAV_ITEMS,
   };

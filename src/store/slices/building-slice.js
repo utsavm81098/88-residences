@@ -147,7 +147,7 @@ export const buildingSlice = createSlice({
         // Transform the inventory data to include buildingName in each unit
         const rawData = action.payload || {};
 
-        state.inventory = Object.keys(rawData).reduce((acc, key) => {
+        const finalData = Object.keys(rawData).reduce((acc, key) => {
           const units = rawData[key];
           if (Array.isArray(units)) {
             acc[key] = units.map((item) => ({
@@ -159,6 +159,8 @@ export const buildingSlice = createSlice({
           }
           return acc;
         }, {});
+
+        state.inventory = finalData;
       })
       .addCase(fetchInventory.rejected, (state, action) => {
         state.loading = false;

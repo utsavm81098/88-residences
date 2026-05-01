@@ -5,6 +5,10 @@ import AppProviders from "./app.jsx";
 import { Provider } from "react-redux";
 import { store } from "@/store";
 import { initPromise } from "@/i18n";
+import { preloadModels } from "@/utils/preloader";
+
+// Start preloading 3D models immediately
+preloadModels();
 
 const root = createRoot(document.getElementById("root"));
 

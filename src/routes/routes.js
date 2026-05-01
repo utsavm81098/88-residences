@@ -9,11 +9,11 @@ export const AUTH_ROUTES = {
 
 export const WEB_ROUTES = {
   landing: {
-    path: "",
+    path: "inventory",
     title: APP_TITLE,
   },
   home: {
-    path: "home",
+    path: "",
     title: "Home",
   },
 };

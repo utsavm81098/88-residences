@@ -27,7 +27,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
 
   return (
     <>
-      <div className="hidden lg:flex absolute top-6 ltr:right-6 rtl:left-6 items-center gap-3 pointer-events-none z-[1000] select-none">
+      <div className="hidden lg:flex absolute top-6 end-6 items-center gap-3 pointer-events-none z-[1000] select-none">
         <div className="relative pointer-events-auto">
           <DropdownMenu onOpenChange={(open) => onToggleMenu(open)}>
             <div className="flex items-center justify-between min-w-[200px] h-12 px-3 bg-nav/85 backdrop-blur-md border border-white/10 rounded-full shadow-2xl transition-all duration-200 hover:border-white/20">

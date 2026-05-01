@@ -1,9 +1,6 @@
 import React from "react";
 import { useMobileNav } from "./use-mobile-nav";
-import {
-  Sheet,
-  SheetContent,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useTranslation } from "react-i18next";
 import { SvgIcon } from "@/components/ui/svg-icon";
 import { cn } from "@/lib/utils";
@@ -22,7 +19,7 @@ import {
 const MobileNavBar = ({ activeNavItem, onNavItemClick }) => {
   const { t } = useTranslation();
   return (
-    <div className="flex items-center justify-between bg-sidebar px-6 py-2 shadow-2xl border-t border-white/5 pointer-events-auto w-full">
+    <div className="flex items-center justify-between bg-sidebar px-6 pt-2 pb-[calc(8px+env(safe-area-inset-bottom))] border-t border-white/5 w-full opacity-100">
       {NAV_ITEMS_MOBILE.map((item) => {
         const isActive = activeNavItem === item.id;
         const Icon = item.icon;
@@ -72,13 +69,12 @@ export default function MobileNavContainer() {
   } = useMobileNav();
   const { t } = useTranslation();
 
-  const activeLang = languages.find((l) => l.code === activeLanguage);
+  const activeLang =
+    languages.find((l) => l.code === activeLanguage) || languages[0];
 
   return (
     <>
-      <MobileNavBar
-        {...{ activeNavItem, onNavItemClick }}
-      />
+      <MobileNavBar {...{ activeNavItem, onNavItemClick }} />
 
       <Sheet open={isMoreOpen} onOpenChange={setIsMoreOpen}>
         <SheetContent

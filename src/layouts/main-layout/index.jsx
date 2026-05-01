@@ -1,6 +1,9 @@
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { Outlet } from "react-router";
+import { fetchInventory } from "@/store/slices/building-slice";
 import SidebarNavContainer from "@/containers/sidebar-nav";
 import MobileNavContainer from "@/containers/mobile-nav";
-import { Outlet } from "react-router";
 
 /**
  * MainLayout provides the global navigation structure for the application.
@@ -8,6 +11,12 @@ import { Outlet } from "react-router";
  * and an Outlet for rendering page-specific content.
  */
 export default function MainLayout() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchInventory());
+  }, [dispatch]);
+
   return (
     <div className="flex h-screen w-screen bg-background text-white font-outfit overflow-hidden relative">
       {/* 
@@ -31,8 +40,8 @@ export default function MainLayout() {
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden absolute bottom-0 left-0 right-0 z-[120] pointer-events-none">
+      {/* Mobile Bottom Navigation - Fixed to viewport to avoid layout interference */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[120] pointer-events-auto">
         <MobileNavContainer />
       </div>
     </div>

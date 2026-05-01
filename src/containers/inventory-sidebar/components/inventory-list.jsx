@@ -147,9 +147,8 @@ const InventoryList = ({
                             <div className="text-[11px] text-center opacity-70">
                               {unit.apartment_area || "0"}
                             </div>
-                            <div className="text-[12px] font-bold text-end pr-4">
-                              €
-                              {(unit.apartment_price_raw || 0).toLocaleString()}
+                            <div className="text-[12px] font-bold text-end pe-4">
+                              {(unit.apartment_price || 0).toLocaleString()}
                             </div>
                           </div>
                         );

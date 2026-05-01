@@ -21,6 +21,7 @@ function FilterRange({
   return (
     <div
       data-slot="filter-range"
+      dir={i18n.dir()}
       className="flex flex-col gap-2 pt-2"
       {...props}>
       <label className="text-[13px] font-medium text-white/70">{label}</label>

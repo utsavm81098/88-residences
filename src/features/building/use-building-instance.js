@@ -3,6 +3,7 @@ import gsap from "gsap";
 import * as THREE from "three";
 import { UNIT_COLORS, OUTLINE_KEY, BUILDING_CONFIG } from "@/utils/constant";
 import { useGLTF } from "@react-three/drei";
+import { configureLoader } from "@/utils/preloader";
 import { useThree } from "@react-three/fiber";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -15,25 +16,8 @@ import {
   setMobileSelectedUnit,
 } from "@/store/slices/building-slice";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
-import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader";
-import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
-
-const THREE_PATH = "https://unpkg.com/three@0.172.0";
-const DRACO_PATH = `${THREE_PATH}/examples/jsm/libs/draco/gltf/`;
-const BASIS_PATH = `${THREE_PATH}/examples/jsm/libs/basis/`;
-
-const configureLoader = (loader) => {
-  const dracoLoader = new DRACOLoader().setDecoderPath(DRACO_PATH);
-  const ktx2Loader = new KTX2Loader().setTranscoderPath(BASIS_PATH);
-  loader.setDRACOLoader(dracoLoader);
-  loader.setKTX2Loader(ktx2Loader);
-  loader.setMeshoptDecoder(MeshoptDecoder);
-};
-
-BUILDING_CONFIG.forEach((b) => {
-  useGLTF.preload(b.model, DRACO_PATH, false, configureLoader);
-});
+// Preloading is now handled globally in src/main.jsx via src/utils/preloader.js
+const DRACO_PATH = "https://unpkg.com/three@0.172.0/examples/jsm/libs/draco/gltf/";
 
 const _Y_AXIS = new THREE.Vector3(0, 1, 0);
 const _hitPoint = new THREE.Vector3();

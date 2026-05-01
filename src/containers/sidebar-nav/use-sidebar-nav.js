@@ -16,7 +16,12 @@ export function useSidebarNav() {
 
   const activePanel = useSelector((state) => state.sidebar.activePanel);
   const [isHovered, setIsHovered] = useState(false);
-  const { state: isMenuOpen, set: setIsMenuOpen, open, close } = useToggleState(false);
+  const {
+    state: isMenuOpen,
+    set: setIsMenuOpen,
+    open,
+    close,
+  } = useToggleState(false);
 
   // Sequential transition: Menu closes first, then sidebar collapses
   const onOpenChange = useCallback((open) => {
@@ -31,18 +36,23 @@ export function useSidebarNav() {
     }
   }, []);
 
-  // Nav is collapsible only on the inventory page (root path)
-  const isInventoryPage =
-    location.pathname === `/${i18n.language}` ||
-    location.pathname === `/${i18n.language}/` ||
-    location.pathname === `/${i18n.language}/${WEB_ROUTES.landing.path}`;
+  // Nav is collapsible only on the inventory page
+  const normalizedPath = location.pathname.replace(/\/$/, "") || "/";
+  const langPath = `/${i18n.language}`;
+  const isInventoryPage = normalizedPath.endsWith("/inventory");
   const isCollapsible = isInventoryPage;
 
-  // Sync Redux state with route
+  // Sync Redux state with route - Automatically open inventory panel on inventory page
   useEffect(() => {
-    const targetPanel = isInventoryPage ? "inventory" : "home";
-    if (activePanel !== targetPanel) {
-      dispatch(setActivePanel(targetPanel));
+    if (isInventoryPage) {
+      if (activePanel !== "inventory") {
+        dispatch(setActivePanel("inventory"));
+      }
+    } else {
+      // Close panels when returning to home page
+      if (activePanel !== null) {
+        dispatch(setActivePanel(null));
+      }
     }
   }, [isInventoryPage, activePanel, dispatch]);
 
@@ -60,14 +70,21 @@ export function useSidebarNav() {
 
   const onNavItemClick = useCallback(
     (id) => {
-      dispatch(setActivePanel(id));
-      if (id === "home") {
-        navigate(`/${i18n.language}/${WEB_ROUTES.home.path}`);
-      } else if (id === "inventory") {
-        navigate(`/${i18n.language}/${WEB_ROUTES.landing.path}`);
+      const lang = i18n.language?.split("-")[0].toLowerCase() || "en";
+      // "home" -> "/en", "inventory" -> "/en/inventory"
+      const path = id === "home" ? "" : id;
+      const targetPath = `/${lang}${path ? `/${path}` : ""}`;
+
+      if (
+        location.pathname !== targetPath &&
+        location.pathname !== `${targetPath}/`
+      ) {
+        navigate(targetPath);
       }
+
+      dispatch(setActivePanel(id === "home" ? null : id));
     },
-    [dispatch, navigate, i18n.language],
+    [navigate, dispatch, i18n.language, location.pathname],
   );
 
   const currentActiveId = isInventoryPage ? "inventory" : "home";
@@ -100,7 +117,7 @@ export function useSidebarNav() {
     activeNavItem: currentActiveId,
     onNavItemClick,
     languages: LANGUAGES,
-    activeLanguage: i18n.language,
+    activeLanguage: i18n.language?.split("-")[0].toLowerCase() || "en",
     onLanguageChange,
   };
 }
