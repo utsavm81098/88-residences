@@ -27,7 +27,8 @@ const TopNavigationContainer = memo(({ onReset }) => {
 
   return (
     <>
-      <div className="hidden lg:flex absolute top-6 end-6 items-center gap-3 pointer-events-none z-[1000] select-none">
+      {/* Desktop Top Navigation (Centered) */}
+      <div className="hidden lg:flex absolute top-6 start-1/2 -translate-x-1/2 items-center pointer-events-none z-[1000] select-none">
         <div className="relative pointer-events-auto">
           <DropdownMenu onOpenChange={(open) => onToggleMenu(open)}>
             <div className="flex items-center justify-between min-w-[200px] h-12 px-3 bg-nav/85 backdrop-blur-md border border-white/10 rounded-full shadow-2xl transition-all duration-200 hover:border-white/20">
@@ -42,7 +43,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
                 disabled={buildings.length <= 1}
               >
                 <ICONS.ChevronLeft
-                  size={20}
+                  size={24}
                   strokeWidth={2}
                   className="rtl:rotate-180"
                 />
@@ -72,7 +73,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
                 disabled={buildings.length <= 1}
               >
                 <ICONS.ChevronRight
-                  size={20}
+                  size={24}
                   strokeWidth={2}
                   className="rtl:rotate-180"
                 />
@@ -105,6 +106,10 @@ const TopNavigationContainer = memo(({ onReset }) => {
             )}
           </DropdownMenu>
         </div>
+      </div>
+
+      {/* Desktop Reset Button (Top-Right) */}
+      <div className="hidden lg:flex absolute top-6 end-6 pointer-events-none z-[1000] select-none">
         <Button
           variant="ghost"
           size="icon-lg"
@@ -112,6 +117,52 @@ const TopNavigationContainer = memo(({ onReset }) => {
           onClick={onReset}
         >
           <ICONS.RotateCw size={20} strokeWidth={2} />
+        </Button>
+      </div>
+
+      {/* Left Navigation Arrow (Desktop) */}
+      <div className="hidden lg:flex absolute top-1/2 start-6 -translate-y-1/2 z-[1000] pointer-events-none select-none">
+        <Button
+          variant="ghost"
+          className={cn(
+            "size-48 bg-transparent text-white/40",
+            "hover:text-white hover:!bg-transparent hover:scale-105",
+            "transition-all pointer-events-auto disabled:opacity-50",
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePrev();
+          }}
+          disabled={buildings.length <= 1}
+          aria-label="Previous building"
+        >
+          <ICONS.ChevronLeft
+            className="!size-40 rtl:rotate-180"
+            strokeWidth={1}
+          />
+        </Button>
+      </div>
+
+      {/* Right Navigation Arrow (Desktop) */}
+      <div className="hidden lg:flex absolute top-1/2 end-6 -translate-y-1/2 z-[1000] pointer-events-none select-none">
+        <Button
+          variant="ghost"
+          className={cn(
+            "size-48 bg-transparent text-white/40",
+            "hover:text-white hover:!bg-transparent hover:scale-105",
+            "transition-all pointer-events-auto disabled:opacity-50",
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleNext();
+          }}
+          disabled={buildings.length <= 1}
+          aria-label="Next building"
+        >
+          <ICONS.ChevronRight
+            className="!size-40 rtl:rotate-180"
+            strokeWidth={1}
+          />
         </Button>
       </div>
 

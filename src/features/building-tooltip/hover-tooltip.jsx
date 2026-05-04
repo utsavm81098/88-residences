@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -94,4 +94,4 @@ const HoverTooltip = ({
   );
 };
 
-export default HoverTooltip;
+export default memo(HoverTooltip);

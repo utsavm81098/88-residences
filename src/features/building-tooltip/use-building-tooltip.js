@@ -1,6 +1,7 @@
 import { useSelector } from "react-redux";
 import { useEffect, useMemo, useRef } from "react";
 import gsap from "gsap";
+import { extractDigit } from "@/utils/helper";
 
 export const useBuildingTooltip = () => {
   const visible = useSelector((state) => state.tooltip.visible);
@@ -22,42 +23,101 @@ export const useBuildingTooltip = () => {
   // GSAP animation references
   const hoverTooltipRef = useRef(null);
 
-  // Keep track of active state for the global event listener without triggering re-renders
+  // Keep track of active state and current unit for the global event listener without triggering re-renders
   const isActiveRef = useRef(showHoverTooltip);
   isActiveRef.current = showHoverTooltip;
+
+  const unitRef = useRef(unit);
+  unitRef.current = unit;
+
+  // ── Performance Optimizations: Dimension & Logic Caching ──────────
+  const dimensionsRef = useRef({ width: 280, height: 140 });
+  const floorConfigRef = useRef({ isLowFloor: false });
+  const rafIdRef = useRef(null);
+
+  // Measure dimensions and pre-calculate floor logic only when unit/visibility changes
+  // This avoids calling offsetWidth/offsetHeight and extractDigit on every mousemove (layout thrashing)
+  useEffect(() => {
+    if (showHoverTooltip && hoverTooltipRef.current) {
+      const el = hoverTooltipRef.current;
+
+      // Small delay to ensure content is rendered before measuring
+      const timeout = setTimeout(() => {
+        dimensionsRef.current = {
+          width: el.offsetWidth || 280,
+          height: el.offsetHeight || 140,
+        };
+      }, 0);
+
+      // Pre-calculate floor logic
+      const floorStr = unit?.floor_no?.slug || unit?.floor_no?.name || "";
+      const extractedFloor = extractDigit(floorStr);
+      const floorNum = parseInt(extractedFloor);
+
+      floorConfigRef.current = {
+        isLowFloor: !isNaN(floorNum) && floorNum <= 2,
+        hasFloorInfo: !isNaN(floorNum),
+      };
+
+      return () => clearTimeout(timeout);
+    }
+  }, [showHoverTooltip, unit]);
 
   // ── Mouse position → direct DOM mutation (bypasses React render cycle) ────
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isActiveRef.current || !hoverTooltipRef.current) return;
 
-      const { clientX: x, clientY: y } = e;
-      const OFFSET_X = 16;
-      const OFFSET_Y = 16;
+      // Cancel previous frame to ensure we only update once per display refresh
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
 
-      const el = hoverTooltipRef.current;
-      const width = el.offsetWidth || 280;
-      const height = el.offsetHeight || 140;
+      rafIdRef.current = requestAnimationFrame(() => {
+        const el = hoverTooltipRef.current;
+        if (!el) return;
 
-      let posX = x + OFFSET_X;
-      let posY = y + OFFSET_Y;
+        const { clientX: x, clientY: y } = e;
+        const OFFSET_X = 16;
+        const OFFSET_Y = 16;
 
-      // Flip above cursor if too close to bottom
-      if (posY + height > window.innerHeight) {
-        posY = y - height - OFFSET_Y;
-      }
+        // Use cached dimensions and floor logic
+        const { width, height } = dimensionsRef.current;
+        const { isLowFloor, hasFloorInfo } = floorConfigRef.current;
 
-      // Flip left of cursor if too close to right edge
-      if (posX + width > window.innerWidth) {
-        posX = x - width - OFFSET_X;
-      }
+        // Horizontal position: Default to right of cursor
+        let posX = x + OFFSET_X;
 
-      // Direct DOM mutation — zero React overhead
-      el.style.transform = `translate(${posX}px, ${posY}px)`;
+        // Vertical position: Use pre-calculated floor logic or screen fallback
+        let posY;
+        if (hasFloorInfo) {
+          posY = isLowFloor ? y - height - OFFSET_Y : y + OFFSET_Y;
+        } else {
+          // Fallback to screen threshold (middle)
+          const THRESHOLD_Y = window.innerHeight * 0.5;
+          posY = y < THRESHOLD_Y ? y + OFFSET_Y : y - height - OFFSET_Y;
+        }
+
+        // Flip left of cursor if too close to right edge
+        if (posX + width > window.innerWidth) {
+          posX = x - width - OFFSET_X;
+        }
+
+        // Final boundary safety checks (keep within viewport)
+        if (posX < 0) posX = 0;
+        if (posY < 0) posY = 0;
+        if (posY + height > window.innerHeight) {
+          posY = window.innerHeight - height;
+        }
+
+        // Direct DOM mutation for maximum performance
+        el.style.transform = `translate(${posX}px, ${posY}px)`;
+      });
     };
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    };
   }, []);
 
   // ── Desktop popup entrance/exit animation (useEffect pattern) ──────────

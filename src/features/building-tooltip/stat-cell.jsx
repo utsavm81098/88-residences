@@ -1,4 +1,6 @@
-const StatCell = ({ icon: Icon, value, label }) => (
+import { memo } from "react";
+
+const StatCell = memo(({ icon: Icon, value, label }) => (
   <div className="flex flex-col items-start gap-0.5 text-white">
     <div className="flex items-center gap-1.5">
       <span className="text-slate-500 shrink-0">{Icon}</span>
@@ -8,6 +10,6 @@ const StatCell = ({ icon: Icon, value, label }) => (
       {label}
     </div>
   </div>
-);
+));
 
 export default StatCell;

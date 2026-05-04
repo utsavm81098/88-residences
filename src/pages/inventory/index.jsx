@@ -1,9 +1,9 @@
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import "@/app.css";
 import { Canvas } from "@react-three/fiber";
 import TopNavigation from "@/containers/top-navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { resetBuilding, fetchInventory } from "@/store/slices/building-slice";
+import { resetBuilding } from "@/store/slices/building-slice";
 import SceneEnvironment from "@/features/scene-environment";
 import AdaptiveControls from "@/features/adaptive-controls";
 import DirectionLabel from "@/features/direction-label";
