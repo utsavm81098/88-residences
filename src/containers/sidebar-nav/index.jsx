@@ -25,7 +25,8 @@ const NavSidebar = ({
   activeNavItem,
   onNavItemClick,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.dir() === "rtl";
   const activeLang = languages.find((l) => l.code === activeLanguage);
 
   return (
@@ -119,8 +120,8 @@ const NavSidebar = ({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            side={isExpanded ? "bottom" : "right"}
-            align={isExpanded ? "start" : "end"}
+            side={isExpanded ? "bottom" : isRTL ? "left" : "right"}
+            align={isExpanded ? (isRTL ? "end" : "start") : "end"}
             className="w-48 border-white/10 text-white"
           >
             {languages.map((lang) => (

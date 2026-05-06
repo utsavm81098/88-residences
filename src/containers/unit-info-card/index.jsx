@@ -48,8 +48,8 @@ const UnitInfoCardContainer = ({ unit, selectedBuilding }) => {
             )}
           </div>
           {status !== "sold" && unit.apartment_price && (
-            <div className="text-white/90 font-bold text-lg">
-              {unit.apartment_price}
+            <div className="text-white/90 font-bold text-lg text-start">
+              <span dir="ltr">{unit.apartment_price}</span>
             </div>
           )}
         </CardHeader>

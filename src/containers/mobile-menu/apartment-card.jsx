@@ -25,16 +25,20 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
       </div>
 
       {unit?.apartment_sold ? (
-        <Badge
-          variant="sold"
-          className="text-[10px] uppercase tracking-wider px-2 py-0 w-fit"
-        >
-          {t("sold")}
-        </Badge>
+        <div className="w-full text-start">
+          <Badge
+            variant="sold"
+            className="text-[10px] uppercase tracking-wider px-2 py-0 w-fit"
+          >
+            {t("sold")}
+          </Badge>
+        </div>
       ) : (
-        <span className="text-[18px] font-bold text-white tracking-tight leading-none">
-          {unit?.apartment_price}
-        </span>
+        <div className="w-full text-start">
+          <span className="text-[18px] font-bold text-white tracking-tight leading-none" dir="ltr">
+            {unit?.apartment_price}
+          </span>
+        </div>
       )}
 
       {/* ── Stats Grid ── */}

@@ -14,7 +14,7 @@ const InventoryFilters = ({ filters, onFilterChange, className }) => {
   const { t } = useTranslation();
 
   return (
-    <div className={cn("space-y-5", className)}>
+    <div className={cn("flex flex-col gap-4 w-full", className)}>
       {/* Rooms Filter */}
       <FilterGroup
         label={t("rooms")}

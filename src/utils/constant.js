@@ -66,6 +66,22 @@ export const FILTER_OPTIONS = {
   areaRange: { min: 30, max: 120 },
 };
 
+// ── Grid ───────────────────────────────────────────────────────────────────────
+export const GRID_CONFIG = {
+  position: [0, 0.01, 0],
+  args: [100, 100],
+  cellSize: 2,
+  cellThickness: 0,
+  sectionSize: 10,
+  sectionThickness: 0.9,
+  sectionColor: "#ffffff",
+  fadeDistance: 200,
+  fadeStrength: 1,
+  followCamera: false,
+  infiniteGrid: true,
+  renderOrder: 1,
+};
+
 export const EXPOSURE = -1.4;
 
 export const CANVAS_GL_CONFIG = {

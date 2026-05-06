@@ -9,43 +9,47 @@ const DIRECTION_NAMES = {
   W: "WEST",
 };
 
-const Label = memo(({ children, position, onMoveCamera, dir, fontSize, isDragging }) => {
-  const { textRef, handleClick, handlePointerOver, handlePointerOut } = useLabel({
-    isDragging,
-    dir,
-    onMoveCamera,
-  });
+const Label = memo(
+  ({ children, position, onMoveCamera, dir, fontSize, isDragging }) => {
+    const { textRef, handleClick, handlePointerOver, handlePointerOut } =
+      useLabel({
+        isDragging,
+        dir,
+        onMoveCamera,
+      });
 
-  return (
-    <Billboard
-      position={position}
-      follow
-      lockX={false}
-      lockY={false}
-      lockZ={false}
-    >
-      <Text
-        ref={textRef}
-        fontSize={fontSize}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-        depthTest={false}
-        renderOrder={100}
-        onClick={handleClick}
-        onPointerOver={handlePointerOver}
-        onPointerOut={handlePointerOut}
+    return (
+      <Billboard
+        position={position}
+        follow
+        lockX={false}
+        lockY={false}
+        lockZ={false}
       >
-        {children}
-      </Text>
-    </Billboard>
-  );
-});
+        <Text
+          ref={textRef}
+          fontSize={fontSize}
+          color="white"
+          anchorX="center"
+          anchorY="middle"
+          depthTest={false}
+          renderOrder={100}
+          onClick={handleClick}
+          onPointerOver={handlePointerOver}
+          onPointerOut={handlePointerOut}
+        >
+          {children}
+        </Text>
+      </Billboard>
+    );
+  },
+);
 
 const DirectionLabel = ({ controlsRef }) => {
-  const { positions, fontSize, moveCamera, isDragging, isTransitioning } = useDirectionLabel({
-    controlsRef,
-  });
+  const { positions, fontSize, moveCamera, isDragging, isTransitioning } =
+    useDirectionLabel({
+      controlsRef,
+    });
 
   // Hide labels immediately while the building transitions
   if (isTransitioning) return null;

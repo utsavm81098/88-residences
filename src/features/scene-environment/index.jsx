@@ -8,9 +8,8 @@ import {
   AdaptiveEvents,
 } from "@react-three/drei";
 import { EffectComposer, SMAA } from "@react-three/postprocessing";
-import { GRID_CONFIG } from "@/utils/config";
 import useSceneEnvironment from "./use-scene-environment";
-import { Preset } from "@/utils/constant";
+import { GRID_CONFIG, Preset } from "@/utils/constant";
 
 const SceneEnvironment = ({ children }) => {
   const {

@@ -17,7 +17,8 @@ import {
 } from "@/store/slices/building-slice";
 import { useIsMobile } from "@/hooks/use-mobile";
 // Preloading is now handled globally in src/main.jsx via src/utils/preloader.js
-const DRACO_PATH = "https://unpkg.com/three@0.172.0/examples/jsm/libs/draco/gltf/";
+const DRACO_PATH =
+  "https://unpkg.com/three@0.172.0/examples/jsm/libs/draco/gltf/";
 
 const _Y_AXIS = new THREE.Vector3(0, 1, 0);
 const _hitPoint = new THREE.Vector3();

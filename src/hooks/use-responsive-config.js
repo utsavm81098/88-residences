@@ -18,8 +18,8 @@ const RESPONSIVE_CONFIG = {
     label: { distanceX: 28, distanceZ: 20, fontSize: 1.2 },
   },
   desktop: {
-    cameraZ: 70, // Closest default distance
-    orbit: { min: 60, max: 90 }, // Tighter zoom limits on desktop
+    cameraZ: 71, // Closest default distance
+    orbit: { min: 71, max: 90 }, // Tighter zoom limits on desktop
     label: { distanceX: 30, distanceZ: 20, fontSize: 1.5 },
   },
 };

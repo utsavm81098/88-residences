@@ -28,65 +28,68 @@ const TopNavigationContainer = memo(({ onReset }) => {
   return (
     <>
       {/* Desktop Top Navigation (Centered) */}
-      <div className="hidden lg:flex absolute top-6 start-1/2 -translate-x-1/2 items-center pointer-events-none z-[1000] select-none">
+      <div className="hidden lg:flex absolute top-6 left-1/2 -translate-x-1/2 items-center pointer-events-none z-[1000] select-none">
         <div className="relative pointer-events-auto">
           <DropdownMenu onOpenChange={(open) => onToggleMenu(open)}>
-            <div className="flex items-center justify-between min-w-[200px] h-12 px-3 bg-nav/85 backdrop-blur-md border border-white/10 rounded-full shadow-2xl transition-all duration-200 hover:border-white/20">
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                className="text-white/70 hover:text-white rounded-full border-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePrev();
-                }}
-                disabled={buildings.length <= 1}
-              >
-                <ICONS.ChevronLeft
-                  size={24}
-                  strokeWidth={2}
-                  className="rtl:rotate-180"
-                />
-              </Button>
+            <DropdownMenuTrigger asChild>
+              <div className="flex items-center justify-between h-12 px-3 bg-nav/85 backdrop-blur-md border border-white/10 rounded-full shadow-2xl transition-all duration-200 hover:border-white/20 cursor-pointer">
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  className="text-white/70 hover:text-white rounded-full border-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePrev();
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onPointerUp={(e) => e.stopPropagation()}
+                  disabled={buildings.length <= 1}
+                >
+                  <ICONS.ChevronLeft
+                    size={24}
+                    strokeWidth={2}
+                    className="rtl:rotate-180"
+                  />
+                </Button>
 
-              <DropdownMenuTrigger asChild>
                 <div
                   className={cn(
                     "mx-4 text-white font-outfit font-semibold text-base tracking-wider transition-colors",
                     buildings.length > 1
-                      ? "cursor-pointer hover:text-white/80"
+                      ? "hover:text-white/80"
                       : "cursor-default",
                   )}
                 >
-                  {currentBuilding.name}
+                  {currentBuilding.name + " Building"}
                 </div>
-              </DropdownMenuTrigger>
 
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                className="text-white/70 hover:text-white rounded-full border-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleNext();
-                }}
-                disabled={buildings.length <= 1}
-              >
-                <ICONS.ChevronRight
-                  size={24}
-                  strokeWidth={2}
-                  className="rtl:rotate-180"
-                />
-              </Button>
-            </div>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  className="text-white/70 hover:text-white rounded-full border-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNext();
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onPointerUp={(e) => e.stopPropagation()}
+                  disabled={buildings.length <= 1}
+                >
+                  <ICONS.ChevronRight
+                    size={24}
+                    strokeWidth={2}
+                    className="rtl:rotate-180"
+                  />
+                </Button>
+              </div>
+            </DropdownMenuTrigger>
 
             {buildings.length > 1 && (
               <DropdownMenuContent
-                className="w-[200px] bg-nav/95 backdrop-blur-xl border-white/10 rounded-xl shadow-2xl overflow-hidden p-0 z-[9999]"
+                className="w-[var(--radix-dropdown-menu-trigger-width)] bg-nav/95 backdrop-blur-xl border-white/10 rounded-xl shadow-2xl overflow-hidden p-0 z-[9999]"
                 align="center"
-                sideOffset={8}
               >
-                <div className="max-h-[240px] overflow-y-auto custom-scrollbar py-1">
+                <div className="max-h-[230px] overflow-y-auto custom-scrollbar py-1">
                   {buildings.map((b, idx) => (
                     <DropdownMenuItem
                       key={b.name}

@@ -27,12 +27,12 @@ export const errorHandler = (handleTry, handleCatch, handleFinally) => {
     return handleTry();
   } catch (error) {
     logError(error);
-    if (typeof handleCatch === 'function') {
+    if (typeof handleCatch === "function") {
       return handleCatch(error);
     }
     return null;
   } finally {
-    if (typeof handleFinally === 'function') {
+    if (typeof handleFinally === "function") {
       handleFinally();
     }
   }

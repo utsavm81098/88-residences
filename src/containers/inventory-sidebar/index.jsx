@@ -19,6 +19,7 @@ const InventorySidebarContainer = () => {
     scrollRef,
     itemRefs,
     totalApartments,
+    loading,
   } = useInventorySidebar();
 
   const { t, i18n } = useTranslation();
@@ -62,6 +63,7 @@ const InventorySidebarContainer = () => {
           scrollRef,
           itemRefs,
           totalApartments,
+          loading,
         }}
       />
     </div>

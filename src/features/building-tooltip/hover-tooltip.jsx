@@ -39,8 +39,8 @@ const HoverTooltip = ({
               {unit.apartment_number || unit.title}
             </span>
             {status === "available" ? (
-              <span className="text-[15px] font-bold text-white/90 tracking-tight">
-                {unit.apartment_price}
+              <span className="text-[15px] font-bold text-white/90 tracking-tight text-start">
+                <span dir="ltr">{unit.apartment_price}</span>
               </span>
             ) : (
               <Badge

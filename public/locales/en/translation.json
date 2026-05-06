@@ -43,5 +43,6 @@
   "show_apartments": "Show Apartments",
   "select_language": "Select Language",
   "more": "More",
-  "find_property": "Find Property"
+  "find_property": "Find Property",
+  "loading": "Loading"
 }

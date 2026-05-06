@@ -13,9 +13,14 @@ export const useInventorySidebar = () => {
   const dispatch = useDispatch();
   const scrollRef = useRef(null);
   const itemRefs = useRef({});
-  const { selectedUnit, filters, inventory, currentBuilding } = useSelector(
-    (state) => state.building,
-  );
+  const {
+    selectedUnit,
+    filters,
+    inventory,
+    currentBuilding,
+    loading,
+    isTransitioning,
+  } = useSelector((state) => state.building);
   const filteredUnits = useSelector(selectFilteredInventory);
 
   const [activeAccordionState, setActiveAccordionState] = useState(null);
@@ -72,7 +77,11 @@ export const useInventorySidebar = () => {
   );
   // Auto-scroll to specific building when it changes
   useEffect(() => {
-    if (currentBuilding?.name && itemRefs.current[currentBuilding.name]) {
+    if (
+      !isTransitioning &&
+      currentBuilding?.name &&
+      itemRefs.current[currentBuilding.name]
+    ) {
       const container = scrollRef.current;
       const element = itemRefs.current[currentBuilding.name];
       if (container && element) {
@@ -82,7 +91,7 @@ export const useInventorySidebar = () => {
         });
       }
     }
-  }, [currentBuilding?.name]);
+  }, [currentBuilding?.name, isTransitioning]);
 
   return {
     filters,
@@ -97,5 +106,6 @@ export const useInventorySidebar = () => {
     currentBuilding,
     scrollRef,
     itemRefs,
+    loading,
   };
 };

@@ -1,10 +1,8 @@
-import { useEffect } from "react";
-import { useThree } from "@react-three/fiber";
 import { useSelector } from "react-redux";
 import useResponsiveConfig from "@/hooks/use-responsive-config";
 import { logger } from "@/utils/logger";
 import { useEnvironment } from "@react-three/drei";
-import { BUILDING_CONFIG, Preset } from "@/utils/constant";
+import { BUILDING_CONFIG } from "@/utils/constant";
 
 // Preload environments
 BUILDING_CONFIG.forEach((config) => {
@@ -21,16 +19,10 @@ export const useSceneEnvironment = () => {
     directColor = "#ffffff",
     ambientIntensity = 0.36,
     ambientColor = "#ffffff",
-    exposure = 1.0,
     preset = null,
   } = lighting;
 
   const config = useResponsiveConfig();
-  const { gl } = useThree();
-
-  // useEffect(() => {
-  //   gl.toneMappingExposure = exposure;
-  // }, [gl, exposure]);
 
   const onPerformanceDecline = () => {
     logger.warn("Performance dropped");
