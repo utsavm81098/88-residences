@@ -137,7 +137,7 @@ export const BUILDING_CONFIG = [
   {
     name: "D",
     ...typeAConfig,
-    model: "/models/type-d-1024.glb",
+    model: "/models/type-d-final.glb",
     hitbox: "/models/d-hitbox.glb",
   },
   {

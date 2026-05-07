@@ -8,12 +8,14 @@ const THREE_PATH = "https://unpkg.com/three@0.172.0";
 const DRACO_PATH = `${THREE_PATH}/examples/jsm/libs/draco/gltf/`;
 const BASIS_PATH = `${THREE_PATH}/examples/jsm/libs/basis/`;
 
+// Initialize loaders ONCE globally to reuse WebWorkers
+const dracoLoader = new DRACOLoader().setDecoderPath(DRACO_PATH);
+const ktx2Loader = new KTX2Loader().setTranscoderPath(BASIS_PATH);
+
 /**
  * Shared loader configuration for performance
  */
 export const configureLoader = (loader) => {
-  const dracoLoader = new DRACOLoader().setDecoderPath(DRACO_PATH);
-  const ktx2Loader = new KTX2Loader().setTranscoderPath(BASIS_PATH);
   loader.setDRACOLoader(dracoLoader);
   loader.setKTX2Loader(ktx2Loader);
   loader.setMeshoptDecoder(MeshoptDecoder);
@@ -26,10 +28,10 @@ export const configureLoader = (loader) => {
 export const preloadModels = () => {
   BUILDING_CONFIG.forEach((b) => {
     if (b.model) {
-      useGLTF.preload(b.model, DRACO_PATH, false, configureLoader);
+      useGLTF.preload(b.model, false, false, configureLoader);
     }
     if (b.hitbox) {
-      useGLTF.preload(b.hitbox, DRACO_PATH, false, configureLoader);
+      useGLTF.preload(b.hitbox, false, false, configureLoader);
     }
   });
 };
