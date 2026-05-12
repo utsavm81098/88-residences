@@ -27,15 +27,19 @@ const TopNavigationContainer = memo(({ onReset }) => {
 
   return (
     <>
-      {/* Desktop Top Navigation (Centered) */}
-      <div className="hidden lg:flex absolute top-6 left-1/2 -translate-x-1/2 items-center pointer-events-none z-[1000] select-none">
+      {/* Desktop Top Navigation Bar */}
+      <div className="hidden lg:flex absolute top-14 left-0 right-0 px-6 items-center z-[1000] pointer-events-none select-none">
+        {/* Left Spacer to keep navigation centered */}
+        <div className="flex-1" />
+
+        {/* Center: Building Navigation Pill */}
         <div className="relative pointer-events-auto">
           <DropdownMenu onOpenChange={(open) => onToggleMenu(open)}>
             <DropdownMenuTrigger asChild>
-              <div className="flex items-center justify-between h-12 px-3 bg-nav/85 backdrop-blur-md border border-white/10 rounded-full shadow-2xl transition-all duration-200 hover:border-white/20 cursor-pointer">
+              <div className="flex items-center justify-between h-14 px-4 bg-nav/85 backdrop-blur-md border border-white/10 rounded-full shadow-2xl transition-all duration-200 hover:border-white/20 cursor-pointer">
                 <Button
                   variant="ghost"
-                  size="icon-xs"
+                  size="icon-sm"
                   className="text-white/70 hover:text-white rounded-full border-0"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -46,7 +50,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
                   disabled={buildings.length <= 1}
                 >
                   <ICONS.ChevronLeft
-                    size={24}
+                    size={28}
                     strokeWidth={2}
                     className="rtl:rotate-180"
                   />
@@ -54,7 +58,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
 
                 <div
                   className={cn(
-                    "mx-4 text-white font-outfit font-semibold text-base tracking-wider transition-colors",
+                    "mx-6 text-white font-outfit font-semibold text-lg tracking-wider transition-colors",
                     buildings.length > 1
                       ? "hover:text-white/80"
                       : "cursor-default",
@@ -65,7 +69,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
 
                 <Button
                   variant="ghost"
-                  size="icon-xs"
+                  size="icon-sm"
                   className="text-white/70 hover:text-white rounded-full border-0"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -76,7 +80,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
                   disabled={buildings.length <= 1}
                 >
                   <ICONS.ChevronRight
-                    size={24}
+                    size={28}
                     strokeWidth={2}
                     className="rtl:rotate-180"
                   />
@@ -94,14 +98,14 @@ const TopNavigationContainer = memo(({ onReset }) => {
                     <DropdownMenuItem
                       key={b.name}
                       className={cn(
-                        "px-4 py-3 text-center text-white font-outfit text-sm cursor-pointer transition-colors hover:bg-white/10 focus:bg-white/10 outline-none block",
+                        "px-6 py-4 text-center text-white font-outfit text-base cursor-pointer transition-colors hover:bg-white/10 focus:bg-white/10 outline-none block",
                         currentBuilding.name === b.name
                           ? "bg-white/5 font-bold"
                           : "font-medium",
                       )}
                       onClick={() => handleSelect(idx)}
                     >
-                      {b.name}
+                      {b.name + " Building"}
                     </DropdownMenuItem>
                   ))}
                 </div>
@@ -109,18 +113,19 @@ const TopNavigationContainer = memo(({ onReset }) => {
             )}
           </DropdownMenu>
         </div>
-      </div>
 
-      {/* Desktop Reset Button (Top-Right) */}
-      <div className="hidden lg:flex absolute top-6 end-6 pointer-events-none z-[1000] select-none">
-        <Button
-          variant="ghost"
-          size="icon-lg"
-          className="bg-nav/85 backdrop-blur-md border border-white/10 rounded-full text-white shadow-2xl pointer-events-auto hover:-translate-y-0.5"
-          onClick={onReset}
-        >
-          <ICONS.RotateCw size={20} strokeWidth={2} />
-        </Button>
+        {/* Right: Reset Button */}
+
+        <div className="flex-1 flex justify-end pointer-events-auto">
+          <Button
+            variant="ghost"
+            size="icon-xl"
+            className="bg-nav/85 backdrop-blur-md border border-white/10 rounded-full text-white shadow-2xl pointer-events-auto hover:border-white/20"
+            onClick={onReset}
+          >
+            <ICONS.RotateCw size={24} strokeWidth={2} />
+          </Button>
+        </div>
       </div>
 
       {/* Left Navigation Arrow (Desktop) */}

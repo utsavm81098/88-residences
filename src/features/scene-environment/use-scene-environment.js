@@ -4,12 +4,7 @@ import { logger } from "@/utils/logger";
 import { useEnvironment } from "@react-three/drei";
 import { BUILDING_CONFIG } from "@/utils/constant";
 
-// Preload environments
-BUILDING_CONFIG.forEach((config) => {
-  if (config.environment) {
-    useEnvironment.preload(config.environment);
-  }
-});
+// Note: Preloading is now handled centrally in src/utils/preloader.js
 
 export const useSceneEnvironment = () => {
   const { currentBuilding } = useSelector((state) => state.building);

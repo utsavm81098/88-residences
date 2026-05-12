@@ -5,7 +5,7 @@ const DesktopPopup = ({ selectedUnit, desktopPopupRef, selectedBuilding }) => {
   return (
     <div
       ref={desktopPopupRef}
-      className={`fixed ltr:right-6 rtl:left-6 top-24 z-[9999] w-[260px] hidden md:block opacity-0 pointer-events-none`}
+      className={`fixed ltr:right-6 rtl:left-6 top-32 z-[9999] w-[260px] hidden md:block opacity-0 pointer-events-auto`}
     >
       {selectedUnit && (
         <UnitInfoCardContainer

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useThree } from "@react-three/fiber";
 import gsap from "gsap";
 import * as THREE from "three";
-import { UNIT_COLORS, OUTLINE_KEY, BUILDING_CONFIG } from "@/utils/constant";
 import { useGLTF } from "@react-three/drei";
-import { configureLoader } from "@/utils/preloader";
-import { useThree } from "@react-three/fiber";
 import { useDispatch, useSelector } from "react-redux";
+import { UNIT_COLORS, OUTLINE_KEY, BUILDING_CONFIG } from "@/utils/constant";
+import { configureLoader } from "@/utils/preloader";
 import {
   showTooltip,
   hideTooltip,
@@ -22,6 +22,14 @@ const _Y_AXIS = new THREE.Vector3(0, 1, 0);
 const _hitPoint = new THREE.Vector3();
 const _dir = new THREE.Vector3();
 const _temp = new THREE.Vector3();
+
+// ── Constants (Coding Standards Compliance) ──────────────────────────────────
+const EDGES_THRESHOLD_ANGLE = 15;
+const OUTLINE_BASE_OPACITY = 0.6;
+const OUTLINE_HOVER_OPACITY = 1.0;
+const ANIMATION_DURATION = 0.25;
+const CAMERA_FOCUS_DURATION = 1.2;
+const MOUSE_DRAG_THRESHOLD = 2;
 
 // ── Shared Materials (Performance Optimization) ──────────────────────────────
 const BASE_MATERIALS = {
@@ -49,6 +57,22 @@ const BASE_MATERIALS = {
   }),
 };
 
+// ── Performance Cache ────────────────────────────────────────────────────────
+const EDGES_CACHE = new Map();
+
+/**
+ * Gets or creates a cached EdgesGeometry for a given geometry.
+ * Significantly reduces memory usage and CPU time.
+ */
+const getCachedEdges = (geometry) => {
+  if (EDGES_CACHE.has(geometry.uuid)) {
+    return EDGES_CACHE.get(geometry.uuid);
+  }
+  const edges = new THREE.EdgesGeometry(geometry, EDGES_THRESHOLD_ANGLE);
+  EDGES_CACHE.set(geometry.uuid, edges);
+  return edges;
+};
+
 /**
  * Handles the logic for a single building instance.
  * Loads models, sets up hitboxes, and manages unit interactions.
@@ -56,8 +80,16 @@ const BASE_MATERIALS = {
 export const useBuildingInstance = ({ config, controlsRef }) => {
   const dispatch = useDispatch();
   const isDragging = useSelector((state) => state.drag.isDragging);
-  const { selectedUnit, mobileSelectedUnit, inventory, isTransitioning } =
-    useSelector((state) => state.building);
+  const {
+    selectedUnit,
+    mobileSelectedUnit,
+    inventory,
+    isTransitioning,
+    currentBuilding,
+  } = useSelector((state) => state.building);
+
+  // Determine if this instance is the active building
+  const isActiveBuilding = currentBuilding?.name === config.name;
 
   const isMobile = useIsMobile();
   const invalidate = useThree((state) => state.invalidate);
@@ -68,12 +100,7 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
   }, [selectedUnit, mobileSelectedUnit, isMobile]);
 
   const building = useGLTF(config.model, false, false, configureLoader);
-  const glassHitbox = useGLTF(
-    config.hitbox,
-    false,
-    false,
-    configureLoader,
-  );
+  const glassHitbox = useGLTF(config.hitbox, false, false, configureLoader);
 
   const unitMap = useMemo(() => {
     const buildingData = inventory?.[config.name];
@@ -87,13 +114,29 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
   const buildingScene = useMemo(() => {
     const buildingClone = building.scene.clone();
     buildingClone.traverse((child) => {
-      if (child.isMesh) child.raycast = () => {};
+      if (child.isMesh) {
+        child.raycast = () => {};
+        // Performance: Disable matrix auto-update for static building parts
+        child.matrixAutoUpdate = false;
+        child.updateMatrix();
+      }
     });
     return buildingClone;
   }, [building]);
 
   const glassScene = useMemo(() => {
     const scene = glassHitbox.scene.clone();
+
+    // Performance: Shared line material
+    const edgeMaterial = new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: OUTLINE_BASE_OPACITY,
+      depthTest: true,
+      depthWrite: false,
+      toneMapped: false,
+    });
+
     scene.traverse((child) => {
       if (child.isLight) {
         child.visible = false;
@@ -108,6 +151,7 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
       const statusKey = unit?.apartment_sold ? "sold" : "available";
       const cfg = UNIT_COLORS[statusKey];
 
+      // Assign material and pre-populate userData
       child.material = BASE_MATERIALS[statusKey].clone();
       child.userData = {
         ...child.userData,
@@ -121,19 +165,18 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
         selectedOpacity: cfg.selectedOpacity,
       };
 
-      const edges = new THREE.EdgesGeometry(child.geometry, 15);
-      const edgeMaterial = new THREE.LineBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.6,
-        depthTest: true,
-        depthWrite: false,
-        toneMapped: false,
-      });
+      // Performance: Use cached edges geometry
+      const edges = getCachedEdges(child.geometry);
       const edgeLines = new THREE.LineSegments(edges, edgeMaterial);
       edgeLines.raycast = () => {};
       child.add(edgeLines);
       child.userData[OUTLINE_KEY] = edgeLines;
+
+      // Optimization: Static hitboxes don't need matrix updates
+      child.matrixAutoUpdate = false;
+      child.updateMatrix();
+      edgeLines.matrixAutoUpdate = false;
+      edgeLines.updateMatrix();
     });
     return scene;
   }, [glassHitbox, unitMap]);
@@ -160,18 +203,19 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
         : type === "hover"
           ? hoverOpacity
           : baseOpacity;
-    const outlineOpacity = type === "base" ? 0.6 : 1.0;
+    const outlineOpacity =
+      type === "base" ? OUTLINE_BASE_OPACITY : OUTLINE_HOVER_OPACITY;
 
     gsap.killTweensOf([mesh.material.color, mesh.material]);
     gsap.to(mesh.material.color, {
       r: targetColor.r,
       g: targetColor.g,
       b: targetColor.b,
-      duration: 0.25,
+      duration: ANIMATION_DURATION,
     });
     gsap.to(mesh.material, {
       opacity: targetOpacity,
-      duration: 0.25,
+      duration: ANIMATION_DURATION,
       ease: "power2.out",
     });
 
@@ -180,7 +224,7 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
       gsap.killTweensOf(outline.material);
       gsap.to(outline.material, {
         opacity: outlineOpacity,
-        duration: 0.2,
+        duration: 0.2, // Minor transition duration
         ease: type === "base" ? "power2.in" : "power2.out",
       });
     }
@@ -218,7 +262,7 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
 
       rotationTween.current = gsap.to(state, {
         azimuth: finalAzimuth,
-        duration: 1.2,
+        duration: CAMERA_FOCUS_DURATION,
         ease: "power3.inOut",
         onUpdate: () => {
           const frameDelta = state.azimuth - prevAzimuth;
@@ -245,7 +289,9 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
       const mesh = e.object;
       if (!mesh.userData.status) return;
 
-      const isSelected = activeSelection?.title === mesh.userData.unitName;
+      const isSelected =
+        activeSelection?.buildingName === config.name &&
+        activeSelection?.title === mesh.userData.unitName;
       if (isSelected) return;
 
       document.body.style.cursor = "pointer";
@@ -270,12 +316,14 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
       if (!mesh.userData.status) return;
 
       if (!isDragging) document.body.style.cursor = "default";
-      const isSelected = activeSelection?.title === mesh.userData.unitName;
+      const isSelected =
+        activeSelection?.buildingName === config.name &&
+        activeSelection?.title === mesh.userData.unitName;
       if (isSelected) return;
 
       animateMesh(mesh, "base");
     },
-    [isDragging, activeSelection, animateMesh],
+    [isDragging, activeSelection, animateMesh, config.name],
   );
 
   const handlePointerMove = useCallback(
@@ -299,7 +347,7 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
   const handleClick = useCallback(
     (e) => {
       e.stopPropagation();
-      if (e.delta > 2) return;
+      if (e.delta > MOUSE_DRAG_THRESHOLD) return;
       const unit = unitMap[e.object.userData.unitName];
       if (!unit) return;
       dispatch(
@@ -312,21 +360,29 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
   );
 
   useEffect(() => {
-    if (isTransitioning) return;
+    // Only update highlights and camera focus for the active building
+    // Inactive buildings don't need to waste cycles on selection changes
+    if (isTransitioning || !isActiveBuilding) return;
+
     let focusObj = null;
     glassScene.traverse((child) => {
       if (!child.isMesh || !child.userData.status) return;
-      const isSelected = activeSelection
-        ? activeSelection.title === child.name
-        : false;
+
+      const isSelected =
+        activeSelection?.buildingName === config.name &&
+        activeSelection?.title === child.name;
+
       animateMesh(child, isSelected ? "selected" : "base");
       if (isSelected) focusObj = child;
     });
+
     if (focusObj) focusCameraOnMesh(focusObj);
   }, [
     activeSelection,
     glassScene,
     isTransitioning,
+    isActiveBuilding,
+    config.name,
     animateMesh,
     focusCameraOnMesh,
   ]);

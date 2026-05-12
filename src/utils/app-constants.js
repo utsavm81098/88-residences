@@ -1,7 +1,7 @@
 import { format, isValid } from 'date-fns';
 
-export const APP_TITLE = 'Crprus 3D';
-export const LOCAL_STORAGE_KEY = 'crprus-3d-auth';
+export const APP_TITLE = '88Residences';
+export const LOCAL_STORAGE_KEY = '88-residences-auth';
 export const CACHED_URL_LOCAL_STORAGE_KEY = 'cached-redirect-url';
 
 export const USER_ROLES = {

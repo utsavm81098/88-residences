@@ -1,14 +1,15 @@
-import { useGLTF } from "@react-three/drei";
+import { useGLTF, useEnvironment } from "@react-three/drei";
 import { BUILDING_CONFIG } from "./constant";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 
-const THREE_PATH = "https://unpkg.com/three@0.172.0";
-const DRACO_PATH = `${THREE_PATH}/examples/jsm/libs/draco/gltf/`;
-const BASIS_PATH = `${THREE_PATH}/examples/jsm/libs/basis/`;
+// ✅ Singleton instances — created once, reused everywhere
+// DRACO handles mesh compression (geometry)
+// BASIS handles texture compression (images)
+const DRACO_PATH = "/draco/";
+const BASIS_PATH = "/basis/";
 
-// Initialize loaders ONCE globally to reuse WebWorkers
 const dracoLoader = new DRACOLoader().setDecoderPath(DRACO_PATH);
 const ktx2Loader = new KTX2Loader().setTranscoderPath(BASIS_PATH);
 
@@ -22,16 +23,52 @@ export const configureLoader = (loader) => {
 };
 
 /**
- * Triggers parallel preloading of all building and hitbox models.
- * Should be called at the root level (main.jsx).
+ * Triggers prioritized preloading of unique building and hitbox models.
+ * Senior approach: Only load unique file paths to save bandwidth.
+ * Staggered loading for low-end systems.
  */
 export const preloadModels = () => {
-  BUILDING_CONFIG.forEach((b) => {
-    if (b.model) {
-      useGLTF.preload(b.model, false, false, configureLoader);
-    }
-    if (b.hitbox) {
-      useGLTF.preload(b.hitbox, false, false, configureLoader);
-    }
-  });
+  const landingBuilding = BUILDING_CONFIG[0];
+  const landingModel = landingBuilding.model;
+  const landingHitbox = landingBuilding.hitbox;
+
+  const landingEnv = landingBuilding.environment;
+
+  // 1. High Priority: Landing building
+  if (landingModel)
+    useGLTF.preload(landingModel, true, undefined, configureLoader);
+  if (landingHitbox)
+    useGLTF.preload(landingHitbox, true, undefined, configureLoader);
+  if (landingEnv) useEnvironment.preload(landingEnv);
+
+  // 2. Background Priority: Remaining unique models
+  const otherModels = [
+    ...new Set(
+      BUILDING_CONFIG.slice(1)
+        .map((b) => b.model)
+        .filter((path) => path && path !== landingModel),
+    ),
+  ];
+  const otherHitboxes = [
+    ...new Set(
+      BUILDING_CONFIG.slice(1)
+        .map((b) => b.hitbox)
+        .filter((path) => path && path !== landingHitbox),
+    ),
+  ];
+  const otherEnvs = [
+    ...new Set(
+      BUILDING_CONFIG.slice(1)
+        .map((b) => b.environment)
+        .filter((env) => env && env !== landingEnv),
+    ),
+  ];
+
+  otherModels.forEach((path) =>
+    useGLTF.preload(path, true, undefined, configureLoader),
+  );
+  otherHitboxes.forEach((path) =>
+    useGLTF.preload(path, true, undefined, configureLoader),
+  );
+  otherEnvs.forEach((env) => useEnvironment.preload(env));
 };

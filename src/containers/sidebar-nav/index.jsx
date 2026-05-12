@@ -86,7 +86,7 @@ const NavSidebar = ({
       {/* ── Bottom Section (Lang + Chat) ── */}
       <div
         className={cn(
-          "border-t border-white/5 space-y-4 mb-6 shrink-0",
+          "flex justify-center border-t border-white/5 space-y-4 mb-6 shrink-0",
           isExpanded ? "p-3" : "p-0 py-4",
         )}
       >

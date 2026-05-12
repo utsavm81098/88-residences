@@ -8,6 +8,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getLocalizedString } from "@/utils/helper";
 
@@ -162,7 +163,13 @@ const InventoryList = ({
                                 {unit?.apartment_area || "0"}
                               </div>
                               <div className="text-[12px] font-bold text-end pe-4">
-                                <span dir="ltr">{unit?.apartment_price || 0}</span>
+                                {unit?.apartment_sold ? (
+                                  <Badge variant="sold" className="px-1.5 py-0.5 text-[9px] uppercase tracking-wider rounded-md">
+                                    {t("sold", "Sold")}
+                                  </Badge>
+                                ) : (
+                                  <span dir="ltr">{unit?.apartment_price || 0}</span>
+                                )}
                               </div>
                             </div>
                           );

@@ -1,4 +1,10 @@
-import { createBrowserRouter, Navigate, Outlet, useParams, useLocation } from "react-router";
+import {
+  createBrowserRouter,
+  Navigate,
+  Outlet,
+  useParams,
+  useLocation,
+} from "react-router";
 import HomePage from "@/pages/home";
 import { WEB_ROUTES } from "./routes";
 import i18n from "@/i18n";
@@ -10,8 +16,10 @@ import Inventory from "@/pages/inventory";
 const RootRedirect = () => {
   // Normalize language (e.g., 'en-GB' -> 'en') and fallback to 'en' if unsupported
   const detectedLang = i18n.language?.split("-")[0].toLowerCase() || "en";
-  const targetLang = SUPPORTED_LANGS.includes(detectedLang) ? detectedLang : "en";
-  
+  const targetLang = SUPPORTED_LANGS.includes(detectedLang)
+    ? detectedLang
+    : "en";
+
   return <Navigate to={`/${targetLang}`} replace />;
 };
 
@@ -24,7 +32,9 @@ const LangGuard = () => {
 
   // If the URL lang is NOT one of our supported base codes, redirect to the correct path
   if (!SUPPORTED_LANGS.includes(lang)) {
-    const targetLang = SUPPORTED_LANGS.includes(normalizedLang) ? normalizedLang : "en";
+    const targetLang = SUPPORTED_LANGS.includes(normalizedLang)
+      ? normalizedLang
+      : "en";
     const newPath = location.pathname.replace(`/${lang}`, `/${targetLang}`);
     return <Navigate to={newPath} replace />;
   }

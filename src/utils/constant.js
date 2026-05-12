@@ -1,5 +1,5 @@
 import { ICONS } from "@/assets/icons";
-import * as THREE from "three/webgpu";
+import * as THREE from "three";
 
 export const statusType = {
   SOLD: "sold",

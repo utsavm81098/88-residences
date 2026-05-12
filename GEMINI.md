@@ -1,4 +1,4 @@
-# Crprus 3D — Architecture Reference
+# 88Residences — Architecture Reference
 
 > Interactive 3D real-estate building viewer with unit selection, camera controls, and responsive mobile/desktop layouts.
 

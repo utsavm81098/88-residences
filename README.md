@@ -1,6 +1,6 @@
-# 🏗️ Crprus-3D
+# 🏗️ 88Residences
 
-Crprus-3D is an immersive, interactive 3D web application designed for exploring architectural building models. It allows users to view building structures with high-fidelity, interact with specific units or apartments (like hovering to see details and clicking to focus), and visualize different data-points like apartment type, area, direction, and availability status.
+88Residences is an immersive, interactive 3D web application designed for exploring architectural building models. It allows users to view building structures with high-fidelity, interact with specific units or apartments (like hovering to see details and clicking to focus), and visualize different data-points like apartment type, area, direction, and availability status.
 
 ## 🚀 Key Features
 
@@ -28,55 +28,52 @@ This project follows a feature-based modular architecture to ensure scalability 
 
 ```text
 src/
-├── main.jsx                          # Application entry point
-├── app/                              # Root application level components
-│   ├── App.jsx                       # Root component (Canvas setup & providers)
-│   └── App.css                       # Global styles
-├── features/                         # Core domain features
-│   ├── building/                     # 3D Building logic
-│   │   ├── BuildingModel.jsx         # Presentation layer
-│   │   ├── useBuilding.js            # Model loading, cloning, and material setup hook
-│   │   ├── useBuildingInteraction.js # Pointer handlers (hover, click, raycasting)
-│   │   └── useCameraRotation.js      # Camera animation logic
-│   ├── controls/                     # User view controls
-│   │   └── AdaptiveControls.jsx      # OrbitControls tailored for device breakpoints
-│   ├── environment/                  # Scene rendering environment
-│   │   └── SceneEnvironment.jsx      # Lighting, HDR, Grid, and PostProcessing
-│   ├── direction/                    # 3D Compass/Direction labels
-│   │   ├── DirectionLabel.jsx        # Billboard text labels rendering
-│   │   └── useDirectionLabel.js      # Layout and camera-tracking logic
-│   └── lighting/                     # Dynamic lighting setups
-│       └── CameraLight.jsx           # Camera-attached directional lighting
-├── components/                       # Shared and reusable UI components
-│   └── ui/                           # DOM based Interface overlays
-│       └── tooltip/                  # The interactive unit infobox
-│           ├── BuildingTooltip.jsx
-│           ├── BuildingTooltip.css
-│           └── StatCell.jsx
-├── hooks/                            # Global shared React hooks
-│   ├── useDeviceDetect.js            # Breakpoint tracking and device identification
-│   ├── useFitCamera.js               # Logic to frame object within viewport
-│   └── useTooltip.js                 # Global tooltip state management
-├── data/                             # Static and mock data structures
-│   └── unitData.js                   # Configuration for each apartment unit (Box001-Box020)
-├── config/                           # Application configuration constants
-│   ├── scene.config.js               # Scene constants (camera pos, HDR paths, etc)
-│   ├── colors.config.js              # Theme and unit status colors
-│   └── breakpoints.config.js         # Responsive design breakpoints matching CSS
-├── constants/                        # Enums and magic strings
-│   └── status.js                     # Unit status definitions (Available, Sold, etc.)
-├── utils/                            # Pure helper functions
-│   └── helpers.js                    # Functions like flattenUnitData
-├── styles/                           # Global stylesheets
-│   └── index.css                     # Base styling, layer setup, CSS variables
-└── assets/                           # Static assets like images and generic models
+├── main.jsx                    # Application entry point
+├── App.jsx                     # Root layout — Canvas + Navigation + State
+├── App.css                     # Global styles
+├── index.css                   # Tailwind + CSS Variables
+│
+├── features/                   # 3D Scene features (R3F modules)
+│   ├── building/               # GLB logic, interactions, instance management
+│   ├── scene-environment/      # Lights, HDR, Grid, Post-processing
+│   ├── building-tooltip/       # Desktop hover tooltips & detail popups
+│   ├── adaptive-controls/      # Responsive OrbitControls
+│   └── direction-label/        # 3D Billboard compass labels
+│
+├── containers/                 # Smart UI components (Redux connected)
+│   ├── inventory-sidebar/      # Unit list & filtering logic
+│   ├── top-navigation/         # Building switcher & global actions
+│   ├── mobile-menu/            # GSAP-driven bottom sheet
+│   └── unit-info-card/         # Selected unit detail views
+│
+├── components/                 # Pure UI components (Presentational)
+│   ├── ui/                     # shadcn/ui primitives (Button, Card, etc.)
+│   ├── providers/              # Context & Query providers
+│   └── error-boundary/         # Error resilience components
+│
+├── store/                      # Redux Toolkit state management
+│   ├── index.js                # Store configuration
+│   └── slices/                 # State domains (building, tooltip, etc.)
+│
+├── hooks/                      # Shared React hooks
+├── utils/                      # Helper functions & global constants
+├── assets/                     # Static icons & SVGs
+├── layouts/                    # Page layout containers
+├── pages/                      # Route-level components
+├── routes/                     # React Router configuration
+├── services/                   # API clients & services
+└── i18n/                       # Internationalization configuration
 ```
 
 ### Key Folders Explained:
-*   `features/`: encapsulates domain-specific logic. Everything needed for the 'building' feature is contained within its subfolder.
-*   `components/`: contains standard UI elements that are agnostic to the domain data.
-*   `hooks/`: are general-purpose utilities that bridge React state with imperative logic, often managing things like window resizing or global states.
-*   `config/ & constants/`: house magic numbers and configuration, making it easy to tweak colors, starting positions, or data schemas without hunting through component code.
+
+*   **`features/`**: Encapsulates 3D-specific logic that runs inside the R3F `<Canvas>`.
+*   **`containers/`**: Smart components that connect business logic (Redux) to UI components.
+*   **`components/`**: Houses presentational UI building blocks and global providers.
+*   **`store/`**: Centralized state management using Redux Toolkit slices.
+*   **`hooks/`**: Global shared React hooks for things like responsive design and API calls.
+*   **`utils/`**: Shared constants, configuration, and helper functions.
+*   **`pages/ & routes/`**: Defines the application's routing structure and views.
 
 ## 🏃‍♂️ Getting Started
 
@@ -90,7 +87,7 @@ src/
 1.  **Clone the repository:**
     ```bash
     git clone [repository-url]
-    cd crprus-3d
+    cd 88-residences
     ```
 
 2.  **Install dependencies:**
