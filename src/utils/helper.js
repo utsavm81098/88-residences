@@ -1,5 +1,14 @@
 import { jwtDecode } from "jwt-decode";
 import { logger } from "./logger";
+import { DASHBOARD_PREFIX } from "./constant";
+import { SUPPORTED_LANGS } from "./languages";
+
+export const getDashboardRoute = (i18n, pathId = "") => {
+  const detectedLang = i18n?.language?.split("-")[0].toLowerCase() || "en";
+  const targetLang = SUPPORTED_LANGS.includes(detectedLang) ? detectedLang : "en";
+  const path = pathId === "home" ? "" : pathId;
+  return `/${DASHBOARD_PREFIX}-${targetLang}${path ? `/${path}` : ""}`;
+};
 
 export const flattenUnitData = (unitDataArray) => {
   const flattened = {};

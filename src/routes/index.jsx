@@ -1,3 +1,4 @@
+
 import {
   createBrowserRouter,
   Navigate,
@@ -12,31 +13,37 @@ import { SUPPORTED_LANGS } from "@/utils/languages";
 
 import MainLayout from "@/layouts/main-layout";
 import Inventory from "@/pages/inventory";
+import { DASHBOARD_PREFIX } from "@/utils/constant";
+import { getDashboardRoute } from "@/utils/helper";
 
 const RootRedirect = () => {
-  // Normalize language (e.g., 'en-GB' -> 'en') and fallback to 'en' if unsupported
-  const detectedLang = i18n.language?.split("-")[0].toLowerCase() || "en";
-  const targetLang = SUPPORTED_LANGS.includes(detectedLang)
-    ? detectedLang
-    : "en";
-
-  return <Navigate to={`/${targetLang}`} replace />;
+  const location = useLocation();
+  return <Navigate to={`${getDashboardRoute(i18n)}${location.search}${location.hash}`} replace />;
 };
 
 const LangGuard = () => {
   const { lang } = useParams();
   const location = useLocation();
 
+  // Extract the true language from the parameter (handles both /dashboard-en and legacy /en)
+  const isDashboard = lang?.startsWith(`${DASHBOARD_PREFIX}-`);
+  const actualLang = isDashboard ? lang.replace(`${DASHBOARD_PREFIX}-`, "") : lang;
+  
   // Normalize the language code from the URL (e.g. en-GB -> en)
-  const normalizedLang = lang?.split("-")[0].toLowerCase() || "en";
+  const normalizedLang = actualLang?.split("-")[0].toLowerCase() || "en";
 
-  // If the URL lang is NOT one of our supported base codes, redirect to the correct path
-  if (!SUPPORTED_LANGS.includes(lang)) {
-    const targetLang = SUPPORTED_LANGS.includes(normalizedLang)
-      ? normalizedLang
-      : "en";
-    const newPath = location.pathname.replace(`/${lang}`, `/${targetLang}`);
-    return <Navigate to={newPath} replace />;
+  // 1. Backward compatibility: if URL is missing the dashboard- prefix, redirect it
+  if (!isDashboard) {
+    const targetLang = SUPPORTED_LANGS.includes(normalizedLang) ? normalizedLang : "en";
+    const newPath = location.pathname.replace(new RegExp(`^\\/${lang}(\\/|$)`), `/${DASHBOARD_PREFIX}-${targetLang}$1`);
+    return <Navigate to={`${newPath}${location.search}${location.hash}`} replace />;
+  }
+
+  // 2. If the URL has the prefix but the language is invalid, redirect to fallback
+  if (!SUPPORTED_LANGS.includes(actualLang)) {
+    const targetLang = SUPPORTED_LANGS.includes(normalizedLang) ? normalizedLang : "en";
+    const newPath = location.pathname.replace(new RegExp(`^\\/${lang}(\\/|$)`), `/${DASHBOARD_PREFIX}-${targetLang}$1`);
+    return <Navigate to={`${newPath}${location.search}${location.hash}`} replace />;
   }
 
   return <Outlet />;
@@ -50,9 +57,20 @@ const router = createBrowserRouter([
   {
     path: "/:lang",
     element: <LangGuard />,
+    loader: async ({ params }) => {
+      const lang = params.lang;
+      const actualLang = lang?.startsWith(`${DASHBOARD_PREFIX}-`)
+        ? lang.replace(`${DASHBOARD_PREFIX}-`, "")
+        : lang;
+
+      if (actualLang && i18n.language !== actualLang && SUPPORTED_LANGS.includes(actualLang)) {
+        await i18n.changeLanguage(actualLang);
+      }
+      return null;
+    },
     children: [
       {
-        path: "",
+        // Removed path: "" to act as a proper pathless layout route in React Router v6
         element: <MainLayout />,
         children: [
           {

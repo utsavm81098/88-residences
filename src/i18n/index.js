@@ -44,8 +44,7 @@ const initPromise = i18n
     debug: import.meta.env.DEV,
     interpolation: { escapeValue: false },
     detection: {
-      order: ["path", "localStorage", "navigator", "htmlTag"],
-      lookupFromPathIndex: 0,
+      order: ["localStorage", "navigator", "htmlTag"],
       lookupLocalStorage: "i18nextLng",
       caches: ["localStorage"],
     },

@@ -1,6 +1,7 @@
-import { ICONS } from "@/assets/icons";
 import * as THREE from "three";
+import { ICONS } from "@/assets/icons";
 
+export const DASHBOARD_PREFIX = "dashboard";
 export const statusType = {
   SOLD: "sold",
   AVAILABLE: "available",

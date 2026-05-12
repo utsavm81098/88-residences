@@ -6,7 +6,7 @@ import { setActivePanel } from "@/store/slices/sidebar-slice";
 import useToggleState from "@/hooks/use-toggle-state";
 import { logger } from "@/utils/logger";
 import { LANGUAGES } from "@/utils/languages";
-import { WEB_ROUTES } from "@/routes/routes";
+import { getDashboardRoute } from "@/utils/helper";
 
 export function useSidebarNav() {
   const dispatch = useDispatch();
@@ -70,10 +70,7 @@ export function useSidebarNav() {
 
   const onNavItemClick = useCallback(
     (id) => {
-      const lang = i18n.language?.split("-")[0].toLowerCase() || "en";
-      // "home" -> "/en", "inventory" -> "/en/inventory"
-      const path = id === "home" ? "" : id;
-      const targetPath = `/${lang}${path ? `/${path}` : ""}`;
+      const targetPath = getDashboardRoute(i18n, id);
 
       if (
         location.pathname !== targetPath &&
@@ -95,12 +92,12 @@ export function useSidebarNav() {
       const segments = location.pathname.split("/").filter(Boolean);
       if (
         segments.length > 0 &&
-        LANGUAGES.some((l) => l.code === segments[0])
+        segments[0].startsWith(`${DASHBOARD_PREFIX}-`)
       ) {
-        segments[0] = langCode;
+        segments[0] = `${DASHBOARD_PREFIX}-${langCode}`;
         navigate(`/${segments.join("/")}`, { replace: true });
       } else {
-        navigate(`/${langCode}`, { replace: true });
+        navigate(`/${DASHBOARD_PREFIX}-${langCode}`, { replace: true });
       }
       setIsHovered(false);
       setIsMenuOpen(false);

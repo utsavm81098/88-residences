@@ -8,6 +8,7 @@ import { LANGUAGES } from "@/utils/languages";
 import { logger } from "@/utils/logger";
 import { NAV_ITEMS } from "@/utils/constant";
 import useToggleState from "@/hooks/use-toggle-state";
+import { getDashboardRoute } from "@/utils/helper";
 
 export function useMobileNav() {
   const dispatch = useDispatch();
@@ -47,9 +48,7 @@ export function useMobileNav() {
         return;
       }
 
-      const lang = i18n.language?.split("-")[0].toLowerCase() || "en";
-      const path = id === "home" ? "" : id;
-      const targetPath = `/${lang}${path ? `/${path}` : ""}`;
+      const targetPath = getDashboardRoute(i18n, id);
 
       if (
         location.pathname !== targetPath &&
@@ -69,12 +68,12 @@ export function useMobileNav() {
       const segments = location.pathname.split("/").filter(Boolean);
       if (
         segments.length > 0 &&
-        LANGUAGES.some((l) => l.code === segments[0])
+        segments[0].startsWith(`${DASHBOARD_PREFIX}-`)
       ) {
-        segments[0] = langCode;
+        segments[0] = `${DASHBOARD_PREFIX}-${langCode}`;
         navigate(`/${segments.join("/")}`, { replace: true });
       } else {
-        navigate(`/${langCode}`, { replace: true });
+        navigate(`/${DASHBOARD_PREFIX}-${langCode}`, { replace: true });
       }
       closeMore();
       logger.info("Language changed to:", langCode);
