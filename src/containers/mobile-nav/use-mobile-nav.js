@@ -8,7 +8,7 @@ import { LANGUAGES } from "@/utils/languages";
 import { logger } from "@/utils/logger";
 import { NAV_ITEMS } from "@/utils/constant";
 import useToggleState from "@/hooks/use-toggle-state";
-import { getDashboardRoute } from "@/utils/helper";
+import { getDashboardRoute, getLanguageSwitchPath } from "@/utils/helper";
 
 export function useMobileNav() {
   const dispatch = useDispatch();
@@ -65,20 +65,15 @@ export function useMobileNav() {
   const onLanguageChange = useCallback(
     (langCode) => {
       i18n.changeLanguage(langCode);
-      const segments = location.pathname.split("/").filter(Boolean);
-      if (
-        segments.length > 0 &&
-        segments[0].startsWith(`${DASHBOARD_PREFIX}-`)
-      ) {
-        segments[0] = `${DASHBOARD_PREFIX}-${langCode}`;
-        navigate(`/${segments.join("/")}`, { replace: true });
-      } else {
-        navigate(`/${DASHBOARD_PREFIX}-${langCode}`, { replace: true });
-      }
+      const targetPath = getLanguageSwitchPath(location.pathname, langCode);
+      navigate(`${targetPath}${location.search}${location.hash}`, {
+        replace: true,
+      });
+
       closeMore();
       logger.info("Language changed to:", langCode);
     },
-    [i18n, location.pathname, navigate],
+    [i18n, location.pathname, location.search, location.hash, navigate, closeMore],
   );
 
   const currentActiveId = isInventoryPage ? "inventory" : "home";

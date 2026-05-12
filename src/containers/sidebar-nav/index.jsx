@@ -1,11 +1,5 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { SvgIcon } from "@/components/ui/svg-icon";
 import { useTranslation } from "react-i18next";
 import { NAV_ITEMS } from "@/utils/constant";
@@ -18,7 +12,6 @@ const NavSidebar = ({
   isExpanded,
   onMouseEnter,
   onMouseLeave,
-  onOpenChange,
   languages = [],
   activeLanguage = "en",
   onLanguageChange,
@@ -27,7 +20,7 @@ const NavSidebar = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.dir() === "rtl";
-  const activeLang = languages.find((l) => l.code === activeLanguage);
+  const targetLang = languages.find((l) => l.code !== activeLanguage) || languages[0];
 
   return (
     <aside
@@ -91,60 +84,30 @@ const NavSidebar = ({
         )}
       >
         {/* Language Switcher */}
-        <DropdownMenu onOpenChange={onOpenChange} modal={false}>
-          <DropdownMenuTrigger asChild>
-            <button
-              className={cn(
-                "flex items-center transition-all duration-300 group/lang h-11 outline-none",
-                isExpanded
-                  ? "w-full gap-4 px-3 rounded-lg bg-white/5 hover:bg-white/10"
-                  : "w-11 justify-center rounded-full hover:bg-white/5",
-              )}
-            >
-              <span className="shrink-0 flex items-center justify-center w-[18px] h-[18px]">
-                <SvgIcon
-                  svgdata={activeLang?.flag}
-                  className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
-                />
-              </span>
-              <span
-                className={cn(
-                  "text-[11px] font-bold transition-all duration-500 whitespace-nowrap overflow-hidden text-start text-white/90",
-                  isExpanded
-                    ? "opacity-100 max-w-[150px]"
-                    : "opacity-0 max-w-0",
-                )}
-              >
-                {activeLang?.label || "Language"}
-              </span>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            side={isExpanded ? "bottom" : isRTL ? "left" : "right"}
-            align={isExpanded ? (isRTL ? "end" : "start") : "end"}
-            className="w-48 border-white/10 text-white"
+        <button
+          onClick={() => onLanguageChange?.(targetLang.code)}
+          className={cn(
+            "flex items-center transition-all duration-300 group/lang h-11 outline-none",
+            isExpanded
+              ? "w-full gap-4 px-3 rounded-lg bg-white/5 hover:bg-white/10"
+              : "w-11 justify-center rounded-full hover:bg-white/5",
+          )}
+        >
+          <span className="shrink-0 flex items-center justify-center w-[18px] h-[18px]">
+            <SvgIcon
+              svgdata={targetLang?.flag}
+              className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
+            />
+          </span>
+          <span
+            className={cn(
+              "text-[11px] font-bold transition-all duration-500 whitespace-nowrap overflow-hidden text-start text-white/90",
+              isExpanded ? "opacity-100 max-w-[150px]" : "opacity-0 max-w-0",
+            )}
           >
-            {languages.map((lang) => (
-              <DropdownMenuItem
-                key={lang.code}
-                onClick={() => onLanguageChange?.(lang.code)}
-                className={cn(
-                  "flex items-center gap-3 cursor-pointer focus:bg-white/10 focus:text-white",
-                  activeLanguage === lang.code &&
-                    "bg-white/10 text-accent-yellow",
-                )}
-              >
-                <span className="shrink-0 flex items-center justify-center w-[18px] h-[18px]">
-                  <SvgIcon
-                    svgdata={lang.flag}
-                    className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
-                  />
-                </span>
-                <span className="text-[13px] font-medium">{lang.label}</span>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+            {targetLang?.label}
+          </span>
+        </button>
       </div>
     </aside>
   );
@@ -169,7 +132,6 @@ export default function SidebarNavContainer() {
         isExpanded,
         onMouseEnter,
         onMouseLeave,
-        onOpenChange,
         activeNavItem,
         onNavItemClick,
         languages,

@@ -2,16 +2,10 @@ import React from "react";
 import { useMobileNav } from "./use-mobile-nav";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useTranslation } from "react-i18next";
-import { SvgIcon } from "@/components/ui/svg-icon";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS_MOBILE } from "@/utils/constant";
 
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+import { SvgIcon } from "@/components/ui/svg-icon";
 
 /**
  * MobileNavBar UI component (formerly src/components/ui/mobile-nav-bar)
@@ -69,8 +63,8 @@ export default function MobileNavContainer() {
   } = useMobileNav();
   const { t } = useTranslation();
 
-  const activeLang =
-    languages.find((l) => l.code === activeLanguage) || languages[0];
+  const targetLang =
+    languages.find((l) => l.code !== activeLanguage) || languages[0];
 
   return (
     <>
@@ -123,56 +117,23 @@ export default function MobileNavContainer() {
                 {t("select_language", "Select Language")}
               </h3>
 
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className={cn(
-                      "flex items-center w-full gap-4 px-5 py-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all duration-300 outline-none",
-                    )}
-                  >
-                    <span className="shrink-0 flex items-center justify-center w-6 h-6">
-                      <SvgIcon
-                        svgdata={activeLang?.flag}
-                        className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
-                      />
-                    </span>
-                    <span className="text-[14px] font-bold text-white/90 flex-1 text-start">
-                      {activeLang?.label || "Language"}
-                    </span>
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent-yellow shadow-[0_0_8px_rgba(255,184,0,0.5)]" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  side="bottom"
-                  align="start"
-                  className="w-[calc(100vw-48px)] bg-sidebar border border-white/10 text-white p-2 rounded-2xl shadow-2xl z-[3100]"
-                >
-                  {languages.map((lang) => (
-                    <DropdownMenuItem
-                      key={lang.code}
-                      onClick={() => onLanguageChange?.(lang.code)}
-                      className={cn(
-                        "flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all duration-200 focus:bg-white/10 focus:text-white mb-1 last:mb-0",
-                        activeLanguage === lang.code &&
-                          "bg-white/5 text-accent-yellow",
-                      )}
-                    >
-                      <span className="shrink-0 flex items-center justify-center w-6 h-6">
-                        <SvgIcon
-                          svgdata={lang.flag}
-                          className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
-                        />
-                      </span>
-                      <span className="text-[14px] font-bold">
-                        {lang.label}
-                      </span>
-                      {activeLanguage === lang.code && (
-                        <div className="ms-auto w-1.5 h-1.5 rounded-full bg-accent-yellow shadow-[0_0_8px_rgba(255,184,0,0.5)]" />
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <button
+                onClick={() => onLanguageChange?.(targetLang.code)}
+                className={cn(
+                  "flex items-center w-full gap-4 px-5 py-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all duration-300 outline-none",
+                )}
+              >
+                <span className="shrink-0 flex items-center justify-center w-6 h-6">
+                  <SvgIcon
+                    svgdata={targetLang?.flag}
+                    className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
+                  />
+                </span>
+                <span className="text-[14px] font-bold text-white/90 flex-1 text-start">
+                  {targetLang?.label}
+                </span>
+                <div className="w-1.5 h-1.5 rounded-full bg-accent-yellow shadow-[0_0_8px_rgba(255,184,0,0.5)]" />
+              </button>
             </div>
           </div>
         </SheetContent>

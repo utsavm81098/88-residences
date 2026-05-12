@@ -3,10 +3,9 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import { setActivePanel } from "@/store/slices/sidebar-slice";
-import useToggleState from "@/hooks/use-toggle-state";
 import { logger } from "@/utils/logger";
 import { LANGUAGES } from "@/utils/languages";
-import { getDashboardRoute } from "@/utils/helper";
+import { getDashboardRoute, getLanguageSwitchPath } from "@/utils/helper";
 
 export function useSidebarNav() {
   const dispatch = useDispatch();
@@ -16,26 +15,6 @@ export function useSidebarNav() {
 
   const activePanel = useSelector((state) => state.sidebar.activePanel);
   const [isHovered, setIsHovered] = useState(false);
-  const {
-    state: isMenuOpen,
-    set: setIsMenuOpen,
-    open,
-    close,
-  } = useToggleState(false);
-
-  // Sequential transition: Menu closes first, then sidebar collapses
-  const onOpenChange = useCallback((open) => {
-    if (open) {
-      setIsMenuOpen(true);
-    } else {
-      // Small delay to let the dropdown menu closing animation finish
-      // before the sidebar starts its collapse transition
-      setTimeout(() => {
-        setIsMenuOpen(false);
-      }, 150);
-    }
-  }, []);
-
   // Nav is collapsible only on the inventory page
   const normalizedPath = location.pathname.replace(/\/$/, "") || "/";
   const langPath = `/${i18n.language}`;
@@ -89,28 +68,21 @@ export function useSidebarNav() {
   const onLanguageChange = useCallback(
     (langCode) => {
       i18n.changeLanguage(langCode);
-      const segments = location.pathname.split("/").filter(Boolean);
-      if (
-        segments.length > 0 &&
-        segments[0].startsWith(`${DASHBOARD_PREFIX}-`)
-      ) {
-        segments[0] = `${DASHBOARD_PREFIX}-${langCode}`;
-        navigate(`/${segments.join("/")}`, { replace: true });
-      } else {
-        navigate(`/${DASHBOARD_PREFIX}-${langCode}`, { replace: true });
-      }
+      const targetPath = getLanguageSwitchPath(location.pathname, langCode);
+      navigate(`${targetPath}${location.search}${location.hash}`, {
+        replace: true,
+      });
+
       setIsHovered(false);
-      setIsMenuOpen(false);
       logger.info("Language changed to:", langCode);
     },
-    [i18n, location.pathname, navigate],
+    [i18n, location.pathname, location.search, location.hash, navigate],
   );
 
   return {
-    isExpanded: !isCollapsible || isHovered || isMenuOpen,
+    isExpanded: !isCollapsible || isHovered,
     onMouseEnter,
     onMouseLeave,
-    onOpenChange,
     activeNavItem: currentActiveId,
     onNavItemClick,
     languages: LANGUAGES,

@@ -10,6 +10,15 @@ export const getDashboardRoute = (i18n, pathId = "") => {
   return `/${DASHBOARD_PREFIX}-${targetLang}${path ? `/${path}` : ""}`;
 };
 
+export const getLanguageSwitchPath = (pathname, langCode) => {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length > 0 && segments[0].startsWith(`${DASHBOARD_PREFIX}-`)) {
+    segments[0] = `${DASHBOARD_PREFIX}-${langCode}`;
+    return `/${segments.join("/")}`;
+  }
+  return `/${DASHBOARD_PREFIX}-${langCode}`;
+};
+
 export const flattenUnitData = (unitDataArray) => {
   const flattened = {};
   unitDataArray.forEach((floor) => {
