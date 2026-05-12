@@ -2,6 +2,12 @@ import * as THREE from "three";
 import { ICONS } from "@/assets/icons";
 
 export const DASHBOARD_PREFIX = "dashboard";
+const BASE_URL = import.meta.env.BASE_URL.endsWith("/")
+  ? import.meta.env.BASE_URL.slice(0, -1)
+  : import.meta.env.BASE_URL;
+
+const getAssetPath = (path) => `${BASE_URL}${path}`;
+
 export const statusType = {
   SOLD: "sold",
   AVAILABLE: "available",
@@ -94,16 +100,16 @@ export const CANVAS_GL_CONFIG = {
 };
 
 const typeAConfig = {
-  model: "/models/type-a-1024.glb",
-  hitbox: "/models/a-hitbox.glb",
+  model: getAssetPath("/models/type-a-1024.glb"),
+  hitbox: getAssetPath("/models/a-hitbox.glb"),
   environment: {
     files: [
-      "/Standard-Cube-Map/py.png", // Right
-      "/Standard-Cube-Map/py.png", // Left
-      "/Standard-Cube-Map/pz.png", // Top
-      "/Standard-Cube-Map/px.png", // Bottom
-      "/Standard-Cube-Map/py.png", // Back
-      "/Standard-Cube-Map/py.png", // Front
+      getAssetPath("/Standard-Cube-Map/py.png"), // Right
+      getAssetPath("/Standard-Cube-Map/py.png"), // Left
+      getAssetPath("/Standard-Cube-Map/pz.png"), // Top
+      getAssetPath("/Standard-Cube-Map/px.png"), // Bottom
+      getAssetPath("/Standard-Cube-Map/py.png"), // Back
+      getAssetPath("/Standard-Cube-Map/py.png"), // Front
     ],
     background: false,
     rotation: [0, 0, 0],
@@ -128,36 +134,36 @@ export const BUILDING_CONFIG = [
   {
     name: "B",
     ...typeAConfig,
-    hitbox: "/models/b-hitbox.glb",
+    hitbox: getAssetPath("/models/b-hitbox.glb"),
   },
   {
     name: "C",
     ...typeAConfig,
-    hitbox: "/models/c-hitbox.glb",
+    hitbox: getAssetPath("/models/c-hitbox.glb"),
   },
   {
     name: "D",
     ...typeAConfig,
-    model: "/models/type-d-final.glb",
-    hitbox: "/models/d-hitbox.glb",
+    model: getAssetPath("/models/type-d-final.glb"),
+    hitbox: getAssetPath("/models/d-hitbox.glb"),
   },
   {
     name: "E",
     ...typeAConfig,
-    model: "/models/type-f-1024.glb",
-    hitbox: "/models/e-hitbox.glb",
+    model: getAssetPath("/models/type-f-1024.glb"),
+    hitbox: getAssetPath("/models/e-hitbox.glb"),
   },
   {
     name: "F",
     ...typeAConfig,
-    model: "/models/type-f-1024.glb",
-    hitbox: "/models/f-hitbox.glb",
+    model: getAssetPath("/models/type-f-1024.glb"),
+    hitbox: getAssetPath("/models/f-hitbox.glb"),
   },
   {
     name: "G",
     ...typeAConfig,
-    model: "/models/type-g.glb",
-    hitbox: "/models/g-hitbox.glb",
+    model: getAssetPath("/models/type-g.glb"),
+    hitbox: getAssetPath("/models/g-hitbox.glb"),
   },
 ];
 

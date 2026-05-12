@@ -49,7 +49,11 @@ const initPromise = i18n
       caches: ["localStorage"],
     },
     backend: {
-      loadPath: "/locales/{{lng}}/{{ns}}.json",
+      loadPath: `${
+        import.meta.env.BASE_URL.endsWith("/")
+          ? import.meta.env.BASE_URL.slice(0, -1)
+          : import.meta.env.BASE_URL
+      }/locales/{{lng}}/{{ns}}.json`,
     },
     react: {
       useSuspense: false, // We await init before rendering — no Suspense needed

@@ -7,8 +7,12 @@ import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.j
 // ✅ Singleton instances — created once, reused everywhere
 // DRACO handles mesh compression (geometry)
 // BASIS handles texture compression (images)
-const DRACO_PATH = "/draco/";
-const BASIS_PATH = "/basis/";
+const BASE_URL = import.meta.env.BASE_URL.endsWith("/")
+  ? import.meta.env.BASE_URL.slice(0, -1)
+  : import.meta.env.BASE_URL;
+
+const DRACO_PATH = `${BASE_URL}/draco/`;
+const BASIS_PATH = `${BASE_URL}/basis/`;
 
 const dracoLoader = new DRACOLoader().setDecoderPath(DRACO_PATH);
 const ktx2Loader = new KTX2Loader().setTranscoderPath(BASIS_PATH);
