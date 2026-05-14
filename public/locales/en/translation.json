@@ -44,5 +44,8 @@
   "select_language": "Select Language",
   "more": "More",
   "find_property": "Find Property",
-  "loading": "Loading"
+  "loading": "Loading",
+  "enquiry": "Enquiry",
+  "enquiry_description": "Interested in this unit? Contact our sales team for more information.",
+  "unit": "Unit"
 }

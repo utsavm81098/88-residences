@@ -104,12 +104,12 @@ const typeAConfig = {
   hitbox: getAssetPath("/models/a-hitbox.glb"),
   environment: {
     files: [
-      getAssetPath("/Standard-Cube-Map/py.png"), // Right
-      getAssetPath("/Standard-Cube-Map/py.png"), // Left
-      getAssetPath("/Standard-Cube-Map/pz.png"), // Top
-      getAssetPath("/Standard-Cube-Map/px.png"), // Bottom
-      getAssetPath("/Standard-Cube-Map/py.png"), // Back
-      getAssetPath("/Standard-Cube-Map/py.png"), // Front
+      getAssetPath("/standard-cube-map/py.png"), // Right
+      getAssetPath("/standard-cube-map/py.png"), // Left
+      getAssetPath("/standard-cube-map/pz.png"), // Top
+      getAssetPath("/standard-cube-map/px.png"), // Bottom
+      getAssetPath("/standard-cube-map/py.png"), // Back
+      getAssetPath("/standard-cube-map/py.png"), // Front
     ],
     background: false,
     rotation: [0, 0, 0],

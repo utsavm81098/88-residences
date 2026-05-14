@@ -13,12 +13,15 @@ import { Badge } from "@/components/ui/badge";
 import { UNIT_ICONS, ICON_PROPS_DEFAULT } from "@/utils/constant";
 import { extractDigit, getLocalizedString } from "@/utils/helper";
 import { useUnitInfoCard } from "./use-unit-info-card";
+import useToggleState from "@/hooks/use-toggle-state";
+import EnquiryDialog from "./components/enquiry-dialog";
 
 /**
  * UnitInfoCardContainer - Combined Smart Container and UI component.
  */
 const UnitInfoCardContainer = ({ unit, selectedBuilding }) => {
   const { status, handleClose } = useUnitInfoCard({ unit });
+  const { state: isEnquiryOpen, open: openEnquiry, set: setEnquiryOpen } = useToggleState(false);
   const { t, i18n } = useTranslation();
   const lang = i18n.language || "en";
 
@@ -41,11 +44,30 @@ const UnitInfoCardContainer = ({ unit, selectedBuilding }) => {
             <span className="text-lg font-bold tracking-tight truncate">
               {t("apt")} {unit.apartment_number || unit.title || unit.name}
             </span>
-            {status === "sold" && (
-              <Badge variant="sold" className="text-[10px] uppercase px-2 py-0">
-                {t("sold")}
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {status !== "sold" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-3 gap-2 text-[11px] uppercase font-bold rounded-full border border-accent-yellow/30 text-accent-yellow bg-accent-yellow/5 hover:!bg-accent-yellow hover:!text-white transition-all duration-300 group shadow-lg"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEnquiry();
+                  }}
+                >
+                  <ICONS.Mail
+                    size={14}
+                    className="text-accent-yellow group-hover:text-white transition-colors"
+                  />
+                  <span>{t("enquiry")}</span>
+                </Button>
+              )}
+              {status === "sold" && (
+                <Badge variant="sold" className="text-[10px] uppercase px-2 py-0">
+                  {t("sold")}
+                </Badge>
+              )}
+            </div>
           </div>
           {status !== "sold" && unit.apartment_price && (
             <div className="text-white/90 font-bold text-lg text-start">
@@ -90,7 +112,10 @@ const UnitInfoCardContainer = ({ unit, selectedBuilding }) => {
         </CardContent>
 
         <CardFooter className="px-3.5 pb-4 flex gap-2">
-          <Button className="flex-1 text-black bg-accent-yellow hover:bg-accent-yellow/80 font-bold h-10 rounded-lg text-[13px] border-0 transition-colors">
+          <Button
+            variant="brand"
+            className="flex-1 font-bold h-10 rounded-lg text-[13px] transition-colors"
+          >
             {t("view_property")}
           </Button>
           <Button
@@ -101,6 +126,8 @@ const UnitInfoCardContainer = ({ unit, selectedBuilding }) => {
           </Button>
         </CardFooter>
       </Card>
+
+      <EnquiryDialog {...{ isEnquiryOpen, setEnquiryOpen, unit, selectedBuilding }} />
     </div>
   );
 };

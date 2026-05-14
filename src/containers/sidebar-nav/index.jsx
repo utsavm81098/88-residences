@@ -2,8 +2,13 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { SvgIcon } from "@/components/ui/svg-icon";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { NAV_ITEMS } from "@/utils/constant";
 import { useSidebarNav } from "./use-sidebar-nav";
+import { getDashboardRoute } from "@/utils/helper";
+import { Logo } from "@/components/ui/logo";
+import { Button } from "@/components/ui/button";
+import logo from "@/assets/logo.png";
 
 /**
  * NavSidebar UI component (formerly src/components/ui/nav-sidebar)
@@ -19,8 +24,8 @@ const NavSidebar = ({
   onNavItemClick,
 }) => {
   const { t, i18n } = useTranslation();
-  const isRTL = i18n.dir() === "rtl";
-  const targetLang = languages.find((l) => l.code !== activeLanguage) || languages[0];
+  const targetLang =
+    languages.find((l) => l.code !== activeLanguage) || languages[0];
 
   return (
     <aside
@@ -32,24 +37,50 @@ const NavSidebar = ({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
+      {/* ── Logo ── */}
+      <div
+        className={cn(
+          "flex items-center shrink-0 transition-all duration-300 pt-6 pb-4",
+          isExpanded ? "px-6" : "px-0 justify-center",
+        )}
+      >
+        <Link
+          to={getDashboardRoute(i18n)}
+          className="flex items-center gap-3 transition-transform hover:scale-105 active:scale-95"
+        >
+          {isExpanded ? (
+            <img
+              src={logo}
+              alt="88 Residences"
+              className="h-8 w-auto object-contain transition-all duration-300"
+            />
+          ) : (
+            <Logo className="h-8 w-8 transition-all duration-300" />
+          )}
+        </Link>
+      </div>
+
       {/* ── Navigation Items ── */}
-      <nav className="flex-1 px-2 py-8 space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden">
+      <nav className="flex-1 px-2 py-2 space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden">
         {NAV_ITEMS.map((item) => (
-          <button
+          <Button
             key={item.id}
+            variant="ghost"
             onClick={() => onNavItemClick?.(item.id)}
             className={cn(
-              "w-full flex items-center rounded-lg transition-all duration-300 group relative h-11",
-              isExpanded ? "gap-4 px-3" : "justify-center",
+              "w-full flex items-center rounded-lg transition-all duration-300 group relative h-11 justify-start",
+              !isExpanded && "justify-center px-0",
+              isExpanded && "px-3 gap-4",
               activeNavItem === item.id
-                ? "text-accent-yellow"
+                ? "text-accent-yellow bg-white/5"
                 : "text-white/40 hover:bg-white/5 hover:text-white",
             )}
           >
             {/* Icon Wrapper */}
             <div
               className={cn(
-                "w-8 h-8 flex items-center justify-center shrink-0 transition-colors",
+                "flex items-center justify-center shrink-0 transition-colors",
+                isExpanded ? "w-5 h-5" : "w-8 h-8",
                 activeNavItem === item.id
                   ? "text-accent-yellow"
                   : "text-white/40 group-hover:text-white",
@@ -57,22 +88,23 @@ const NavSidebar = ({
             >
               {item.icon && (
                 <item.icon
-                  size={22}
+                  size={isExpanded ? 20 : 22}
                   strokeWidth={activeNavItem === item.id ? 2.5 : 1.5}
                 />
               )}
             </div>
 
             {/* Label */}
-            <span
-              className={cn(
-                "text-[13px] font-bold tracking-wide transition-all duration-500 whitespace-nowrap overflow-hidden text-start",
-                isExpanded ? "opacity-100 max-w-[200px]" : "opacity-0 max-w-0",
-              )}
-            >
-              {t(item.label)}
-            </span>
-          </button>
+            {isExpanded && (
+              <span
+                className={cn(
+                  "text-[13px] font-bold tracking-wide transition-all duration-500 whitespace-nowrap overflow-hidden text-start",
+                )}
+              >
+                {t(item.label)}
+              </span>
+            )}
+          </Button>
         ))}
       </nav>
 
@@ -84,13 +116,14 @@ const NavSidebar = ({
         )}
       >
         {/* Language Switcher */}
-        <button
+        <Button
+          variant="ghost"
           onClick={() => onLanguageChange?.(targetLang.code)}
           className={cn(
-            "flex items-center transition-all duration-300 group/lang h-11 outline-none",
+            "flex items-center transition-all duration-300 group/lang h-11 outline-none justify-start",
             isExpanded
-              ? "w-full gap-4 px-3 rounded-lg bg-white/5 hover:bg-white/10"
-              : "w-11 justify-center rounded-full hover:bg-white/5",
+              ? "w-full gap-4 px-3 bg-white/5 hover:bg-white/10"
+              : "w-11 justify-center rounded-full hover:bg-white/5 p-0",
           )}
         >
           <span className="shrink-0 flex items-center justify-center w-[18px] h-[18px]">
@@ -99,15 +132,16 @@ const NavSidebar = ({
               className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
             />
           </span>
-          <span
-            className={cn(
-              "text-[11px] font-bold transition-all duration-500 whitespace-nowrap overflow-hidden text-start text-white/90",
-              isExpanded ? "opacity-100 max-w-[150px]" : "opacity-0 max-w-0",
-            )}
-          >
-            {targetLang?.label}
-          </span>
-        </button>
+          {isExpanded && (
+            <span
+              className={cn(
+                "text-[11px] font-bold transition-all duration-500 whitespace-nowrap overflow-hidden text-start text-white/90",
+              )}
+            >
+              {targetLang?.label}
+            </span>
+          )}
+        </Button>
       </div>
     </aside>
   );

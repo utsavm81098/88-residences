@@ -20,6 +20,7 @@ import {
   MessageCircle,
   User,
   Menu,
+  Mail,
 } from "lucide-react";
 
 export const ICONS = {
@@ -48,4 +49,5 @@ export const ICONS = {
   MessageCircle,
   User,
   Menu,
+  Mail,
 };

@@ -13,9 +13,6 @@ import { cn } from "@/lib/utils";
 import useMobileMenu from "./use-mobile-menu";
 import { BUILDING_CONFIG } from "@/utils/constant";
 
-/**
- * Combined Container and UI for MobileMenu.
- */
 const MobileMenuContainer = memo(
   ({ handleNext, handlePrev, currentBuilding, buildingUnits }) => {
     const {

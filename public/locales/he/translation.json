@@ -44,5 +44,8 @@
   "select_language": "בחר שפה",
   "more": "עוד",
   "find_property": "מצא נכס",
-  "loading": "טוען"
+  "loading": "טוען",
+  "enquiry": "בירור",
+  "enquiry_description": "מעוניינים ביחידה זו? צור קשר עם צוות המכירות שלנו למידע נוסף.",
+  "unit": "יחידה"
 }

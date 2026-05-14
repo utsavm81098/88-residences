@@ -5,6 +5,9 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS_MOBILE } from "@/utils/constant";
 
+import { Link } from "react-router";
+import { getDashboardRoute } from "@/utils/helper";
+import logo from "@/assets/logo.png";
 import { SvgIcon } from "@/components/ui/svg-icon";
 
 /**
@@ -61,7 +64,7 @@ export default function MobileNavContainer() {
     languages,
     navItems,
   } = useMobileNav();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const targetLang =
     languages.find((l) => l.code !== activeLanguage) || languages[0];
@@ -75,7 +78,22 @@ export default function MobileNavContainer() {
           side="bottom"
           className="h-full top-0 w-full bg-sidebar border-none p-0 rounded-none overflow-hidden flex flex-col"
         >
-          <div className="flex-1 p-6 space-y-8 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 p-6 space-y-4 overflow-y-auto custom-scrollbar">
+            {/* ── Logo ── */}
+            <div className="flex justify-start pb-2">
+              <Link
+                to={getDashboardRoute(i18n)}
+                onClick={() => setIsMoreOpen(false)}
+                className="outline-none active:scale-95 transition-transform"
+              >
+                <img
+                  src={logo}
+                  alt="88 Residences"
+                  className="h-8 w-auto object-contain"
+                />
+              </Link>
+            </div>
+
             {/* ── Navigation Grid ── */}
             <div className="grid grid-cols-3 gap-3">
               {navItems

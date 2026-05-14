@@ -35,7 +35,10 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
         </div>
       ) : (
         <div className="w-full text-start">
-          <span className="text-[18px] font-bold text-white tracking-tight leading-none" dir="ltr">
+          <span
+            className="text-[18px] font-bold text-white tracking-tight leading-none"
+            dir="ltr"
+          >
             {unit?.apartment_price}
           </span>
         </div>
@@ -97,7 +100,10 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
         >
           {t("floor_plan")}
         </Button>
-        <Button className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-[12px] font-bold h-9 rounded-lg shadow-lg shadow-blue-500/20 border-0">
+        <Button
+          variant="brand"
+          className="flex-1 text-[12px] font-bold h-9 rounded-lg"
+        >
           {t("view_property")}
         </Button>
       </div>
