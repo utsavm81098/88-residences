@@ -1,8 +1,6 @@
 import { useSelector } from "react-redux";
 import useResponsiveConfig from "@/hooks/use-responsive-config";
 import { logger } from "@/utils/logger";
-import { useEnvironment } from "@react-three/drei";
-import { BUILDING_CONFIG } from "@/utils/constant";
 
 // Note: Preloading is now handled centrally in src/utils/preloader.js
 

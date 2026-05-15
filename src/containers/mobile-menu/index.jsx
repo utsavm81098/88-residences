@@ -1,5 +1,6 @@
 import React, { memo, useMemo } from "react";
 import ApartmentCard from "./apartment-card";
+import EnquiryDialog from "@/containers/enquiry-dialog";
 import { ICONS } from "@/assets/icons";
 import {
   Carousel,
@@ -23,6 +24,9 @@ const MobileMenuContainer = memo(
       openFilter,
       closeFilter,
       activeFiltersCount,
+      isEnquiryOpen,
+      openEnquiry,
+      setEnquiryOpen,
     } = useMobileMenu({
       buildingUnits,
     });
@@ -66,7 +70,7 @@ const MobileMenuContainer = memo(
           <div className="w-[36px]"></div>
         </div>
 
-        <FilterOverlay isOpen={isFilterOpen} onClose={closeFilter} />
+        <FilterOverlay {...{ isOpen: isFilterOpen, onClose: closeFilter }} />
 
         <div
           ref={sheetRef}
@@ -111,9 +115,11 @@ const MobileMenuContainer = memo(
 
             {buildingUnits.length > 0 ? (
               <Carousel
-                opts={carouselOpts}
-                setApi={handleApi}
-                className="w-full pb-2"
+                {...{
+                  opts: carouselOpts,
+                  setApi: handleApi,
+                  className: "w-full pb-2",
+                }}
               >
                 <CarouselContent
                   data-vaul-no-drag
@@ -134,9 +140,12 @@ const MobileMenuContainer = memo(
                         className={cn(buildingUnits.length === 1 && "w-[85%]")}
                       >
                         <ApartmentCard
-                          unit={unit}
-                          isSelected={mobileSelectedUnit?.id === unit.id}
-                          selectedBuilding={currentBuilding}
+                          {...{
+                            unit,
+                            isSelected: mobileSelectedUnit?.id === unit.id,
+                            selectedBuilding: currentBuilding,
+                            onEnquiry: openEnquiry,
+                          }}
                         />
                       </div>
                     </CarouselItem>
@@ -153,6 +162,17 @@ const MobileMenuContainer = memo(
             )}
           </div>
         </div>
+
+        <EnquiryDialog
+          {...{
+            isEnquiryOpen,
+            setEnquiryOpen,
+            unit: mobileSelectedUnit,
+            selectedBuilding: currentBuilding,
+            t,
+            lang: i18n.language,
+          }}
+        />
       </div>
     );
   },

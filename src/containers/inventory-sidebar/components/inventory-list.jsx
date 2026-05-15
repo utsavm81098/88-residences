@@ -164,11 +164,16 @@ const InventoryList = ({
                               </div>
                               <div className="text-[12px] font-bold text-end pe-4">
                                 {unit?.apartment_sold ? (
-                                  <Badge variant="sold" className="px-1.5 py-0.5 text-[9px] uppercase tracking-wider rounded-md">
+                                  <Badge
+                                    variant="sold"
+                                    className="px-1.5 py-0.5 text-[9px] uppercase tracking-wider rounded-md"
+                                  >
                                     {t("sold", "Sold")}
                                   </Badge>
                                 ) : (
-                                  <span dir="ltr">{unit?.apartment_price || 0}</span>
+                                  <span dir="ltr">
+                                    {unit?.apartment_price || 0}
+                                  </span>
                                 )}
                               </div>
                             </div>

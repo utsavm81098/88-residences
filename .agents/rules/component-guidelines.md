@@ -90,10 +90,12 @@ const InventoryContainer = () => {
 
   return (
     <InventorySidebar
-      units={units}
-      filters={filters}
-      onFilterChange={onFilterChange}
-      onUnitSelect={onUnitSelect}
+      {...{
+        units,
+        filters,
+        onFilterChange,
+        onUnitSelect,
+      }}
     />
   );
 };

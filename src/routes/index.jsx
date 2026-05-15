@@ -1,4 +1,3 @@
-
 import {
   createBrowserRouter,
   Navigate,
@@ -53,7 +52,7 @@ const LangGuard = () => {
     const currentPath = location.pathname.replace(`/${lang}`, "");
     const cleanPath = currentPath === "/" ? "" : currentPath;
     const newPath = `/${DASHBOARD_PREFIX}-${targetLang}${cleanPath}`;
-    
+
     return (
       <Navigate to={`${newPath}${location.search}${location.hash}`} replace />
     );
@@ -73,11 +72,7 @@ const router = createBrowserRouter([
     loader: async ({ params }) => {
       // Sync i18next state with the URL parameter before rendering
       const lang = params.lang?.replace(`${DASHBOARD_PREFIX}-`, "");
-      if (
-        lang &&
-        i18n.language !== lang &&
-        SUPPORTED_LANGS.includes(lang)
-      ) {
+      if (lang && i18n.language !== lang && SUPPORTED_LANGS.includes(lang)) {
         await i18n.changeLanguage(lang);
       }
       return null;

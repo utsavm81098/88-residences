@@ -23,6 +23,8 @@
   "floor_plan": "Floor Plan",
   "block": "Block",
   "apt": "Apt",
+  "apartment": "Apartment",
+  "building": "Building",
   "apartments_found": "Apartments Found",
   "area_sqm": "Area (sqm)",
   "more_filters": "More Filters",
@@ -55,5 +57,7 @@
   "phone": "Phone",
   "validation_required": "This field is required",
   "validation_email": "Please enter a valid email address",
-  "validation_phone": "Please enter a valid phone number"
+  "validation_phone": "Please enter a valid phone number",
+  "enquiry_greeting": "Please get back to me regarding this apartment:",
+  "bedrooms": "bedrooms"
 }

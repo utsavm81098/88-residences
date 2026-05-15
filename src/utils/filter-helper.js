@@ -7,7 +7,8 @@ export const normalizeInventory = (inventory) => {
   if (Array.isArray(inventory)) {
     return inventory.map((unit) => ({
       ...unit,
-      buildingName: unit.building_name || unit.building || unit.buildingName || "A",
+      buildingName:
+        unit.building_name || unit.building || unit.buildingName || "A",
       rooms: unit.rooms || unit.type || "1",
       price: unit.price || "0",
       area: unit.area || "0",
@@ -19,8 +20,8 @@ export const normalizeInventory = (inventory) => {
   if (typeof inventory === "object" && Object.keys(inventory).length > 0) {
     return Object.entries(inventory).flatMap(([buildingName, units]) => {
       if (!Array.isArray(units)) return [];
-      return units.map((unit) => ({ 
-        ...unit, 
+      return units.map((unit) => ({
+        ...unit,
         buildingName,
         rooms: unit.rooms || unit.type || "1",
         price: unit.price || "0",
@@ -43,20 +44,20 @@ export const getActiveFiltersCount = (filters) => {
 
   // Only count price if it's different from default range
   if (filters.price?.length === 2) {
-    const isDefault = 
-      filters.price[0] === FILTER_OPTIONS.priceRange.min && 
+    const isDefault =
+      filters.price[0] === FILTER_OPTIONS.priceRange.min &&
       filters.price[1] === FILTER_OPTIONS.priceRange.max;
     if (!isDefault) count++;
   }
 
   // Only count areas if different from default range
   if (filters.areas?.length === 2) {
-    const isDefault = 
-      filters.areas[0] === FILTER_OPTIONS.areaRange.min && 
+    const isDefault =
+      filters.areas[0] === FILTER_OPTIONS.areaRange.min &&
       filters.areas[1] === FILTER_OPTIONS.areaRange.max;
     if (!isDefault) count++;
   }
-  
+
   if (filters.buildings) count++;
 
   return count;

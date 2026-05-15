@@ -73,23 +73,29 @@ export default function MobileNavContainer() {
     <>
       <MobileNavBar {...{ activeNavItem, onNavItemClick }} />
 
-      <Sheet open={isMoreOpen} onOpenChange={setIsMoreOpen}>
+      <Sheet {...{ open: isMoreOpen, onOpenChange: setIsMoreOpen }}>
         <SheetContent
-          side="bottom"
-          className="h-full top-0 w-full bg-sidebar border-none p-0 rounded-none overflow-hidden flex flex-col"
+          {...{
+            side: "bottom",
+            className:
+              "h-full top-0 w-full bg-sidebar border-none p-0 rounded-none overflow-hidden flex flex-col",
+          }}
         >
           <div className="flex-1 p-6 space-y-4 overflow-y-auto custom-scrollbar">
             {/* ── Logo ── */}
             <div className="flex justify-start pb-2">
               <Link
-                to={getDashboardRoute(i18n)}
-                onClick={() => setIsMoreOpen(false)}
-                className="outline-none active:scale-95 transition-transform"
+                {...{
+                  to: getDashboardRoute(i18n),
+                  onClick: () => setIsMoreOpen(false),
+                  className:
+                    "outline-none active:scale-95 transition-transform",
+                }}
               >
                 <img
                   src={logo}
                   alt="88 Residences"
-                  className="h-8 w-auto object-contain"
+                  className="h-6 w-auto object-contain"
                 />
               </Link>
             </div>

@@ -4,10 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { getLocalizedString, extractDigit } from "@/utils/helper";
 import { useTranslation } from "react-i18next";
 import { UNIT_ICONS, ICON_PROPS_DEFAULT } from "@/utils/constant";
+import { ICONS } from "@/assets/icons";
 
-const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
+const ApartmentCard = ({ unit, isSelected, selectedBuilding, onEnquiry }) => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
+
+  const isSold = unit?.status === "sold" || unit?.apartment_sold;
+  const isAvailable = !isSold;
 
   return (
     <div
@@ -24,25 +28,41 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
         </span>
       </div>
 
-      {unit?.apartment_sold ? (
-        <div className="w-full text-start">
+      <div className="flex justify-between items-center w-full min-h-[32px]">
+        {isSold ? (
           <Badge
             variant="sold"
             className="text-[10px] uppercase tracking-wider px-2 py-0 w-fit"
           >
             {t("sold")}
           </Badge>
-        </div>
-      ) : (
-        <div className="w-full text-start">
-          <span
-            className="text-[18px] font-bold text-white tracking-tight leading-none"
-            dir="ltr"
-          >
-            {unit?.apartment_price}
-          </span>
-        </div>
-      )}
+        ) : (
+          <>
+            <span
+              className="text-[18px] font-bold text-white tracking-tight leading-none"
+              dir="ltr"
+            >
+              {unit?.apartment_price}
+            </span>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-3 gap-1.5 text-[10px] uppercase font-bold rounded-full border border-accent-yellow/30 text-accent-yellow bg-accent-yellow/5 hover:!bg-accent-yellow hover:!text-white transition-all duration-300 group shadow-lg"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEnquiry?.();
+              }}
+            >
+              <ICONS.Mail
+                size={12}
+                className="text-accent-yellow group-hover:text-white transition-colors"
+              />
+              <span>{t("enquiry")}</span>
+            </Button>
+          </>
+        )}
+      </div>
 
       {/* ── Stats Grid ── */}
       <div className="flex flex-row items-center justify-between gap-x-2 mt-0.5">

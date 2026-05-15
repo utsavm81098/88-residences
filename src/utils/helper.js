@@ -5,7 +5,9 @@ import { SUPPORTED_LANGS } from "./languages";
 
 export const getDashboardRoute = (i18n, pathId = "") => {
   const detectedLang = i18n?.language?.split("-")[0].toLowerCase() || "en";
-  const targetLang = SUPPORTED_LANGS.includes(detectedLang) ? detectedLang : "en";
+  const targetLang = SUPPORTED_LANGS.includes(detectedLang)
+    ? detectedLang
+    : "en";
   const path = pathId === "home" ? "" : pathId;
   return `/${DASHBOARD_PREFIX}-${targetLang}${path ? `/${path}` : ""}`;
 };

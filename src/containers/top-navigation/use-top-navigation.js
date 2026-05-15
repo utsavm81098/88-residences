@@ -14,7 +14,12 @@ export const useTopNavigation = () => {
   const dispatch = useDispatch();
   const { currentBuilding } = useSelector((state) => state.building);
   const buildingUnits = useSelector(selectBuildingUnits);
-  const { state: isMenuOpen, open, close, set: setMenuOpen } = useToggleState(false);
+  const {
+    state: isMenuOpen,
+    open,
+    close,
+    set: setMenuOpen,
+  } = useToggleState(false);
 
   const menuRef = useRef(null);
 
@@ -42,9 +47,12 @@ export const useTopNavigation = () => {
     [dispatch],
   );
 
-  const onToggleMenu = useCallback((open) => {
-    setMenuOpen(open);
-  }, [setMenuOpen]);
+  const onToggleMenu = useCallback(
+    (open) => {
+      setMenuOpen(open);
+    },
+    [setMenuOpen],
+  );
 
   const totalApt = useMemo(() => buildingUnits.length, [buildingUnits]);
 

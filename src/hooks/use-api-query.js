@@ -2,7 +2,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
 /**
  * Generic API query hook built on top of TanStack React Query.
- * 
+ *
  * @param {Object} config
  * @param {import('@tanstack/react-query').QueryKey | string} config.queryKey
  * @param {Function} config.apiCall
@@ -20,4 +20,3 @@ export function useApiQuery({ queryKey, apiCall, params, options }) {
     ...options,
   });
 }
-

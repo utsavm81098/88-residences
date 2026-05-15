@@ -89,3 +89,6 @@ The project uses the `@/` alias to represent the `src/` directory (configured in
 - Arrow functions for callbacks; named function declarations for components.
 - No magic numbers — extract to named constants.
 - Maximum one component per file (co-located sub-components are exceptions).
+- **Prop Passing Pattern**: Use shorthand object spread for passing multiple props to components.
+  - ✅ **Correct**: `<Component {...{ prop1, prop2: value2 }} />`
+  - ❌ **Incorrect**: `<Component prop1={prop1} prop2={value2} />`

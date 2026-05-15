@@ -1,6 +1,6 @@
 import { Text, Billboard } from "@react-three/drei";
 import useDirectionLabel, { useLabel } from "./use-direction-label";
-import React, { memo } from "react";
+import { memo } from "react";
 
 const DIRECTION_NAMES = {
   N: "NORTH",
@@ -9,41 +9,46 @@ const DIRECTION_NAMES = {
   W: "WEST",
 };
 
-const Label = memo(
-  ({ children, position, onMoveCamera, dir, fontSize, isDragging }) => {
-    const { textRef, handleClick, handlePointerOver, handlePointerOut } =
-      useLabel({
-        isDragging,
-        dir,
-        onMoveCamera,
-      });
+const Label = memo(function Label({
+  children,
+  position,
+  onMoveCamera,
+  dir,
+  fontSize,
+  isDragging,
+}) {
+  const { textRef, handleClick, handlePointerOver, handlePointerOut } =
+    useLabel({
+      isDragging,
+      dir,
+      onMoveCamera,
+    });
 
-    return (
-      <Billboard
-        position={position}
-        follow
-        lockX={false}
-        lockY={false}
-        lockZ={false}
+  return (
+    <Billboard
+      position={position}
+      follow
+      lockX={false}
+      lockY={false}
+      lockZ={false}
+    >
+      <Text
+        ref={textRef}
+        fontSize={fontSize}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+        depthTest={false}
+        renderOrder={100}
+        onClick={handleClick}
+        onPointerOver={handlePointerOver}
+        onPointerOut={handlePointerOut}
       >
-        <Text
-          ref={textRef}
-          fontSize={fontSize}
-          color="white"
-          anchorX="center"
-          anchorY="middle"
-          depthTest={false}
-          renderOrder={100}
-          onClick={handleClick}
-          onPointerOver={handlePointerOver}
-          onPointerOut={handlePointerOut}
-        >
-          {children}
-        </Text>
-      </Billboard>
-    );
-  },
-);
+        {children}
+      </Text>
+    </Billboard>
+  );
+});
 
 const DirectionLabel = ({ controlsRef }) => {
   const { positions, fontSize, moveCamera, isDragging, isTransitioning } =

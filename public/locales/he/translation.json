@@ -23,6 +23,8 @@
   "floor_plan": "תכנית קומה",
   "block": "בלוק",
   "apt": "מַתְאִים",
+  "apartment": "דירה",
+  "building": "בניין",
   "apartments_found": "דירות נמצאו",
   "area_sqm": "שטח (מ\"ר)",
   "more_filters": "מסננים נוספים",
@@ -55,5 +57,7 @@
   "phone": "טלפון",
   "validation_required": "שדה זה הוא חובה",
   "validation_email": "אנא הזן כתובת אימייל תקינה",
-  "validation_phone": "אנא הזן מספר טלפון תקין"
+  "validation_phone": "אנא הזן מספר טלפון תקין",
+  "enquiry_greeting": "אנא חזור אליי בנוגע לדירה זו:",
+  "bedrooms": "חדרי שינה"
 }

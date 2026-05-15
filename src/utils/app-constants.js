@@ -21,6 +21,10 @@ export const METHODS = {
   OPTIONS: "options",
 };
 
+export const DEFAULT_STALE_TIME = 1000 * 60 * 5;
+
+export const IP_CHECK_URL = "https://checkip.amazonaws.com";
+
 export const AUTH_MESSAGES = {
   loginSuccess: "Login successful.",
   invalidLogin: "Invalid email or password.",

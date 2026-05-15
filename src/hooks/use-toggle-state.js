@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 /**
  * Custom hook to manage a boolean toggle state.
  * Supports both array and object destructuring.
- * 
+ *
  * @example
  * const [isOpen, open, close, toggle] = useToggleState(false);
  * or
@@ -24,15 +24,13 @@ const useToggleState = (initialState = false) => {
     setState((s) => !s);
   }, []);
 
-  const hookData = [state, open, close, toggle];
+  const hookData = [state, open, close, toggle, setState];
   hookData.state = state;
   hookData.open = open;
   hookData.close = close;
   hookData.toggle = toggle;
-  
-  // Adding set for compatibility with components expecting a setter function
   hookData.set = setState;
-  
+
   return hookData;
 };
 

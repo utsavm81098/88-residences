@@ -44,6 +44,13 @@ export const preloadModels = () => {
   if (landingHitbox)
     useGLTF.preload(landingHitbox, true, undefined, configureLoader);
   if (landingEnv) useEnvironment.preload(landingEnv);
+};
+
+export const preloadBackgroundModels = () => {
+  const landingBuilding = BUILDING_CONFIG[0];
+  const landingModel = landingBuilding.model;
+  const landingHitbox = landingBuilding.hitbox;
+  const landingEnv = landingBuilding.environment;
 
   // 2. Background Priority: Remaining unique models
   const otherModels = [

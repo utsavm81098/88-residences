@@ -1,10 +1,10 @@
-import { useMemo, useCallback } from 'react';
-import { useDispatch } from 'react-redux';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import { LOCAL_STORAGE_KEY } from '@/utils/app-constants';
-import { decodeToken } from '@/utils/helper';
-import AuthContext from './context';
-import { ADMIN_ROUTES, AUTH_ROUTES } from '@/routes/routes';
+import { useMemo, useCallback } from "react";
+import { useDispatch } from "react-redux";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import { LOCAL_STORAGE_KEY } from "@/utils/app-constants";
+import { decodeToken } from "@/utils/helper";
+import AuthContext from "./context";
+import { ADMIN_ROUTES, AUTH_ROUTES } from "@/routes/routes";
 
 const REDIRECTION = {
   admin: ADMIN_ROUTES.dashboard.path,
@@ -19,7 +19,7 @@ const AuthProvider = ({ children }) => {
     storedValue: token,
     setValue: setToken,
     removeValue: removeToken,
-  } = useLocalStorage(LOCAL_STORAGE_KEY, '');
+  } = useLocalStorage(LOCAL_STORAGE_KEY, "");
 
   const user = useMemo(() => {
     if (!token) return {};
@@ -30,7 +30,7 @@ const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  const role = user?.role ?? '';
+  const role = user?.role ?? "";
 
   const redirectUrl = useMemo(() => {
     if (!role) return AUTH_ROUTES.login.path;
@@ -38,7 +38,7 @@ const AuthProvider = ({ children }) => {
   }, [role]);
 
   const resetAllStores = useCallback(() => {
-    dispatch({ type: 'app/reset' });
+    dispatch({ type: "app/reset" });
   }, [dispatch]);
 
   const login = useCallback(
@@ -60,7 +60,7 @@ const AuthProvider = ({ children }) => {
   const contextValue = useMemo(
     () => ({
       user,
-      role: user?.role || '',
+      role: user?.role || "",
       redirectUrl,
       login,
       logout,

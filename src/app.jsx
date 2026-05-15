@@ -23,8 +23,10 @@ const AppProviders = () => {
 
         {/* Global UI utilities */}
         <Toaster
-          position={dir === "rtl" ? "top-left" : "top-right"}
-          dir={dir}
+          {...{
+            position: dir === "rtl" ? "top-left" : "top-right",
+            dir,
+          }}
         />
       </DirectionProvider>
     </QueryProvider>
@@ -32,5 +34,3 @@ const AppProviders = () => {
 };
 
 export default AppProviders;
-
-

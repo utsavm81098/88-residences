@@ -73,7 +73,14 @@ export function useMobileNav() {
       closeMore();
       logger.info("Language changed to:", langCode);
     },
-    [i18n, location.pathname, location.search, location.hash, navigate, closeMore],
+    [
+      i18n,
+      location.pathname,
+      location.search,
+      location.hash,
+      navigate,
+      closeMore,
+    ],
   );
 
   const currentActiveId = isInventoryPage ? "inventory" : "home";

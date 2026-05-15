@@ -17,7 +17,9 @@ export const useMobileMenu = ({ buildingUnits }) => {
   const lastSyncedIndex = useRef(-1);
   const dispatch = useDispatch();
 
-  const { mobileSelectedUnit, filters } = useSelector((state) => state.building);
+  const { mobileSelectedUnit, filters } = useSelector(
+    (state) => state.building,
+  );
 
   const activeFiltersCount = useMemo(
     () => getActiveFiltersCount(filters),
@@ -32,6 +34,8 @@ export const useMobileMenu = ({ buildingUnits }) => {
 
   const [api, setApi] = useState(null);
   const [isFilterOpen, openFilter, closeFilter] = useToggleState(false);
+  const [isEnquiryOpen, openEnquiry, closeEnquiry, , setEnquiryOpen] =
+    useToggleState(false);
 
   const animateTo = useCallback(
     (height) => {
@@ -158,6 +162,10 @@ export const useMobileMenu = ({ buildingUnits }) => {
     isFilterOpen,
     openFilter,
     closeFilter,
+    isEnquiryOpen,
+    openEnquiry,
+    closeEnquiry,
+    setEnquiryOpen,
     activeFiltersCount,
     mobileSelectedUnit,
   };

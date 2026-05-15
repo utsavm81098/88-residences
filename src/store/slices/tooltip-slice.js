@@ -29,5 +29,10 @@ const tooltipSlice = createSlice({
   },
 });
 
-export const { showTooltip, hideTooltip, updateTooltipUnit, updateTooltipPosition } = tooltipSlice.actions;
+export const {
+  showTooltip,
+  hideTooltip,
+  updateTooltipUnit,
+  updateTooltipPosition,
+} = tooltipSlice.actions;
 export default tooltipSlice.reducer;

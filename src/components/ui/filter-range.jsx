@@ -23,14 +23,17 @@ function FilterRange({
       data-slot="filter-range"
       dir={i18n.dir()}
       className="flex flex-col gap-2 pt-2"
-      {...props}>
+      {...props}
+    >
       <label className="text-[13px] font-medium text-white/70">{label}</label>
       <div className="flex justify-between items-center text-[11px] font-bold text-white/60 px-1">
         <span>
-          {prefix}{formatValue(displayMin)} {unit}
+          {prefix}
+          {formatValue(displayMin)} {unit}
         </span>
         <span>
-          {prefix}{formatValue(displayMax)} {unit}
+          {prefix}
+          {formatValue(displayMax)} {unit}
         </span>
       </div>
       <div className="px-2 pt-2 pb-1">
@@ -45,7 +48,7 @@ function FilterRange({
         />
       </div>
     </div>
-  )
+  );
 }
 
-export { FilterRange }
+export { FilterRange };

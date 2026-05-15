@@ -1,9 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { useSelector, useDispatch } from "react-redux";
 import { endTransition } from "@/store/slices/building-slice";
 import { BUILDING_CONFIG } from "@/utils/constant";
-import { useThree } from "@react-three/fiber";
+import { useThree, useFrame } from "@react-three/fiber";
+import { preloadBackgroundModels } from "@/utils/preloader";
+
+const WARMUP_FRAMES = 2;
 
 /**
  * Orchestrates the cinematic building transition animation.
@@ -157,7 +160,24 @@ export const useBuilding = ({ controlsRef }) => {
   } = useSelector((state) => state.building);
   const groupRefs = useRef({});
 
+  const [warmedUp, setWarmedUp] = useState(false);
+  const frames = useRef(0);
+  const [mountBackground, setMountBackground] = useState(false);
+
   useBuildingTransition({ groupRefs, controlsRef });
+
+  useFrame(() => {
+    if (warmedUp) return;
+    frames.current++;
+    if (frames.current >= WARMUP_FRAMES) setWarmedUp(true);
+  });
+
+  useEffect(() => {
+    if (warmedUp) {
+      preloadBackgroundModels();
+      setMountBackground(true);
+    }
+  }, [warmedUp]);
 
   return {
     currentBuilding,
@@ -165,6 +185,8 @@ export const useBuilding = ({ controlsRef }) => {
     previousBuildingIndex,
     isTransitioning,
     groupRefs,
+    warmedUp,
+    mountBackground,
   };
 };
 

@@ -11,7 +11,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { UNIT_ICONS, ICON_PROPS_DEFAULT } from "@/utils/constant";
 import { extractDigit, getLocalizedString } from "@/utils/helper";
-import EnquiryDialog from "./enquiry-dialog";
 
 /**
  * UnitInfoCardView - Pure UI component for displaying unit details.
@@ -68,7 +67,10 @@ const UnitInfoCardView = ({
                 </Button>
               )}
               {status === "sold" && (
-                <Badge variant="sold" className="text-[10px] uppercase px-2 py-0">
+                <Badge
+                  variant="sold"
+                  className="text-[10px] uppercase px-2 py-0"
+                >
                   {t("sold")}
                 </Badge>
               )}
@@ -131,8 +133,6 @@ const UnitInfoCardView = ({
           </Button>
         </CardFooter>
       </Card>
-
-      <EnquiryDialog {...{ isEnquiryOpen, setEnquiryOpen, unit, selectedBuilding, t, lang }} />
     </div>
   );
 };

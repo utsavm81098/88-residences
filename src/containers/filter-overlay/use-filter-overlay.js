@@ -1,19 +1,19 @@
 import { useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { BUILDING_CONFIG } from "@/utils/constant";
-import { 
+import {
   setBuilding,
   clearSelectedUnit,
   setFilters,
   clearFilters,
-  selectFilteredInventory
+  selectFilteredInventory,
 } from "@/store/slices/building-slice";
 
 export const useFilterOverlay = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
   const { filters } = useSelector((state) => state.building);
   const allFilteredUnits = useSelector(selectFilteredInventory);
-  
+
   const onFilterChange = useCallback(
     (key, value) => {
       dispatch(setFilters({ [key]: value }));
@@ -40,7 +40,10 @@ export const useFilterOverlay = ({ isOpen, onClose }) => {
     dispatch(clearFilters());
   }, [dispatch]);
 
-  const buildings = useMemo(() => Array.from(new Set(BUILDING_CONFIG.map((b) => b.name))), []);
+  const buildings = useMemo(
+    () => Array.from(new Set(BUILDING_CONFIG.map((b) => b.name))),
+    [],
+  );
 
   return {
     selectedFilters: filters,

@@ -7,7 +7,7 @@ import prettierRecommended from "eslint-plugin-prettier/recommended";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
-  globalIgnores(["dist", "node_modules", "build"]),
+  globalIgnores(["dist", "node_modules", "build", "public"]),
 
   {
     files: ["**/*.{js,jsx}"],
@@ -27,7 +27,10 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
     },
 
     settings: {
@@ -38,6 +41,8 @@ export default defineConfig([
 
     rules: {
       "react-refresh/only-export-components": "off",
+      "react/no-unknown-property": "off",
+      "react/prop-types": "off",
     },
   },
 

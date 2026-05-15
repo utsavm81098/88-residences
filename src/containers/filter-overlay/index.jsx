@@ -22,11 +22,14 @@ const FilterOverlay = memo(({ isOpen, onClose }) => {
   const { t, i18n } = useTranslation();
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Sheet {...{ open: isOpen, onOpenChange: (open) => !open && onClose() }}>
       <SheetContent
-        side="bottom"
-        dir={i18n.dir()}
-        className="h-[90vh] w-full bg-sidebar border-none p-0 rounded-t-[20px] overflow-hidden flex flex-col z-[4000]"
+        {...{
+          side: "bottom",
+          dir: i18n.dir(),
+          className:
+            "h-[90vh] w-full bg-sidebar border-none p-0 rounded-t-[20px] overflow-hidden flex flex-col z-[4000]",
+        }}
       >
         <SheetHeader className="px-6 py-4 flex flex-row items-center justify-between space-y-0 text-start">
           <SheetTitle className="text-white text-xl font-bold tracking-tight">
@@ -37,8 +40,10 @@ const FilterOverlay = memo(({ isOpen, onClose }) => {
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-8 custom-scrollbar">
           <InventoryFilters
-            filters={selectedFilters}
-            onFilterChange={onFilterChange}
+            {...{
+              filters: selectedFilters,
+              onFilterChange,
+            }}
           />
         </div>
 

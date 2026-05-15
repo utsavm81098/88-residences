@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import gsap from "gsap";
-import React, { useCallback, useMemo, useEffect, useRef } from "react";
+import { useCallback, useMemo, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import useResponsiveConfig from "@/hooks/use-responsive-config";
 

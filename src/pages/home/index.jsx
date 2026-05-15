@@ -1,8 +1,8 @@
-import React from "react";
+// HomePage Component
 
 const HomePage = () => {
   return (
-    <div className="flex-1 h-full flex flex-col items-center justify-center p-10 relative">
+    <div className="flex-1 h-full w-full flex flex-col items-center justify-center p-10 relative bg-background z-10 pointer-events-auto">
       {/* Subtle background glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-accent-yellow/5 blur-[120px] rounded-full" />
 

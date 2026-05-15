@@ -1,7 +1,10 @@
-import { getLocalStorage } from '@/utils/local-storage';
-import { LOCAL_STORAGE_KEY, CACHED_URL_LOCAL_STORAGE_KEY } from '@/utils/app-constants';
-import { decodeToken, isTokenActive } from '@/utils/helper';
-import { ADMIN_ROUTES, AUTH_ROUTES } from '@/routes/routes';
+import { getLocalStorage } from "@/utils/local-storage";
+import {
+  LOCAL_STORAGE_KEY,
+  CACHED_URL_LOCAL_STORAGE_KEY,
+} from "@/utils/app-constants";
+import { decodeToken, isTokenActive } from "@/utils/helper";
+import { ADMIN_ROUTES, AUTH_ROUTES } from "@/routes/routes";
 
 const REDIRECTION = {
   admin: ADMIN_ROUTES.dashboard.path,
@@ -20,11 +23,11 @@ const getAuth = (options = {}) => {
   const isAuthenticated = isTokenActive(token);
 
   let user = null;
-  let role = '';
+  let role = "";
 
   if (isAuthenticated) {
     user = decodeToken(token);
-    role = user?.role || '';
+    role = user?.role || "";
   }
 
   const isAuthorized = !requiredRole || role === requiredRole;

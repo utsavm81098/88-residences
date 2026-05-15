@@ -9,7 +9,6 @@ const services = {
         ...configs,
       }),
   },
-
 };
 
 export default services;
