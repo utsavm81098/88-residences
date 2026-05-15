@@ -47,5 +47,13 @@
   "loading": "טוען",
   "enquiry": "בירור",
   "enquiry_description": "מעוניינים ביחידה זו? צור קשר עם צוות המכירות שלנו למידע נוסף.",
-  "unit": "יחידה"
+  "unit": "יחידה",
+  "submit": "שלח",
+  "first_name": "שם פרטי",
+  "last_name": "שם משפחה",
+  "email": "אימייל",
+  "phone": "טלפון",
+  "validation_required": "שדה זה הוא חובה",
+  "validation_email": "אנא הזן כתובת אימייל תקינה",
+  "validation_phone": "אנא הזן מספר טלפון תקין"
 }

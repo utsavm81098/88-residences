@@ -26,7 +26,7 @@
     --accent-yellow: 41 72% 63%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --ring: 41 72% 63%;
     --filter-active: 0 0% 32%;
     --filter-hover: 0 0% 27%;
     --filter-border: 0 0% 33%;
@@ -46,6 +46,7 @@
 
   * {
     border-color: hsl(var(--border));
+    outline: none !important;
   }
 }
 

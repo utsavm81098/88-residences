@@ -5,6 +5,8 @@ import HoverTooltip from "./hover-tooltip";
 import DesktopPopup from "./desktop-popup";
 const BuildingTooltip = () => {
   const {
+    t,
+    lang,
     unit,
     status,
     selectedUnit,
@@ -25,6 +27,8 @@ const BuildingTooltip = () => {
             selectedBuilding={selectedBuilding}
             showHoverTooltip={showHoverTooltip}
             hoverTooltipRef={hoverTooltipRef}
+            t={t}
+            lang={lang}
           />
         ) : null}
       </ComponentErrorBoundary>

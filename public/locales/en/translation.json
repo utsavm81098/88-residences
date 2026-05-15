@@ -47,5 +47,13 @@
   "loading": "Loading",
   "enquiry": "Enquiry",
   "enquiry_description": "Interested in this unit? Contact our sales team for more information.",
-  "unit": "Unit"
+  "unit": "Unit",
+  "submit": "Submit",
+  "first_name": "First Name",
+  "last_name": "Last Name",
+  "email": "Email",
+  "phone": "Phone",
+  "validation_required": "This field is required",
+  "validation_email": "Please enter a valid email address",
+  "validation_phone": "Please enter a valid phone number"
 }

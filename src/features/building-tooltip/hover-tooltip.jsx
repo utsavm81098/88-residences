@@ -1,8 +1,7 @@
 import React, { memo } from "react";
-import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import StatCell from "./stat-cell";
+import StatCell from "@/components/ui/stat-cell";
 import { getLocalizedString, extractDigit } from "@/utils/helper";
 import {
   ICON_PROPS_DEFAULT,
@@ -10,16 +9,19 @@ import {
   UNIT_ICONS,
 } from "@/utils/constant";
 
+/**
+ * HoverTooltip - Pure UI component for displaying hover details.
+ * Following SOP: Presentational component, data via props.
+ */
 const HoverTooltip = ({
   unit,
   status,
   selectedBuilding,
   showHoverTooltip,
   hoverTooltipRef,
+  t,
+  lang,
 }) => {
-  const { t, i18n } = useTranslation();
-  const lang = i18n.language || "en";
-
   const statusInfo = unit ? (STATUS_CONFIG[status] ?? { label: status }) : null;
 
   if (!unit) return null;
@@ -29,7 +31,7 @@ const HoverTooltip = ({
       ref={hoverTooltipRef}
       className={`fixed top-0 left-0 pointer-events-none z-[9990] will-change-transform transition-opacity duration-75 ease-in-out hidden md:block`}
       style={{
-        opacity: showHoverTooltip ? 1 : 0, // Fixed: should be 0 if hidden
+        opacity: showHoverTooltip ? 1 : 0,
       }}
     >
       <Card className="!p-0 bg-card-bg/95 backdrop-blur-[16px] border border-white/10 rounded-2xl min-w-[240px] max-w-[280px] shadow-[0_16px_48px_rgba(0,0,0,0.6),0_0_0_0.5px_rgba(255,255,255,0.04)] text-white">
@@ -95,3 +97,4 @@ const HoverTooltip = ({
 };
 
 export default memo(HoverTooltip);
+
