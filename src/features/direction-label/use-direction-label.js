@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import gsap from "gsap";
-import { useCallback, useMemo, useEffect, useRef } from "react";
+import { useCallback, useMemo, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import useResponsiveConfig from "@/hooks/use-responsive-config";
 
@@ -55,6 +55,8 @@ export const useLabel = ({ isDragging, dir, onMoveCamera }) => {
   return { textRef, handleClick, handlePointerOver, handlePointerOut };
 };
 
+const LABEL_TRANSITION_DURATION = 0.6;
+
 const useDirectionLabel = ({ controlsRef }) => {
   const { camera } = useThree();
   const config = useResponsiveConfig();
@@ -63,7 +65,71 @@ const useDirectionLabel = ({ controlsRef }) => {
     (state) => state.building.isTransitioning,
   );
 
-  const { distanceX, distanceZ, fontSize } = config.label;
+  // Animated label values — GSAP-animate on breakpoint change
+  const [labelValues, setLabelValues] = useState({
+    distanceX: config.label.distanceX,
+    distanceZ: config.label.distanceZ,
+    fontSize: config.label.fontSize,
+  });
+  const prevConfigRef = useRef(config);
+  const tweenRef = useRef(null);
+
+  useEffect(() => {
+    const prevConfig = prevConfigRef.current;
+    prevConfigRef.current = config;
+
+    // Skip on initial render (same reference)
+    if (prevConfig === config) return;
+
+    const prevLabel = prevConfig.label;
+    const nextLabel = config.label;
+
+    // No change needed
+    if (
+      prevLabel.distanceX === nextLabel.distanceX &&
+      prevLabel.distanceZ === nextLabel.distanceZ &&
+      prevLabel.fontSize === nextLabel.fontSize
+    )
+      return;
+
+    // Kill any in-progress label transition
+    if (tweenRef.current) {
+      tweenRef.current.kill();
+    }
+
+    const animated = {
+      distanceX: prevLabel.distanceX,
+      distanceZ: prevLabel.distanceZ,
+      fontSize: prevLabel.fontSize,
+    };
+
+    tweenRef.current = gsap.to(animated, {
+      distanceX: nextLabel.distanceX,
+      distanceZ: nextLabel.distanceZ,
+      fontSize: nextLabel.fontSize,
+      duration: LABEL_TRANSITION_DURATION,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        setLabelValues({
+          distanceX: animated.distanceX,
+          distanceZ: animated.distanceZ,
+          fontSize: animated.fontSize,
+        });
+      },
+      onComplete: () => {
+        tweenRef.current = null;
+      },
+    });
+
+    return () => {
+      if (tweenRef.current) {
+        tweenRef.current.kill();
+        tweenRef.current = null;
+      }
+    };
+  }, [config]);
+
+  const { distanceX, distanceZ, fontSize } = labelValues;
 
   const positions = useMemo(
     () => ({

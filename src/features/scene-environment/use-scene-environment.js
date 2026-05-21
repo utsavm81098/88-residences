@@ -20,10 +20,12 @@ export const useSceneEnvironment = () => {
   const { size } = useThree();
   const config = useResponsiveConfig();
 
-  // Calculate dynamic FOV to keep horizontal framing consistent when aspect ratio shrinks
+  // Calculate dynamic FOV to keep horizontal framing consistent when aspect ratio shrinks.
+  // Uses a fixed reference aspect (1.2 = typical desktop landscape) so the camera never
+  // jumps when the window crosses a responsive breakpoint during resize.
   const fov = useMemo(() => {
     const baseFov = 35;
-    const baseAspect = config.baseAspect || 1.2; // Use configured threshold based on current cameraZ viewport context
+    const baseAspect = 1.2;
     const aspect = size.width / size.height;
 
     if (aspect < baseAspect) {
@@ -38,7 +40,7 @@ export const useSceneEnvironment = () => {
     }
 
     return baseFov;
-  }, [size.width, size.height, config.baseAspect]);
+  }, [size.width, size.height]);
 
   const onPerformanceDecline = () => {
     logger.warn("Performance dropped");

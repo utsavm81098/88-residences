@@ -5,7 +5,7 @@ import { GlobalErrorBoundary } from "@/components/error-boundary";
 import AuthProvider from "@/auth/provider";
 import { RouterProvider } from "react-router";
 import router from "@/routes";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/components/providers/query-provider";
 
 const AppProviders = () => {

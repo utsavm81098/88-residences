@@ -44,26 +44,28 @@ const Inventory = () => {
         }}
       >
         <TopNavigation onReset={handleResetCamera} />
-        <Canvas
-          dpr={[1.5, Math.min(window.devicePixelRatio, 2)]}
-          performance={{ min: 0.5, debounce: 200 }}
-          frameloop="always"
-          gl={CANVAS_GL_CONFIG}
-          shadows
-        >
-          {/* {import.meta.env.DEV && <Stats />} */}
-          <Suspense fallback={<CanvasLoader />}>
-            <SceneEnvironment>
-              <Building
-                controlsRef={controlsRef}
-                modelRef={modelRef}
-                position={[0, 0.02, 0]}
-              />
-              <AdaptiveControls controlsRef={controlsRef} />
-              <DirectionLabel controlsRef={controlsRef} />
-            </SceneEnvironment>
-          </Suspense>
-        </Canvas>
+        <div className="w-full h-full" dir="ltr">
+          <Canvas
+            dpr={[1.5, Math.min(window.devicePixelRatio, 2)]}
+            performance={{ min: 0.5, debounce: 200 }}
+            frameloop="always"
+            gl={CANVAS_GL_CONFIG}
+            shadows
+          >
+            {/* {import.meta.env.DEV && <Stats />} */}
+            <Suspense fallback={<CanvasLoader />}>
+              <SceneEnvironment>
+                <Building
+                  controlsRef={controlsRef}
+                  modelRef={modelRef}
+                  position={[0, 0.02, 0]}
+                />
+                <AdaptiveControls controlsRef={controlsRef} />
+                <DirectionLabel controlsRef={controlsRef} />
+              </SceneEnvironment>
+            </Suspense>
+          </Canvas>
+        </div>
         <BuildingTooltip />
       </div>
     </div>

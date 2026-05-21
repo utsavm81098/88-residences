@@ -122,7 +122,7 @@ const NavSidebar = ({
           className={cn(
             "flex items-center transition-all duration-300 group/lang h-11 outline-none justify-start",
             isExpanded
-              ? "w-full gap-4 px-3 bg-white/5 hover:bg-white/10"
+              ? "w-full gap-4 px-3 bg-white/5 hover:bg-white/10 rounded-lg"
               : "w-11 justify-center rounded-full hover:bg-white/5 p-0",
           )}
         >

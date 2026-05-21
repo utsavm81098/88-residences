@@ -1,5 +1,10 @@
 import { format, isValid } from "date-fns";
 
+export const GTM_ID = import.meta.env.VITE_GTM_ID;
+export const GA_ID = import.meta.env.VITE_GA_ID || "G-8M3Y9724X3";
+export const FACEBOOK_DOMAIN_VERIFICATION = import.meta.env.VITE_FACEBOOK_DOMAIN_VERIFICATION;
+export const FACEBOOK_PIXEL_ID = import.meta.env.VITE_FACEBOOK_PIXEL_ID;
+
 export const APP_TITLE = "88 Residence – Building Your Dreams";
 export const APP_FAVICON_URL = "/favicon-32x32.png";
 export const LOCAL_STORAGE_KEY = "88-residences-auth";

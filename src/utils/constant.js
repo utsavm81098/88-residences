@@ -27,7 +27,7 @@ export const UNIT_COLORS = {
     selectedOpacity: 0.8,
   },
   sold: {
-    base: new THREE.Color("#FCA5A5"),
+    base: new THREE.Color("#F87171"),
     hover: new THREE.Color("#F87171"),
     selected: new THREE.Color("#EF4444"),
     baseOpacity: 0.1,

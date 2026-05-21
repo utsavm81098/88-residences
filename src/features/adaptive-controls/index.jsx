@@ -3,7 +3,7 @@ import { OrbitControls } from "@react-three/drei";
 import useAdaptiveControls from "./use-adaptive-controls";
 
 const AdaptiveControls = ({ controlsRef }) => {
-  const { config, onStart, onEnd, POLAR, TARGET } =
+  const { orbitLimits, onStart, onEnd, POLAR, TARGET } =
     useAdaptiveControls(controlsRef);
 
   return (
@@ -18,8 +18,8 @@ const AdaptiveControls = ({ controlsRef }) => {
       rotateSpeed={0.5}
       minPolarAngle={POLAR.min}
       maxPolarAngle={POLAR.max}
-      minDistance={config.orbit.min}
-      maxDistance={config.orbit.max}
+      minDistance={orbitLimits.min}
+      maxDistance={orbitLimits.max}
       onStart={onStart}
       onEnd={onEnd}
     />
@@ -27,3 +27,4 @@ const AdaptiveControls = ({ controlsRef }) => {
 };
 
 export default AdaptiveControls;
+

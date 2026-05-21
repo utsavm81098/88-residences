@@ -70,7 +70,7 @@ const EnquiryDialogView = ({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-3 sm:space-y-4">
             {fields.map((config) => (
               <FormField
                 key={config.name}
@@ -80,7 +80,7 @@ const EnquiryDialogView = ({
                   config.type === "hidden" ? (
                     <Input type="hidden" {...field} />
                   ) : (
-                    <FormItem className="space-y-1.5">
+                    <FormItem className="space-y-1 sm:space-y-1.5">
                       <FormLabel className="text-[11px] text-white/60 uppercase ms-1">
                         {config.label}
                       </FormLabel>
@@ -91,7 +91,7 @@ const EnquiryDialogView = ({
                           {...field}
                           dir={config.dir || dir}
                           className={cn(
-                            "h-11 text-[14px] bg-white/5 border-white/10",
+                            "h-9 sm:h-11 text-[13px] sm:text-[14px] bg-white/5 border-white/10",
                             dir === "rtl" ? "text-right" : "text-left",
                           )}
                         />
@@ -107,7 +107,7 @@ const EnquiryDialogView = ({
               type="submit"
               variant="brand"
               disabled={isSubmitting}
-              className="w-full font-bold h-11 rounded-lg text-[14px] transition-colors mt-4"
+              className="w-full font-bold h-9 sm:h-11 rounded-lg text-[13px] sm:text-[14px] transition-colors mt-3 sm:mt-4"
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">

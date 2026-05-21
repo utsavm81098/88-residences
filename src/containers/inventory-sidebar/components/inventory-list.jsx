@@ -85,7 +85,6 @@ const InventoryList = ({
         ) : (
           <Accordion
             type="multiple"
-            collapsible
             className="border-none rounded-none"
             value={activeAccordion || []}
             onValueChange={setActiveAccordion}

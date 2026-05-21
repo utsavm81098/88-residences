@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import gsap from "gsap";
 import { extractDigit } from "@/utils/helper";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 /**
  * Hook for BuildingTooltip feature.
@@ -18,6 +19,7 @@ export const useBuildingTooltip = () => {
   const selectedBuilding = useSelector(
     (state) => state.building.currentBuilding,
   );
+  const isMobile = useIsMobile();
 
   // Memoize derived boolean — avoids recalculation on unrelated renders
   const showHoverTooltip = useMemo(() => {
@@ -171,6 +173,7 @@ export const useBuildingTooltip = () => {
     showHoverTooltip,
     desktopPopupRef,
     hoverTooltipRef,
+    isMobile,
   };
 };
 

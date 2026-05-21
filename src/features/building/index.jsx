@@ -40,8 +40,8 @@ const BuildingModel = memo(function BuildingModel({
 
         const instance = (
           <BuildingInstance
+            key={config.name}
             {...{
-              key: config.name,
               groupRef: (el) => (groupRefs.current[index] = el),
               config,
               active: isCurrent,

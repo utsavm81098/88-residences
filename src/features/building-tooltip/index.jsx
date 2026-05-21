@@ -14,6 +14,7 @@ const BuildingTooltip = () => {
     showHoverTooltip,
     desktopPopupRef,
     hoverTooltipRef,
+    isMobile,
   } = useBuildingTooltip();
 
   return (
@@ -35,7 +36,7 @@ const BuildingTooltip = () => {
 
       {/* ── Desktop Selection Popup ── */}
       <ComponentErrorBoundary name="DesktopPopup">
-        {selectedUnit ? (
+        {!isMobile && selectedUnit ? (
           <DesktopPopup
             selectedUnit={selectedUnit}
             desktopPopupRef={desktopPopupRef}
