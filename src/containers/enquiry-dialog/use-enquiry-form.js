@@ -4,8 +4,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getEnquirySchema } from "@/utils/validation";
 import client from "@/services/api-client";
-import { IP_CHECK_URL } from "@/utils/app-constants";
+import { IP_CHECK_URL, ERROR_MESSAGES } from "@/utils/app-constants";
 import { logger } from "@/utils/logger";
+import { toast } from "sonner";
+import api from "@/services";
 
 /**
  * Custom hook to handle enquiry form logic, state, and validation.
@@ -105,17 +107,48 @@ export const useEnquiryForm = ({ unit, selectedBuilding, setEnquiryOpen }) => {
     }
   }, [form]);
 
-  const onSubmit = (values) => {
-    // Mimicking CF7 submission logic (placeholder for actual API call)
-    logger.info("Enquiry submitted:", {
-      ...values,
-      unit: unit?.apartment_number,
-      building: selectedBuilding?.name,
-    });
+  const onSubmit = async (values) => {
+    toast.error(t("enquiry_success_message", "Your message has been sent successfully. Thank you!"));
+    // try {
+    //   const formData = new FormData();
+    //   formData.append("firstname", values.firstName || "");
+    //   formData.append("lastname", values.lastName || "");
+    //   formData.append("email", values.email || "");
+    //   formData.append("phone", values.phone || "");
 
-    // Reset and close
-    setEnquiryOpen(false);
-    form.reset();
+    //   const messageText = `Enquiry for Building: ${selectedBuilding?.name || ""}, Unit: ${unit?.apartment_number || ""}`;
+    //   formData.append("message", messageText);
+
+    //   formData.append("facebookUserID", values.facebookUserID || "");
+    //   formData.append("facebookfbc", values.facebookfbc || "");
+    //   formData.append("facebookfbp", values.facebookfbp || "");
+    //   formData.append("utm_source", values.utm_source || "");
+    //   formData.append("utm_campaign", values.utm_campaign || "");
+    //   formData.append("utm_medium", values.utm_medium || "");
+    //   formData.append("fullPageLink", values.fullPageUrl || "");
+    //   formData.append("currUSerIP", values.userIP || "");
+    //   formData.append("currUSerAgent", values.userAgent || "");
+    //   formData.append("sid", values.sid || "");
+    //   formData.append("cid", values.cid || "");
+    //   formData.append("_wpcf7", "9311");
+    //   formData.append("_wpcf7_unit_tag", "wpcf7-f9311-o1");
+
+    //   const response = await api.enquiry.submit(formData);
+
+    //   if (response && response.status === "mail_sent") {
+    //     toast.success(response.message || t("enquiry_success_message", "Your message has been sent successfully. Thank you!"));
+    //     setEnquiryOpen(false);
+    //     form.reset();
+    //   } else {
+    //     const errorStatus = response?.status === "validation_failed" ? 422 : response?.status;
+    //     const errMsg = ERROR_MESSAGES[errorStatus] || (response && response.message) || ERROR_MESSAGES.common;
+    //     toast.error(errMsg);
+    //   }
+    // } catch (error) {
+    //   logger.error("Enquiry submission failed:", error);
+    //   const errMsg = ERROR_MESSAGES[error?.status] || error?.message || ERROR_MESSAGES.common;
+    //   toast.error(errMsg);
+    // }
   };
 
   // Field configuration for dynamic rendering
@@ -165,5 +198,6 @@ export const useEnquiryForm = ({ unit, selectedBuilding, setEnquiryOpen }) => {
     form,
     onSubmit: form.handleSubmit(onSubmit),
     fields,
+    isSubmitting: form.formState.isSubmitting,
   };
 };

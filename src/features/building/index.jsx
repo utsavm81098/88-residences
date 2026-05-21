@@ -3,6 +3,9 @@ import { BUILDING_CONFIG } from "@/utils/constant";
 import useBuilding from "./use-building";
 import useBuildingInstance from "./use-building-instance";
 
+const ACTIVE_POSITION = [0, 0, 0];
+const INACTIVE_POSITION = [0, -1000, 0];
+
 /**
  * Renders all buildings in the scene and manages their visibility and transitions.
  */
@@ -35,8 +38,6 @@ const BuildingModel = memo(function BuildingModel({
           return null;
         }
 
-        const isVisible = (isLanding && !warmedUp) || isCurrent || isPrevious;
-
         const instance = (
           <BuildingInstance
             {...{
@@ -44,7 +45,7 @@ const BuildingModel = memo(function BuildingModel({
               groupRef: (el) => (groupRefs.current[index] = el),
               config,
               active: isCurrent,
-              isVisible,
+              isTransitioning,
               controlsRef,
               renderOrder,
             }}
@@ -75,7 +76,7 @@ const GLASS_RENDER_ORDER_OFFSET = 1;
 const BuildingInstance = memo(function BuildingInstance({
   config,
   active,
-  isVisible,
+  isTransitioning,
   controlsRef,
   renderOrder,
   groupRef,
@@ -95,8 +96,12 @@ const BuildingInstance = memo(function BuildingInstance({
 
   const glassRenderOrder = renderOrder + GLASS_RENDER_ORDER_OFFSET;
 
+  // During transitions, we let GSAP completely control the position by passing undefined.
+  // Otherwise, active building is at [0, 0, 0] and inactive ones are warmed underground.
+  const position = isTransitioning ? undefined : (active ? ACTIVE_POSITION : INACTIVE_POSITION);
+
   return (
-    <group ref={groupRef} visible={isVisible}>
+    <group ref={groupRef} visible={true} position={position}>
       <primitive object={buildingScene} renderOrder={renderOrder} />
       <primitive
         key={glassScene.uuid}

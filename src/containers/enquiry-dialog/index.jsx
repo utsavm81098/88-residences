@@ -15,7 +15,7 @@ const EnquiryDialogContainer = ({
   t,
   lang,
 }) => {
-  const { form, onSubmit, fields } = useEnquiryForm({
+  const { form, onSubmit, fields, isSubmitting } = useEnquiryForm({
     unit,
     selectedBuilding,
     setEnquiryOpen,
@@ -36,6 +36,7 @@ const EnquiryDialogContainer = ({
         form,
         onSubmit,
         fields,
+        isSubmitting,
       }}
     />
   );

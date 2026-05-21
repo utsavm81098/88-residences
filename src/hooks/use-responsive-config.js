@@ -9,16 +9,19 @@ const BREAKPOINTS = {
 const RESPONSIVE_CONFIG = {
   mobile: {
     cameraZ: 80, // Pushed further back on mobile
+    baseAspect: 0.6, // Typical mobile portrait
     orbit: { min: 50, max: 140 }, // Generous zoom limits for mobile
     label: { distanceX: 25, distanceZ: 18, fontSize: 1.2 },
   },
   tablet: {
     cameraZ: 60, // Medium distance
+    baseAspect: 0.8, // Typical tablet portrait/square
     orbit: { min: 60, max: 120 },
     label: { distanceX: 28, distanceZ: 20, fontSize: 1.2 },
   },
   desktop: {
-    cameraZ: 71, // Closest default distance
+    cameraZ: 80, // Closest default distance
+    baseAspect: 1.2, // Desktop landscape threshold where clipping starts
     orbit: { min: 71, max: 90 }, // Tighter zoom limits on desktop
     label: { distanceX: 30, distanceZ: 20, fontSize: 1.5 },
   },
@@ -29,8 +32,9 @@ export default function useResponsiveConfig() {
 
   // Memoize the config retrieval for performance so it doesn't recalculate unless window width fundamentally changes
   return useMemo(() => {
-    if (size.width < BREAKPOINTS.mobile) return RESPONSIVE_CONFIG.mobile;
-    if (size.width < BREAKPOINTS.tablet) return RESPONSIVE_CONFIG.tablet;
+    const windowWidth = window.innerWidth;
+    if (windowWidth < BREAKPOINTS.mobile) return RESPONSIVE_CONFIG.mobile;
+    if (windowWidth < BREAKPOINTS.tablet) return RESPONSIVE_CONFIG.tablet;
     return RESPONSIVE_CONFIG.desktop;
   }, [size.width]);
 }

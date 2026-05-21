@@ -28,7 +28,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
   return (
     <>
       {/* Desktop Top Navigation Bar */}
-      <div className="hidden lg:flex absolute top-14 left-0 right-0 px-6 items-center z-[1000] pointer-events-none select-none">
+      <div className="hidden lg:flex absolute top-10 left-0 right-0 px-6 items-center z-10 pointer-events-none select-none">
         {/* Left Spacer to keep navigation centered */}
         <div className="flex-1" />
 
@@ -36,10 +36,10 @@ const TopNavigationContainer = memo(({ onReset }) => {
         <div className="relative pointer-events-auto">
           <DropdownMenu onOpenChange={(open) => onToggleMenu(open)}>
             <DropdownMenuTrigger asChild>
-              <div className="flex items-center justify-between h-14 px-4 bg-nav/85 backdrop-blur-md border border-white/10 rounded-full shadow-2xl transition-all duration-200 hover:border-white/20 cursor-pointer">
+              <div className="flex items-center justify-between h-14 px-4 bg-nav/85 backdrop-blur-md border border-white/10 rounded-full shadow-2xl transition-all duration-200 hover:border-white/20 cursor-pointer px-[40px] h-[80px]">
                 <Button
                   variant="ghost"
-                  size="icon-sm"
+                  size="icon-lg"
                   className="text-white/70 hover:text-white rounded-full border-0"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -50,26 +50,26 @@ const TopNavigationContainer = memo(({ onReset }) => {
                   disabled={buildings.length <= 1}
                 >
                   <ICONS.ChevronLeft
-                    size={28}
+                    size={30}
                     strokeWidth={2}
-                    className="rtl:rotate-180"
+                    className="rtl:rotate-180 size-[30px]"
                   />
                 </Button>
 
                 <div
                   className={cn(
-                    "mx-6 text-white font-outfit font-semibold text-lg tracking-wider transition-colors",
+                    "mx-6 text-white font-outfit font-semibold text-2xl tracking-wider transition-colors",
                     buildings.length > 1
                       ? "hover:text-white/80"
                       : "cursor-default",
                   )}
                 >
-                  {currentBuilding.name + " Building"}
+                  {currentBuilding?.name + " Building"}
                 </div>
 
                 <Button
                   variant="ghost"
-                  size="icon-sm"
+                  size="icon-lg"
                   className="text-white/70 hover:text-white rounded-full border-0"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -80,9 +80,9 @@ const TopNavigationContainer = memo(({ onReset }) => {
                   disabled={buildings.length <= 1}
                 >
                   <ICONS.ChevronRight
-                    size={28}
+                    size={30}
                     strokeWidth={2}
-                    className="rtl:rotate-180"
+                    className="rtl:rotate-180 size-[30px]"
                   />
                 </Button>
               </div>
@@ -116,14 +116,14 @@ const TopNavigationContainer = memo(({ onReset }) => {
 
         {/* Right: Reset Button */}
 
-        <div className="flex-1 flex justify-end pointer-events-auto">
+        <div className="flex-1 flex justify-end pointer-events-auto mr-4">
           <Button
             variant="ghost"
             size="icon-xl"
-            className="bg-nav/85 backdrop-blur-md border border-white/10 rounded-full text-white shadow-2xl pointer-events-auto hover:border-white/20"
+            className="bg-nav/85 backdrop-blur-md border border-white/10 rounded-full text-white shadow-2xl pointer-events-auto hover:border-white/20 size-[80px]"
             onClick={onReset}
           >
-            <ICONS.RotateCw size={24} strokeWidth={2} />
+            <ICONS.RotateCw size={30} strokeWidth={2} className="size-[30px]" />
           </Button>
         </div>
       </div>

@@ -1,0 +1,36 @@
+import React from "react";
+import { Html, useProgress } from "@react-three/drei";
+
+/**
+ * CanvasLoader Container.
+ * Renders a premium, dynamic loading overlay inside the 3D Canvas
+ * powered by the useProgress hook from react-three/drei.
+ */
+export const CanvasLoader = () => {
+  const { progress } = useProgress();
+  // Ensure visual indication starts at least at 8% and caps at 100%
+  const displayProgress = Math.max(8, Math.min(100, Math.round(progress)));
+
+  return (
+    <Html center className="model-loader z-50">
+      <div className="flex flex-col items-center justify-center p-6 bg-background/95 border border-border/50 rounded-2xl min-w-[220px] text-center shadow-2xl">
+        <span className="text-[10px] text-white/40 font-outfit uppercase tracking-widest mb-3">
+          Loading Model
+        </span>
+        <i className="w-full bg-white/15 h-[3px] rounded-full overflow-hidden block mb-2">
+          <b
+            className="h-full block transition-all duration-300 ease-out bg-accent-yellow"
+            style={{
+              width: `${displayProgress}%`,
+            }}
+          />
+        </i>
+        <em className="text-xs font-semibold text-accent-yellow font-outfit not-italic">
+          {displayProgress}%
+        </em>
+      </div>
+    </Html>
+  );
+};
+
+export default CanvasLoader;

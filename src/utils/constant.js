@@ -27,7 +27,7 @@ export const UNIT_COLORS = {
     selectedOpacity: 0.8,
   },
   sold: {
-    base: new THREE.Color("#D0D0D0"),
+    base: new THREE.Color("#FCA5A5"),
     hover: new THREE.Color("#F87171"),
     selected: new THREE.Color("#EF4444"),
     baseOpacity: 0.1,
@@ -102,6 +102,7 @@ export const CANVAS_GL_CONFIG = {
 const typeAConfig = {
   model: getAssetPath("/models/type-a-1024.glb"),
   hitbox: getAssetPath("/models/a-hitbox.glb"),
+  heroAngle: 0,
   environment: {
     files: [
       getAssetPath("/cube-map/py.png"), // Right

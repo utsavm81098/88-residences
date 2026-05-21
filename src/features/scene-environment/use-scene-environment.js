@@ -1,4 +1,6 @@
+import { useMemo } from "react";
 import { useSelector } from "react-redux";
+import { useThree } from "@react-three/fiber";
 import useResponsiveConfig from "@/hooks/use-responsive-config";
 import { logger } from "@/utils/logger";
 
@@ -15,7 +17,28 @@ export const useSceneEnvironment = () => {
     preset = null,
   } = lighting;
 
+  const { size } = useThree();
   const config = useResponsiveConfig();
+
+  // Calculate dynamic FOV to keep horizontal framing consistent when aspect ratio shrinks
+  const fov = useMemo(() => {
+    const baseFov = 35;
+    const baseAspect = config.baseAspect || 1.2; // Use configured threshold based on current cameraZ viewport context
+    const aspect = size.width / size.height;
+
+    if (aspect < baseAspect) {
+      const baseFovRad = (baseFov * Math.PI) / 180;
+      const calculatedFov =
+        2 *
+        Math.atan(Math.tan(baseFovRad / 2) * (baseAspect / aspect)) *
+        (180 / Math.PI);
+
+      // Clamp max FOV to 60 degrees to prevent perspective fish-eye distortion
+      return Math.min(60, Math.round(calculatedFov));
+    }
+
+    return baseFov;
+  }, [size.width, size.height, config.baseAspect]);
 
   const onPerformanceDecline = () => {
     logger.warn("Performance dropped");
@@ -34,6 +57,7 @@ export const useSceneEnvironment = () => {
     ambientColor,
     preset,
     config,
+    fov,
     onPerformanceDecline,
     onPerformanceIncline,
   };

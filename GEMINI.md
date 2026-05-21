@@ -23,56 +23,81 @@
 
 ```
 src/
-├── main.jsx                    # Entry point — wraps <App> in Redux <Provider>
-├── App.jsx                     # Root layout — Canvas + sidebar + navigation
-├── App.css                     # Global CSS (scrollbar, canvas container)
-├── index.css                   # Tailwind directives + CSS custom properties (shadcn)
+├── main.jsx                    # Entry point — wraps <AppProviders> in Redux <Provider>
+├── app.jsx                     # Root application wrapper setting up Providers and React Router
+├── app.css                     # Global scrollbar styles and basic configurations
+├── index.css                   # Tailwind directives + CSS custom properties (shadcn variables)
 │
-├── features/                   # 3D scene feature modules (each = folder with index.jsx)
-│   ├── scene-environment/      # PerspectiveCamera, HDR env, lighting, grid, post-processing
-│   ├── building/               # GLB model loader, hitbox overlay, unit interaction hook
-│   ├── building-tooltip/       # Hover tooltip (desktop) + selected unit card (desktop popup)
-│   ├── adaptive-controls/      # OrbitControls with responsive min/max distance
-│   ├── camera-stabilizer/      # FOV compensation for mobile canvas height changes
-│   ├── direction-label/        # N/S/E/W billboard text labels + click-to-rotate camera
-│   ├── controls/               # (unused / legacy)
-│   ├── direction/              # (unused / legacy)
-│   ├── environment/            # (unused / legacy)
-│   ├── grass-grid/             # (unused / legacy)
-│   └── lighting/               # (unused / legacy)
+├── auth/                       # Authentication context, provider, and use-auth hook
+│   ├── context.jsx             # Auth Context creation
+│   ├── provider.jsx            # Auth state provider
+│   ├── use-auth.js             # custom useAuth hook
+│   └── index.js                # Auth entry exports
 │
-├── components/ui/              # React UI components (non-3D)
-│   ├── top-navigation/         # Desktop building switcher pill + MobileMenu bottom sheet
-│   │   ├── index.jsx           # Desktop nav bar (prev/next building, dropdown)
-│   │   ├── mobile-menu.jsx     # GSAP bottom sheet with snap points + Embla carousel
-│   │   └── apartment-card.jsx  # Card component rendered inside the carousel
-│   ├── inventory-sidebar/      # Desktop left sidebar — filters + accordion unit list
-│   ├── unit-info-card/         # Selected unit detail card (used in desktop popup)
-│   ├── accordion.jsx           # Radix Accordion (shadcn)
-│   ├── button.jsx              # Radix Button (shadcn)
-│   ├── carousel.jsx            # Embla Carousel wrapper (shadcn)
-│   └── tabs.jsx                # Radix Tabs (shadcn)
+├── i18n/                       # Localization & internationalization config
+│   └── index.js                # i18next configuration with fallback languages and detector
 │
-├── store/                      # Redux store
-│   ├── index.js                # configureStore
+├── routes/                     # Central client routing definition
+│   ├── index.jsx               # createBrowserRouter, language guards, and layout matching
+│   └── routes.js               # Route paths definition constants
+│
+├── layouts/                    # Global app layouts
+│   └── main-layout/            # Renders responsive SidebarNav/MobileNav layouts around pages
+│
+├── pages/                      # Target routing page components
+│   ├── home/                   # "Coming Soon" splash page
+│   └── inventory/              # Core 3D Viewer page (renders Canvas, Sidebar, and Top Nav)
+│
+├── features/                   # R3F scene graph feature modules (run inside <Canvas>)
+│   ├── scene-environment/      # Scene settings: lighting, shadows, cube-map backdrop
+│   ├── building/               # Dual-GLB building loader, hitboxes parsing, pointer interaction
+│   ├── building-tooltip/       # 3D interactive unit hover tooltip configuration
+│   ├── adaptive-controls/      # OrbitControls wrapper adjusting min/max distance dynamically
+│   └── direction-label/        # N/S/E/W floating billboards with rotate-to-face camera action
+│
+├── containers/                 # Smart UI components (connect Redux store/APIs to pure UI)
+│   ├── top-navigation/         # Header containing language selector and reset camera action
+│   ├── sidebar-panel/          # Sidebar drawer hosting filters or selected unit card
+│   ├── inventory-sidebar/      # Unit list and search panels inside the sidebar
+│   ├── unit-info-card/         # Informational sheet for selected apartments
+│   ├── mobile-menu/            # GSAP-driven swipeable bottom drawer with snap points
+│   ├── mobile-nav/             # Bottom navigation pill buttons for mobile viewports
+│   ├── sidebar-nav/            # Navigation rail rail bar for desktop screens
+│   ├── enquiry-dialog/         # Interactive booking form popup modal
+│   └── filter-overlay/         # Overlay filters for inventory searching
+│
+├── components/                 # Pure presentational components (no store or API imports)
+│   ├── error-boundary/         # Global/Component error boundary fallbacks and logging
+│   ├── providers/              # Generic hooks/state provider layers (e.g. QueryProvider)
+│   └── ui/                     # shadcn/ui and custom primitives (accordion, button, dialog, etc.)
+│
+├── store/                      # Global Redux State (Redux Toolkit)
+│   ├── index.js                # configureStore aggregator
 │   └── slices/
-│       ├── index.js            # combineReducers (building + tooltip + drag)
-│       ├── building-slice.js   # Active building, selected unit, snap state, menu toggle
-│       ├── tooltip-slice.js    # Hover tooltip visibility, position, unit data
-│       └── drag-slice.js       # OrbitControls drag flag (suppresses tooltips while orbiting)
+│       ├── index.js            # combineReducers (building + tooltip + drag slices)
+│       ├── building-slice.js   # Active building, selection, snap-points, menu toggle actions
+│       ├── tooltip-slice.js    # Hover tooltip positioning and unit details
+│       └── drag-slice.js       # OrbitControls drag status flags (silences tooltips during pans)
 │
-├── hooks/
-│   └── use-responsive-config.js # Breakpoint-aware camera/orbit/label config (mobile/tablet/desktop)
+├── services/                   # Network and API integration
+│   ├── api-client.js           # Customized Axios instance with base prefix configuration
+│   └── index.js                # Service modules (e.g. inventory APIs)
 │
-├── utils/
-│   ├── constant.js             # BUILDING_CONFIG[], unitData{}, UNIT_COLORS, OUTLINE_KEY
-│   ├── config.js               # Camera defaults, Canvas GL config, Grid config
-│   └── helper.js               # flattenUnitData utility
+├── hooks/                      # Global reusable hooks
+│   ├── use-mobile.js           # Breakpoint matches detection
+│   ├── use-responsive-config.js# Responsively computes camera focal configuration values
+│   └── use-api-query.js        # Dynamic API fetching hook integrations
 │
-├── lib/
-│   └── utils.js                # cn() — clsx + tailwind-merge
+├── utils/                      # Helper libraries and application constants
+│   ├── constant.js             # Building models presets, statuses, base colors mapping
+│   ├── app-constants.js        # Global static parameters definitions
+│   ├── filter-helper.js        # Inventory filtering logic algorithms
+│   ├── helper.js               # Helper algorithms (languages translation, flattening array maps)
+│   ├── preloader.js            # Singleton loaders cache configurations (Draco, KTX2, basis)
+│   └── logger.js               # Centralized environment-aware debugger loggers
 │
-└── config/                     # (empty — reserved)
+└── lib/                        # Common utilities wrapper
+    └── utils.js                # cn() - Classnames merger utility (clsx + tailwind-merge)
 ```
 
 ### SOP Compliance Notes
@@ -204,7 +229,7 @@ User taps 3D unit
     → MobileMenu useEffect detects selectedUnit change
       → Scrolls Embla carousel to matching unit card
       → If snapIndex !== 1, calls animateTo(1) to open bottom sheet
-    → App.jsx canvas height shrinks via CSS calc()
+    → pages/inventory/index.jsx canvas height shrinks via CSS calc()
     → CameraStabilizer compensates FOV to prevent zoom jump
 ```
 
@@ -261,7 +286,7 @@ When a unit is selected, GSAP animates the camera's **azimuthal angle** around t
 animateTo(index)
   → dispatch(setSnap({ height: snapPoints[index], snapIndex: index }))
   → gsap.to(sheetRef, { height: snapPoints[index] })
-  → App.jsx reads snap.height and adjusts canvas container height
+  → pages/inventory/index.jsx reads snap.height and adjusts canvas container height
 ```
 
 ---

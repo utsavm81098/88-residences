@@ -93,14 +93,16 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
 
   const isMobile = useIsMobile();
   const invalidate = useThree((state) => state.invalidate);
+  const gl = useThree((state) => state.gl);
+  const camera = useThree((state) => state.camera);
   const rotationTween = useRef(null);
 
   const activeSelection = useMemo(() => {
     return isMobile ? mobileSelectedUnit : selectedUnit;
   }, [selectedUnit, mobileSelectedUnit, isMobile]);
 
-  const building = useGLTF(config.model, false, false, configureLoader);
-  const glassHitbox = useGLTF(config.hitbox, false, false, configureLoader);
+  const building = useGLTF(config.model, true, true, configureLoader);
+  const glassHitbox = useGLTF(config.hitbox, true, true, configureLoader);
 
   const unitMap = useMemo(() => {
     const buildingData = inventory?.[config.name];
@@ -115,7 +117,8 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
     const buildingClone = building.scene.clone();
     buildingClone.traverse((child) => {
       if (child.isMesh) {
-        child.raycast = () => {};
+        child.raycast = () => { };
+        child.frustumCulled = false;
         // Performance: Disable matrix auto-update for static building parts
         child.matrixAutoUpdate = false;
         child.updateMatrix();
@@ -146,6 +149,7 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
 
       child.castShadow = false;
       child.receiveShadow = false;
+      child.frustumCulled = false;
 
       const unit = unitMap[child.name];
       const statusKey = unit?.apartment_sold ? "sold" : "available";
@@ -168,7 +172,8 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
       // Performance: Use cached edges geometry
       const edges = getCachedEdges(child.geometry);
       const edgeLines = new THREE.LineSegments(edges, edgeMaterial);
-      edgeLines.raycast = () => {};
+      edgeLines.raycast = () => { };
+      edgeLines.frustumCulled = false;
       child.add(edgeLines);
       child.userData[OUTLINE_KEY] = edgeLines;
 
@@ -358,6 +363,7 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
     },
     [unitMap, dispatch, isMobile],
   );
+
 
   useEffect(() => {
     // Only update highlights and camera focus for the active building

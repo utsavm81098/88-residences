@@ -21,6 +21,7 @@ const SceneEnvironment = ({ children }) => {
     ambientColor,
     preset,
     config,
+    fov,
     onPerformanceDecline,
     onPerformanceIncline,
   } = useSceneEnvironment();
@@ -38,7 +39,7 @@ const SceneEnvironment = ({ children }) => {
 
       <PerspectiveCamera
         makeDefault
-        fov={35}
+        fov={fov}
         near={0.5}
         far={2000}
         position={[0, 10, config.cameraZ]}

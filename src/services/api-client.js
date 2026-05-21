@@ -8,7 +8,7 @@ import {
 import { getLocalStorage } from "@/utils/local-storage";
 
 const BASE_URL = ENV_CONFIG.API_BASE_URL;
-const DEFAULT_PREFIX = "/wp-json/custom/v2";
+const DEFAULT_PREFIX = "/wp-json";
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL + DEFAULT_PREFIX,

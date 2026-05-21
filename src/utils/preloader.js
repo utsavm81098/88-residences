@@ -40,9 +40,9 @@ export const preloadModels = () => {
 
   // 1. High Priority: Landing building
   if (landingModel)
-    useGLTF.preload(landingModel, true, undefined, configureLoader);
+    useGLTF.preload(landingModel, true, true, configureLoader);
   if (landingHitbox)
-    useGLTF.preload(landingHitbox, true, undefined, configureLoader);
+    useGLTF.preload(landingHitbox, true, true, configureLoader);
   if (landingEnv) useEnvironment.preload(landingEnv);
 };
 
@@ -76,10 +76,10 @@ export const preloadBackgroundModels = () => {
   ];
 
   otherModels.forEach((path) =>
-    useGLTF.preload(path, true, undefined, configureLoader),
+    useGLTF.preload(path, true, true, configureLoader),
   );
   otherHitboxes.forEach((path) =>
-    useGLTF.preload(path, true, undefined, configureLoader),
+    useGLTF.preload(path, true, true, configureLoader),
   );
   otherEnvs.forEach((env) => useEnvironment.preload(env));
 };

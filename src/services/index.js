@@ -4,8 +4,20 @@ const services = {
   inventory: {
     getAll: ({ params }, configs) =>
       client({
-        url: "/inventory",
+        url: "/custom/v2/inventory",
         params,
+        ...configs,
+      }),
+  },
+  enquiry: {
+    submit: (formData, configs) =>
+      client({
+        url: `/contact-form-7/v1/contact-forms/9311/feedback`,
+        method: "post",
+        data: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
         ...configs,
       }),
   },

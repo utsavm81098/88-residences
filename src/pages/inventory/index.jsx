@@ -12,7 +12,7 @@ import BuildingTooltip from "@/features/building-tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import { Suspense } from "react";
-import { Html } from "@react-three/drei";
+import { CanvasLoader } from "@/containers/canvas-loader";
 import { CANVAS_GL_CONFIG } from "@/utils/constant";
 import SidebarPanel from "@/containers/sidebar-panel";
 
@@ -52,18 +52,7 @@ const Inventory = () => {
           shadows
         >
           {/* {import.meta.env.DEV && <Stats />} */}
-          <Suspense
-            fallback={
-              <Html
-                center
-                style={{
-                  color: "white",
-                }}
-              >
-                Loading Model...
-              </Html>
-            }
-          >
+          <Suspense fallback={<CanvasLoader />}>
             <SceneEnvironment>
               <Building
                 controlsRef={controlsRef}

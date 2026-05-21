@@ -1,6 +1,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import logo from "@/assets/logo.png";
 import { getLocalizedString } from "@/utils/helper";
 import {
@@ -35,6 +36,7 @@ const EnquiryDialogView = ({
   form,
   onSubmit,
   fields,
+  isSubmitting,
 }) => {
   return (
     <Dialog
@@ -104,9 +106,17 @@ const EnquiryDialogView = ({
             <Button
               type="submit"
               variant="brand"
+              disabled={isSubmitting}
               className="w-full font-bold h-11 rounded-lg text-[14px] transition-colors mt-4"
             >
-              {t("submit")}
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Spinner />
+                  {t("submitting", "loading...")}
+                </span>
+              ) : (
+                t("submit")
+              )}
             </Button>
           </form>
         </Form>
