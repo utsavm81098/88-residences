@@ -114,7 +114,7 @@ export const useEnquiryForm = ({ unit, selectedBuilding, setEnquiryOpen }) => {
       formData.append("lastname", values.lastName || "");
       formData.append("email", values.email || "");
       formData.append("phone", values.phone || "");
-      const messageText = `Apartment ${unit?.apartment_number || ""} | Building ${selectedBuilding?.name || ""} | ${getLocalizedString(unit?.property_direction?.name, "en") || ""} | ${getLocalizedString(unit?.bedrooms?.name, "en") || ""}`;
+      const messageText = `${t("apartment", "Apartment")} ${unit?.apartment_number || ""} | ${t("building", "Building")} ${selectedBuilding?.name || ""} | ${getLocalizedString(unit?.property_direction?.name, lang) || ""} | ${getLocalizedString(unit?.bedrooms?.name, lang) || ""}`;
       formData.append("message", messageText);
       formData.append("facebookUserID", values.facebookUserID || "");
       formData.append("facebookfbc", values.facebookfbc || "");
@@ -127,10 +127,14 @@ export const useEnquiryForm = ({ unit, selectedBuilding, setEnquiryOpen }) => {
       formData.append("currUSerAgent", values.userAgent || "");
       formData.append("sid", values.sid || "");
       formData.append("cid", values.cid || "");
-      formData.append("_wpcf7", "9311");
-      formData.append("_wpcf7_unit_tag", "wpcf7-f9311-o1");
+      const isHe = lang === "he";
+      const formId = isHe ? "9360" : "9311";
+      formData.append("_wpcf7", formId);
+      formData.append("_wpcf7_unit_tag", `wpcf7-f${formId}-o1`);
 
-      const response = await api.enquiry.submit(formData);
+      const response = isHe 
+        ? await api.enquiry.postHe(formData) 
+        : await api.enquiry.postEn(formData);
 
       if (response && response.status === "mail_sent") {
         toast.success(response.message || t("enquiry_success_message", "Your message has been sent successfully. Thank you!"));

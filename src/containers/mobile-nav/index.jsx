@@ -1,6 +1,6 @@
 import React from "react";
 import { useMobileNav } from "./use-mobile-nav";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS_MOBILE } from "@/utils/constant";
@@ -16,7 +16,7 @@ import { SvgIcon } from "@/components/ui/svg-icon";
 const MobileNavBar = ({ activeNavItem, onNavItemClick }) => {
   const { t } = useTranslation();
   return (
-    <div className="flex items-center justify-between bg-sidebar px-6 pt-2 pb-[calc(8px+env(safe-area-inset-bottom))] border-t border-white/5 w-full opacity-100">
+    <div id="bottomMenu" className="flex items-center justify-between bg-sidebar px-6 pt-2 pb-[calc(8px+env(safe-area-inset-bottom))] border-t border-white/5 w-full opacity-100">
       {NAV_ITEMS_MOBILE.map((item) => {
         const isActive = activeNavItem === item.id;
         const Icon = item.icon;
@@ -81,6 +81,7 @@ export default function MobileNavContainer() {
               "h-full top-0 w-full bg-sidebar border-none p-0 rounded-none overflow-hidden flex flex-col",
           }}
         >
+          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
           <div className="flex-1 p-6 space-y-4 overflow-y-auto custom-scrollbar">
             {/* ── Logo ── */}
             <div className="flex justify-start pb-2">

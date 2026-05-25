@@ -8,12 +8,12 @@ const BREAKPOINTS = {
 
 const RESPONSIVE_CONFIG = {
   mobile: {
-    cameraZ: 80, // Reference distance (used by building transitions)
+    cameraZ: 75, // Reference distance (used by building transitions)
     orbit: { min: 50, max: 140 }, // Generous zoom limits for mobile
     label: { distanceX: 25, distanceZ: 18, fontSize: 1.2 },
   },
   tablet: {
-    cameraZ: 60, // Reference distance (used by building transitions)
+    cameraZ: 75, // Reference distance (used by building transitions)
     orbit: { min: 60, max: 120 },
     label: { distanceX: 28, distanceZ: 20, fontSize: 1.2 },
   },

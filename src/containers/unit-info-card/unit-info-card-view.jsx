@@ -42,8 +42,8 @@ const UnitInfoCardView = ({
         </Button>
       )}
 
-      <Card className="flex flex-col gap-4 bg-card-bg/95 !p-0 backdrop-blur-xl border border-white/10 w-full overflow-hidden text-white shadow-2xl rounded-2xl">
-        <CardHeader className="px-3.5 pt-4 pb-0 space-y-0.5">
+      <Card className="flex flex-col gap-4 bg-card-bg/95 !p-0 !px-3.5 !py-4 backdrop-blur-xl border border-white/10 w-full overflow-hidden text-white shadow-2xl rounded-2xl">
+        <CardHeader className="px-0 pb-0 space-y-0.5">
           <div className="flex justify-between items-center gap-2">
             <span className="text-lg font-bold tracking-tight truncate">
               {t("apt")} {unit.apartment_number || unit.title || unit.name}
@@ -83,7 +83,7 @@ const UnitInfoCardView = ({
           )}
         </CardHeader>
 
-        <CardContent className="px-3.5 flex flex-col gap-y-4">
+        <CardContent className="px-0 flex flex-col gap-y-4">
           <div className="h-[1px] bg-white/10" />
           {selectedBuilding?.name && unit?.floor_no?.name && (
             <div className="text-[14px] font-semibold text-slate-500 tracking-[0.1em] flex items-center gap-2">
@@ -118,20 +118,25 @@ const UnitInfoCardView = ({
           </div>
         </CardContent>
 
-        <CardFooter className="px-3.5 pb-4 flex gap-2">
-          <Button
-            variant="brand"
-            className="flex-1 font-bold h-10 rounded-lg text-[13px] transition-colors"
-          >
-            {t("view_property")}
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1 h-10 rounded-lg text-[13px] border-white/10 text-white/90 hover:bg-white/5 uppercase tracking-wider"
-          >
-            {t("floor_plan")}
-          </Button>
-        </CardFooter>
+        {unit?.apartment_floor_plan_image && (
+          <CardFooter className="px-0 flex gap-2">
+            <Button
+              variant="brand"
+              className="flex-1 font-bold h-10 rounded-lg text-[13px] transition-colors gap-1.5"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(
+                  unit.apartment_floor_plan_image,
+                  "_blank",
+                  "noopener,noreferrer"
+                );
+              }}
+            >
+              <ICONS.FileText size={16} className="opacity-85" />
+              <span>{t("floor_plan")}</span>
+            </Button>
+          </CardFooter>
+        )}
       </Card>
     </div>
   );

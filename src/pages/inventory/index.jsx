@@ -10,6 +10,7 @@ import DirectionLabel from "@/features/direction-label";
 import Building from "@/features/building";
 import BuildingTooltip from "@/features/building-tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
+import useBottomMenuHeight from "@/hooks/use-bottom-menu-height";
 
 import { Suspense } from "react";
 import { CanvasLoader } from "@/containers/canvas-loader";
@@ -22,12 +23,13 @@ const Inventory = () => {
   const isMobile = useIsMobile();
   const controlsRef = useRef();
   const modelRef = useRef();
+  const { bottomMenuHeight } = useBottomMenuHeight();
 
   const handleResetCamera = () => {
     dispatch(resetBuilding());
   };
 
-  const canvasHeight = isMobile ? `calc(100% - ${snapHeight + 70}px)` : "100%";
+  const canvasHeight = isMobile ? `calc(100% - ${snapHeight + bottomMenuHeight}px)` : "100%";
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-background">
@@ -43,7 +45,7 @@ const Inventory = () => {
           transition: "height 0.4s cubic-bezier(0.33, 1, 0.68, 1)",
         }}
       >
-        <TopNavigation onReset={handleResetCamera} />
+        <TopNavigation {...{ onReset: handleResetCamera }} />
         <div className="w-full h-full" dir="ltr">
           <Canvas
             dpr={[1.5, Math.min(window.devicePixelRatio, 2)]}
@@ -56,12 +58,14 @@ const Inventory = () => {
             <Suspense fallback={<CanvasLoader />}>
               <SceneEnvironment>
                 <Building
-                  controlsRef={controlsRef}
-                  modelRef={modelRef}
-                  position={[0, 0.02, 0]}
+                  {...{
+                    controlsRef,
+                    modelRef,
+                    position: [0, 0.02, 0],
+                  }}
                 />
-                <AdaptiveControls controlsRef={controlsRef} />
-                <DirectionLabel controlsRef={controlsRef} />
+                <AdaptiveControls {...{ controlsRef }} />
+                <DirectionLabel {...{ controlsRef }} />
               </SceneEnvironment>
             </Suspense>
           </Canvas>

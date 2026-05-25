@@ -50,7 +50,8 @@ const FilterOverlay = memo(({ isOpen, onClose }) => {
         {/* Footer Actions */}
         <div className="p-4 bg-sidebar border-t border-white/5 flex items-center gap-4">
           <Button
-            className="flex-1 h-12 rounded-full bg-white text-black font-bold text-[15px] hover:bg-white/90 active:scale-[0.98] transition-all shadow-xl"
+            variant="brand"
+            className="flex-1 h-10 rounded-full font-bold text-sm active:scale-[0.98] transition-all shadow-xl"
             onClick={handleApplyFilters}
           >
             {t("show_apartments")} ({filteredCount})

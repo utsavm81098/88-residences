@@ -100,7 +100,7 @@ const router = createBrowserRouter([
   {
     path: "*",
     element: (
-      <div className="flex items-center justify-center h-screen bg-background text-white text-2xl font-outfit">
+      <div className="flex items-center justify-center h-screen bg-background text-white text-2xl font-open-sans">
         Page Not Found
       </div>
     ),

@@ -295,7 +295,7 @@ animateTo(index)
 
 - **Tailwind CSS 3** with shadcn/ui CSS custom properties (`--background`, `--border`, etc.)
 - **Dark mode** is the only mode (bg `#050505`, sidebar `#1f2530`)
-- **Font**: Outfit (Google Font) loaded via @fontsource-variable
+- **Font**: Open Sans (Google Font) loaded via index.html
 - **shadcn primitives**: Accordion, Button, Carousel, Tabs (Radix-based)
 - **Utility function**: `cn()` = `twMerge(clsx(...))` for conditional class merging
 

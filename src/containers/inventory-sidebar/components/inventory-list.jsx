@@ -114,7 +114,7 @@ const InventoryList = ({
                       className={cn(
                         "px-5 py-3 hover:no-underline border-b border-white/5 flex justify-between text-white/90 transition-colors",
                         activeAccordion?.includes(building) &&
-                          "bg-white/[0.02]",
+                        "bg-white/[0.02]",
                       )}
                     >
                       <span className="text-[12px] font-bold tracking-widest">
@@ -128,7 +128,7 @@ const InventoryList = ({
                           const isSelected =
                             selectedUnit?.id === unit.id &&
                             selectedUnit?.apartment_number ===
-                              unit?.apartment_number;
+                            unit?.apartment_number;
 
                           return (
                             <div

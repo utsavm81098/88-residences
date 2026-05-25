@@ -10,9 +10,19 @@ const services = {
       }),
   },
   enquiry: {
-    submit: (formData, configs) =>
+    postEn: (formData, configs) =>
       client({
         url: `/contact-form-7/v1/contact-forms/9311/feedback`,
+        method: "post",
+        data: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        ...configs,
+      }),
+    postHe: (formData, configs) =>
+      client({
+        url: `/contact-form-7/v1/contact-forms/9360/feedback`,
         method: "post",
         data: formData,
         headers: {

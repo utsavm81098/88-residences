@@ -5,30 +5,53 @@ import { getLocalizedString, extractDigit } from "@/utils/helper";
 import { useTranslation } from "react-i18next";
 import { UNIT_ICONS, ICON_PROPS_DEFAULT } from "@/utils/constant";
 import { ICONS } from "@/assets/icons";
+import { cn } from "@/lib/utils";
 
-const ApartmentCard = ({ unit, isSelected, selectedBuilding, onEnquiry }) => {
+const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
+  const isRtl = i18n.dir() === "rtl";
 
   const isSold = unit?.status === "sold" || unit?.apartment_sold;
-  const isAvailable = !isSold;
 
   return (
     <div
-      className={`w-full snap-center bg-card-mobile border-2 ${
+      className={cn(
+        "w-full snap-center bg-card-mobile border-2 rounded-[18px] p-3 flex flex-col gap-2 relative transition-all active:scale-[0.98] shadow-lg shrink-0",
         isSelected ? "border-blue-500" : "border-transparent"
-      } rounded-[18px] p-3 flex flex-col gap-1.5 relative transition-all active:scale-[0.98] shadow-lg shrink-0`}
+      )}
+      dir={isRtl ? "rtl" : "ltr"}
     >
-      <div className="flex justify-between items-center mt-0.5">
-        <span className="font-extrabold text-white text-[16px] tracking-tight">
-          {getLocalizedString(unit.bedrooms?.name, lang)}
-        </span>
-        <span className="text-white/60 font-bold text-[13px] flex items-center gap-1.5">
-          {unit?.apartment_number}
-        </span>
+      <div className="flex justify-between items-center w-full min-h-8">
+        <div className="flex items-center gap-1.5" dir="ltr">
+          <span className="text-white/60 font-bold text-[13px]">
+            {unit?.apartment_number}
+          </span>
+          <span className="text-white/30 text-[13px] font-medium">-</span>
+          <span className="text-white/60 font-bold text-[13px]">
+            {getLocalizedString(unit.bedrooms?.name, lang)}
+          </span>
+        </div>
+        {!isSold && unit?.apartment_floor_plan_image && (
+          <Button
+            variant="brand"
+            className="text-[12px] font-bold h-8 px-3 rounded-lg gap-1.5 shrink-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(
+                unit.apartment_floor_plan_image,
+                "_blank",
+                "noopener,noreferrer"
+              );
+            }}
+          >
+            <ICONS.FileText size={14} className="opacity-85" />
+            <span>{t("floor_plan")}</span>
+          </Button>
+        )}
       </div>
 
-      <div className="flex justify-between items-center w-full min-h-[32px]">
+      <div className="flex justify-between items-center w-full h-6">
         {isSold ? (
           <Badge
             variant="sold"
@@ -37,42 +60,29 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding, onEnquiry }) => {
             {t("sold")}
           </Badge>
         ) : (
-          <>
-            <span
-              className="text-[18px] font-bold text-white tracking-tight leading-none"
-              dir="ltr"
-            >
-              {unit?.apartment_price}
-            </span>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-3 gap-1.5 text-[10px] uppercase font-bold rounded-full border border-accent-yellow/30 text-accent-yellow bg-accent-yellow/5 hover:!bg-accent-yellow hover:!text-white transition-all duration-300 group shadow-lg"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEnquiry?.();
-              }}
-            >
-              <ICONS.Mail
-                size={12}
-                className="text-accent-yellow group-hover:text-white transition-colors"
-              />
-              <span>{t("enquiry")}</span>
-            </Button>
-          </>
+          <span
+            className="text-[16px] font-semibold text-white tracking-tight leading-none"
+            dir="ltr"
+          >
+            {unit?.apartment_price}
+          </span>
         )}
       </div>
 
       {/* ── Stats Grid ── */}
-      <div className="flex flex-row items-center justify-between gap-x-2 mt-0.5">
+      <div className="flex flex-row items-center justify-between gap-x-2">
         {selectedBuilding?.name && unit?.bedrooms?.slug && (
-          <div className="flex flex-col items-start gap-0 text-white">
+          <div className="flex flex-col items-start gap-0 text-white text-start">
             <div className="flex items-center gap-1">
-              <span className="text-slate-500 shrink-0 scale-90 origin-left">
+              <span
+                className={cn(
+                  "text-slate-500 shrink-0 scale-90",
+                  isRtl ? "origin-right" : "origin-left"
+                )}
+              >
                 <UNIT_ICONS.aptType {...ICON_PROPS_DEFAULT} />
               </span>
-              <div className="text-[13px] font-semibold leading-tight">
+              <div className="text-[13px] font-semibold leading-tight" dir="ltr">
                 {`${selectedBuilding.name} ${extractDigit(unit?.bedrooms?.slug)}`}
               </div>
             </div>
@@ -82,12 +92,17 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding, onEnquiry }) => {
           </div>
         )}
         {unit.bedrooms && (
-          <div className="flex flex-col items-start gap-0 text-white">
+          <div className="flex flex-col items-center gap-0 text-white text-center">
             <div className="flex items-center gap-1">
-              <span className="text-slate-500 shrink-0 scale-90 origin-left">
+              <span
+                className={cn(
+                  "text-slate-500 shrink-0 scale-90",
+                  isRtl ? "origin-right" : "origin-left"
+                )}
+              >
                 <UNIT_ICONS.bedrooms {...ICON_PROPS_DEFAULT} />
               </span>
-              <div className="text-[13px] font-semibold leading-tight">
+              <div className="text-[13px] font-semibold leading-tight" dir="ltr">
                 {extractDigit(unit.bedrooms?.slug)}
               </div>
             </div>
@@ -97,12 +112,17 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding, onEnquiry }) => {
           </div>
         )}
         {unit.apartment_area && (
-          <div className="flex flex-col items-start gap-0 text-white">
+          <div className="flex flex-col items-end gap-0 text-white text-end">
             <div className="flex items-center gap-1">
-              <span className="text-slate-500 shrink-0 scale-90 origin-left">
+              <span
+                className={cn(
+                  "text-slate-500 shrink-0 scale-90",
+                  isRtl ? "origin-right" : "origin-left"
+                )}
+              >
                 <UNIT_ICONS.area {...ICON_PROPS_DEFAULT} />
               </span>
-              <div className="text-[13px] font-semibold leading-tight">
+              <div className="text-[13px] font-semibold leading-tight" dir="ltr">
                 {unit.apartment_area}
               </div>
             </div>
@@ -111,21 +131,6 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding, onEnquiry }) => {
             </div>
           </div>
         )}
-      </div>
-
-      <div className="flex gap-2 mt-1">
-        <Button
-          variant="outline"
-          className="flex-1 bg-transparent border border-white/10 text-white text-[12px] font-bold h-9 rounded-lg"
-        >
-          {t("floor_plan")}
-        </Button>
-        <Button
-          variant="brand"
-          className="flex-1 text-[12px] font-bold h-9 rounded-lg"
-        >
-          {t("view_property")}
-        </Button>
       </div>
     </div>
   );

@@ -69,8 +69,8 @@ Design tokens MUST be defined centrally in `index.css` or `tailwind.config.js`:
 
 ## Font
 
-- **Primary font**: Outfit (loaded via `@fontsource-variable/outfit`).
-- Use the `font-outfit` Tailwind utility class.
+- **Primary font**: Open Sans (loaded via Google Fonts in index.html).
+- Use the `font-open-sans` Tailwind utility class.
 - Do not import or use other fonts without approval.
 
 ## Utility Function

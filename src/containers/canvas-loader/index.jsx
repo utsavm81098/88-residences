@@ -18,7 +18,7 @@ export const CanvasLoader = () => {
   return (
     <Html center className="model-loader z-50">
       <div dir={dir} className="flex flex-col items-center justify-center p-6 bg-background/95 border border-border/50 rounded-2xl min-w-[220px] text-center shadow-2xl">
-        <span className="text-[10px] text-white/40 font-outfit uppercase tracking-widest mb-3">
+        <span className="text-[10px] text-white/40 font-open-sans uppercase tracking-widest mb-3">
           {t("loading_model", "Loading Model")}
         </span>
         <i dir="ltr" className="w-full bg-white/15 h-[3px] rounded-full overflow-hidden flex mb-2 justify-start">
@@ -29,7 +29,7 @@ export const CanvasLoader = () => {
             }}
           />
         </i>
-        <em className="text-xs font-semibold text-accent-yellow font-outfit not-italic" dir="ltr">
+        <em className="text-xs font-semibold text-accent-yellow font-open-sans not-italic" dir="ltr">
           {displayProgress}%
         </em>
       </div>

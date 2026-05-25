@@ -21,6 +21,7 @@ import {
   User,
   Menu,
   Mail,
+  FileText,
 } from "lucide-react";
 
 export const ICONS = {
@@ -50,4 +51,5 @@ export const ICONS = {
   User,
   Menu,
   Mail,
+  FileText,
 };

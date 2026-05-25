@@ -58,7 +58,8 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        outfit: ["'Outfit'", "sans-serif"],
+        sans: ["'Open Sans'", "sans-serif"],
+        "open-sans": ["'Open Sans'", "sans-serif"],
         inter: ["'Inter'", "sans-serif"],
       },
       keyframes: {

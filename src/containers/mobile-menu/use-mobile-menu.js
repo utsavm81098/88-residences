@@ -6,6 +6,7 @@ import {
   setSnapHeight,
 } from "@/store/slices/building-slice";
 import useToggleState from "@/hooks/use-toggle-state";
+import useBottomMenuHeight from "@/hooks/use-bottom-menu-height";
 
 import { getActiveFiltersCount } from "@/utils/filter-helper";
 
@@ -16,6 +17,7 @@ export const useMobileMenu = ({ buildingUnits }) => {
   const sheetRef = useRef(null);
   const lastSyncedIndex = useRef(-1);
   const dispatch = useDispatch();
+  const { bottomMenuHeight } = useBottomMenuHeight();
 
   const { mobileSelectedUnit, filters } = useSelector(
     (state) => state.building,
@@ -168,6 +170,7 @@ export const useMobileMenu = ({ buildingUnits }) => {
     setEnquiryOpen,
     activeFiltersCount,
     mobileSelectedUnit,
+    bottomMenuHeight,
   };
 };
 

@@ -18,7 +18,7 @@ export default function MainLayout() {
   }, [dispatch]);
 
   return (
-    <div className="flex h-screen w-screen bg-background text-white font-outfit overflow-hidden relative">
+    <div className="flex h-screen w-screen bg-background text-white font-open-sans overflow-hidden relative">
       {/* 
           Navigation Rail Wrapper 
           Occupies fixed space in the layout flow to prevent shifting 

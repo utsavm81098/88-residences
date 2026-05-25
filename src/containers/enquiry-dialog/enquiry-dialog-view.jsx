@@ -48,9 +48,9 @@ const EnquiryDialogView = ({
     >
       <DialogContent
         dir={dir}
-        className="bg-card-bg/90 backdrop-blur-2xl border-white/10 text-white rounded-[1.5rem] sm:rounded-[2rem] w-[92vw] max-w-[400px] sm:max-w-md ring-1 ring-white/10 shadow-2xl p-5 sm:p-8 overflow-y-auto max-h-[95vh] sm:max-h-none custom-scrollbar"
+        className="bg-card-bg/90 backdrop-blur-2xl border-white/10 text-white rounded-3xl sm:rounded-4xl w-[92vw] max-w-[400px] sm:max-w-md ring-1 ring-white/10 shadow-2xl p-5 sm:p-8 overflow-y-auto max-h-[95vh] sm:max-h-none custom-scrollbar"
       >
-        <div className="flex items-center justify-start mb-2 pr-10">
+        <div className="flex items-center justify-start mb-2 pe-10">
           <img
             src={logo}
             alt="88 Residences"

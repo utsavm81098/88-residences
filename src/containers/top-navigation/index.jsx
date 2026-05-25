@@ -52,13 +52,13 @@ const TopNavigationContainer = memo(({ onReset }) => {
                   <ICONS.ChevronLeft
                     size={30}
                     strokeWidth={2}
-                    className="rtl:rotate-180 size-[30px]"
+                    className="size-[30px] rtl:-scale-x-100"
                   />
                 </Button>
 
                 <div
                   className={cn(
-                    "mx-6 text-white font-outfit font-semibold text-2xl tracking-wider transition-colors",
+                    "mx-6 text-white font-open-sans font-semibold text-2xl tracking-wider transition-colors",
                     buildings.length > 1
                       ? "hover:text-white/80"
                       : "cursor-default",
@@ -82,7 +82,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
                   <ICONS.ChevronRight
                     size={30}
                     strokeWidth={2}
-                    className="rtl:rotate-180 size-[30px]"
+                    className="size-[30px] rtl:-scale-x-100"
                   />
                 </Button>
               </div>
@@ -98,7 +98,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
                     <DropdownMenuItem
                       key={b.name}
                       className={cn(
-                        "px-6 py-4 text-center text-white font-outfit text-base cursor-pointer transition-colors hover:bg-white/10 focus:bg-white/10 outline-none block",
+                        "px-6 py-4 text-center text-white font-open-sans text-base cursor-pointer transition-colors hover:bg-white/10 focus:bg-white/10 outline-hidden block",
                         currentBuilding.name === b.name
                           ? "bg-white/5 font-bold"
                           : "font-medium",
@@ -145,7 +145,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
           aria-label="Previous building"
         >
           <ICONS.ChevronLeft
-            className="!size-40 rtl:rotate-180"
+            className="!size-40 rtl:-scale-x-100"
             strokeWidth={1}
           />
         </Button>
@@ -168,7 +168,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
           aria-label="Next building"
         >
           <ICONS.ChevronRight
-            className="!size-40 rtl:rotate-180"
+            className="!size-40 rtl:-scale-x-100"
             strokeWidth={1}
           />
         </Button>
