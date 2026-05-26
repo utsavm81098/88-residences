@@ -79,7 +79,7 @@ const MobileMenuContainer = memo(
 
         <div
           ref={sheetRef}
-          className="fixed left-0 w-full bg-sidebar rounded-t-3xl shadow-2xl overflow-hidden z-1"
+          className="fixed left-0 w-full bg-sidebar rounded-t-3xl shadow-2xl overflow-hidden z-[1]"
           style={{ bottom: `${bottomMenuHeight}px` }}
         >
           <div className="px-4 py-2 overflow-y-auto max-h-[calc(100vh-70px)] flex flex-col gap-2 items-center overflow-hidden">
