@@ -1,5 +1,5 @@
 {
-  "home": "בית",
+  "home": "לאתר הבית",
   "inventory": "מלאי",
   "about": "אודות",
   "gallery": "גלריה",
@@ -22,7 +22,7 @@
   "view_property": "צפה בנכס",
   "floor_plan": "תכנית קומה",
   "block": "בלוק",
-  "apt": "מַתְאִים",
+  "apt": "דירה",
   "apartment": "דירה",
   "building": "בניין",
   "apartments_found": "דירות נמצאו",
@@ -61,5 +61,6 @@
   "validation_email": "אנא הזן כתובת אימייל תקינה",
   "validation_phone": "אנא הזן מספר טלפון תקין",
   "enquiry_greeting": "אנא חזור אליי בנוגע לדירה זו:",
+  "bedroom": "חדר שינה",
   "bedrooms": "חדרי שינה"
 }

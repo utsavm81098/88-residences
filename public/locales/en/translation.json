@@ -61,5 +61,6 @@
   "validation_email": "Please enter a valid email address",
   "validation_phone": "Please enter a valid phone number",
   "enquiry_greeting": "Please get back to me regarding this apartment:",
-  "bedrooms": "bedrooms"
+  "bedroom": "Bedroom",
+  "bedrooms": "Bedrooms"
 }
