@@ -18,7 +18,7 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
     <div
       className={cn(
         "w-full snap-center bg-card-mobile border-2 rounded-[18px] p-3 flex flex-col gap-2 relative transition-all active:scale-[0.98] shadow-lg shrink-0",
-        isSelected ? "border-blue-500" : "border-transparent"
+        isSelected ? "border-blue-500" : "border-transparent",
       )}
       dir={isRtl ? "rtl" : "ltr"}
     >
@@ -41,7 +41,7 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
               window.open(
                 unit.apartment_floor_plan_image,
                 "_blank",
-                "noopener,noreferrer"
+                "noopener,noreferrer",
               );
             }}
           >
@@ -71,23 +71,23 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
 
       {/* ── Stats Grid ── */}
       <div className="flex flex-row items-center justify-between gap-x-2">
-        {selectedBuilding?.name && unit?.bedrooms?.slug && (
+        {unit?.property_direction?.name && (
           <div className="flex flex-col items-start gap-0 text-white text-start">
             <div className="flex items-center gap-1">
               <span
                 className={cn(
                   "text-slate-500 shrink-0 scale-90",
-                  isRtl ? "origin-right" : "origin-left"
+                  isRtl ? "origin-right" : "origin-left",
                 )}
               >
-                <UNIT_ICONS.aptType {...ICON_PROPS_DEFAULT} />
+                <UNIT_ICONS.direction {...ICON_PROPS_DEFAULT} />
               </span>
-              <div className="text-[13px] font-semibold leading-tight" dir="ltr">
-                {`${selectedBuilding.name} ${extractDigit(unit?.bedrooms?.slug)}`}
+              <div className="text-[13px] font-semibold leading-tight">
+                {getLocalizedString(unit?.property_direction?.name, lang)}
               </div>
             </div>
             <div className="text-[10px] text-slate-500 font-medium normal-case">
-              {t("apt_type")}
+              {t("direction")}
             </div>
           </div>
         )}
@@ -97,17 +97,22 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
               <span
                 className={cn(
                   "text-slate-500 shrink-0 scale-90",
-                  isRtl ? "origin-right" : "origin-left"
+                  isRtl ? "origin-right" : "origin-left",
                 )}
               >
                 <UNIT_ICONS.bedrooms {...ICON_PROPS_DEFAULT} />
               </span>
-              <div className="text-[13px] font-semibold leading-tight" dir="ltr">
+              <div
+                className="text-[13px] font-semibold leading-tight"
+                dir="ltr"
+              >
                 {extractDigit(unit.bedrooms?.slug)}
               </div>
             </div>
             <div className="text-[10px] text-slate-500 font-medium normal-case">
-              {t("rooms")}
+              {Number(extractDigit(unit.bedrooms?.slug)) === 1
+                ? t("bedroom", "Bedroom")
+                : t("bedrooms", "Bedrooms")}
             </div>
           </div>
         )}
@@ -117,12 +122,15 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
               <span
                 className={cn(
                   "text-slate-500 shrink-0 scale-90",
-                  isRtl ? "origin-right" : "origin-left"
+                  isRtl ? "origin-right" : "origin-left",
                 )}
               >
                 <UNIT_ICONS.area {...ICON_PROPS_DEFAULT} />
               </span>
-              <div className="text-[13px] font-semibold leading-tight" dir="ltr">
+              <div
+                className="text-[13px] font-semibold leading-tight"
+                dir="ltr"
+              >
                 {unit.apartment_area}
               </div>
             </div>

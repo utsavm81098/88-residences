@@ -3,10 +3,7 @@ import { useMobileNav } from "./use-mobile-nav";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { NAV_ITEMS_MOBILE } from "@/utils/constant";
-
-import { Link } from "react-router";
-import { getDashboardRoute } from "@/utils/helper";
+import { NAV_ITEMS_MOBILE, WEBSITE_URL } from "@/utils/constant";
 import logo from "@/assets/logo.png";
 import { SvgIcon } from "@/components/ui/svg-icon";
 
@@ -85,20 +82,21 @@ export default function MobileNavContainer() {
           <div className="flex-1 p-6 space-y-4 overflow-y-auto custom-scrollbar">
             {/* ── Logo ── */}
             <div className="flex justify-start pb-2">
-              <Link
-                {...{
-                  to: getDashboardRoute(i18n),
-                  onClick: () => setIsMoreOpen(false),
-                  className:
-                    "outline-none active:scale-95 transition-transform",
+              <a
+                href={WEBSITE_URL}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsMoreOpen(false);
+                  window.location.href = WEBSITE_URL;
                 }}
+                className="outline-none active:scale-95 transition-transform"
               >
                 <img
                   src={logo}
                   alt="88 Residences"
                   className="h-6 w-auto object-contain"
                 />
-              </Link>
+              </a>
             </div>
 
             {/* ── Navigation Grid ── */}

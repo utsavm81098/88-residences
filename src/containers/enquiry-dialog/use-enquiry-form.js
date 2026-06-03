@@ -132,22 +132,35 @@ export const useEnquiryForm = ({ unit, selectedBuilding, setEnquiryOpen }) => {
       formData.append("_wpcf7", formId);
       formData.append("_wpcf7_unit_tag", `wpcf7-f${formId}-o1`);
 
-      const response = isHe 
-        ? await api.enquiry.postHe(formData) 
+      const response = isHe
+        ? await api.enquiry.postHe(formData)
         : await api.enquiry.postEn(formData);
 
       if (response && response.status === "mail_sent") {
-        toast.success(response.message || t("enquiry_success_message", "Your message has been sent successfully. Thank you!"));
+        toast.success(
+          response.message ||
+            t(
+              "enquiry_success_message",
+              "Your message has been sent successfully. Thank you!",
+            ),
+        );
         setEnquiryOpen(false);
         form.reset();
       } else {
-        const errorStatus = response?.status === "validation_failed" ? 422 : response?.status;
-        const errMsg = ERROR_MESSAGES[errorStatus] || (response && response.message) || ERROR_MESSAGES.common;
+        const errorStatus =
+          response?.status === "validation_failed" ? 422 : response?.status;
+        const errMsg =
+          ERROR_MESSAGES[errorStatus] ||
+          (response && response.message) ||
+          ERROR_MESSAGES.common;
         toast.error(errMsg);
       }
     } catch (error) {
       logger.error("Enquiry submission failed:", error);
-      const errMsg = ERROR_MESSAGES[error?.status] || error?.message || ERROR_MESSAGES.common;
+      const errMsg =
+        ERROR_MESSAGES[error?.status] ||
+        error?.message ||
+        ERROR_MESSAGES.common;
       toast.error(errMsg);
     }
   };

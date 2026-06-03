@@ -6,6 +6,7 @@ import { setActivePanel } from "@/store/slices/sidebar-slice";
 import { logger } from "@/utils/logger";
 import { LANGUAGES } from "@/utils/languages";
 import { getDashboardRoute, getLanguageSwitchPath } from "@/utils/helper";
+import { WEBSITE_URL } from "@/utils/constant";
 
 export function useSidebarNav() {
   const dispatch = useDispatch();
@@ -49,6 +50,10 @@ export function useSidebarNav() {
 
   const onNavItemClick = useCallback(
     (id) => {
+      if (id === "home") {
+        window.location.href = WEBSITE_URL;
+        return;
+      }
       const targetPath = getDashboardRoute(i18n, id);
 
       if (

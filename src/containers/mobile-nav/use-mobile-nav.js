@@ -6,7 +6,7 @@ import { setActivePanel } from "@/store/slices/sidebar-slice";
 import { WEB_ROUTES } from "@/routes/routes";
 import { LANGUAGES } from "@/utils/languages";
 import { logger } from "@/utils/logger";
-import { NAV_ITEMS } from "@/utils/constant";
+import { NAV_ITEMS, WEBSITE_URL } from "@/utils/constant";
 import useToggleState from "@/hooks/use-toggle-state";
 import { getDashboardRoute, getLanguageSwitchPath } from "@/utils/helper";
 
@@ -43,6 +43,10 @@ export function useMobileNav() {
 
   const onNavItemClick = useCallback(
     (id) => {
+      if (id === "home") {
+        window.location.href = WEBSITE_URL;
+        return;
+      }
       if (id === "more") {
         openMore();
         return;

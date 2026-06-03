@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { ICONS } from "@/assets/icons";
 
 export const DASHBOARD_PREFIX = "dashboard";
+export const WEBSITE_URL = "https://www.88residences.com";
 const BASE_URL = import.meta.env.BASE_URL.endsWith("/")
   ? import.meta.env.BASE_URL.slice(0, -1)
   : import.meta.env.BASE_URL;
@@ -104,14 +105,7 @@ const typeAConfig = {
   hitbox: getAssetPath("/models/a-hitbox.glb"),
   heroAngle: 0,
   environment: {
-    files: [
-      getAssetPath("/cube-map/py.png"), // Right
-      getAssetPath("/cube-map/py.png"), // Left
-      getAssetPath("/cube-map/pz.png"), // Top
-      getAssetPath("/cube-map/px.png"), // Bottom
-      getAssetPath("/cube-map/py.png"), // Back
-      getAssetPath("/cube-map/py.png"), // Front
-    ],
+    files: Array(6).fill(getAssetPath("/cube-map/py.png")),
     background: false,
     rotation: [0, 0, 0],
     backgroundRotation: [0, 0, 0],

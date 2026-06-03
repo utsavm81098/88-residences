@@ -68,18 +68,22 @@ const HoverTooltip = ({
 
           {/* ── Stats Grid ── */}
           <div className="flex flex-row items-center justify-between gap-x-4">
-            {selectedBuilding.name && unit?.bedrooms?.slug && (
+            {unit?.property_direction?.name && (
               <StatCell
-                icon={<UNIT_ICONS.aptType {...ICON_PROPS_DEFAULT} />}
-                value={`${selectedBuilding.name} ${extractDigit(unit?.bedrooms?.slug)}`}
-                label={t("apt_type")}
+                icon={<UNIT_ICONS.direction {...ICON_PROPS_DEFAULT} />}
+                value={getLocalizedString(unit?.property_direction?.name, lang)}
+                label={t("direction")}
               />
             )}
             {unit.bedrooms && (
               <StatCell
                 icon={<UNIT_ICONS.bedrooms {...ICON_PROPS_DEFAULT} />}
                 value={extractDigit(unit.bedrooms?.slug)}
-                label={t("rooms")}
+                label={
+                  Number(extractDigit(unit.bedrooms?.slug)) === 1
+                    ? t("bedroom", "Bedroom")
+                    : t("bedrooms", "Bedrooms")
+                }
               />
             )}
             {unit.apartment_area && (

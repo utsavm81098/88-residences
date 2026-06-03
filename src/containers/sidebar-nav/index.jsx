@@ -2,10 +2,8 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { SvgIcon } from "@/components/ui/svg-icon";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
-import { NAV_ITEMS } from "@/utils/constant";
+import { NAV_ITEMS, WEBSITE_URL } from "@/utils/constant";
 import { useSidebarNav } from "./use-sidebar-nav";
-import { getDashboardRoute } from "@/utils/helper";
 import { Logo } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
@@ -44,8 +42,12 @@ const NavSidebar = ({
           isExpanded ? "px-6" : "px-0 justify-center",
         )}
       >
-        <Link
-          to={getDashboardRoute(i18n)}
+        <a
+          href={WEBSITE_URL}
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.href = WEBSITE_URL;
+          }}
           className="flex items-center gap-3 transition-transform hover:scale-105 active:scale-95"
         >
           {isExpanded ? (
@@ -57,7 +59,7 @@ const NavSidebar = ({
           ) : (
             <Logo className="h-8 w-8 transition-all duration-300" />
           )}
-        </Link>
+        </a>
       </div>
 
       {/* ── Navigation Items ── */}
