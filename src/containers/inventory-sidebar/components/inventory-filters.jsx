@@ -17,14 +17,14 @@ const InventoryFilters = ({ filters, onFilterChange, className }) => {
     <div className={cn("flex flex-col gap-4 w-full", className)}>
       {/* Rooms Filter */}
       <FilterGroup
-        label={t("rooms")}
+        label={t("bedrooms")}
         className="flex-row items-center justify-between gap-2"
       >
         <FilterTabs
           value={filters.rooms}
           onValueChange={(val) => onFilterChange("rooms", val)}
           options={FILTER_OPTIONS.rooms}
-          triggerClassName="text-[10px] sm:text-[11px] p-3"
+          triggerClassName="text-[10px] sm:text-[16px] p-2"
           className="w-auto"
         />
       </FilterGroup>
@@ -38,7 +38,7 @@ const InventoryFilters = ({ filters, onFilterChange, className }) => {
           value={filters.direction}
           onValueChange={(val) => onFilterChange("direction", val)}
           options={FILTER_OPTIONS.direction}
-          triggerClassName="p-3"
+          triggerClassName="text-[10px] sm:text-[16px] p-2"
           className="w-auto"
         />
       </FilterGroup>

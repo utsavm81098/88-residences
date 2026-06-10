@@ -155,6 +155,11 @@ export const useBuildingTooltip = () => {
         pointerEvents: "none",
       });
     }
+
+    // Fix 4: Kill any active tween on this node when selectedUnit changes or component unmounts
+    return () => {
+      gsap.killTweensOf(node);
+    };
   }, [selectedUnit]);
 
   // Derive status from unit data

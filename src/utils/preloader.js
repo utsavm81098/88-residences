@@ -39,8 +39,7 @@ export const preloadModels = () => {
   const landingEnv = landingBuilding.environment;
 
   // 1. High Priority: Landing building
-  if (landingModel)
-    useGLTF.preload(landingModel, true, true, configureLoader);
+  if (landingModel) useGLTF.preload(landingModel, true, true, configureLoader);
   if (landingHitbox)
     useGLTF.preload(landingHitbox, true, true, configureLoader);
   if (landingEnv) useEnvironment.preload(landingEnv);

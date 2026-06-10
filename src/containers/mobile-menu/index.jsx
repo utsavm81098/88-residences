@@ -116,7 +116,7 @@ const MobileMenuContainer = memo(
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-3 gap-1.5 text-[10px] uppercase font-bold rounded-full border border-accent-yellow/30 text-accent-yellow bg-accent-yellow/5 hover:!bg-accent-yellow hover:!text-white transition-all duration-300 group shadow-lg shrink-0"
+                  className="h-7 px-3 gap-1.5 text-[12px] uppercase font-bold rounded-full border border-accent-yellow/30 text-accent-yellow bg-accent-yellow/5 hover:!bg-accent-yellow hover:!text-white transition-all duration-300 group shadow-lg shrink-0"
                   onClick={(e) => {
                     e.stopPropagation();
                     openEnquiry();
@@ -165,7 +165,7 @@ const MobileMenuContainer = memo(
                       className={cn(
                         "basis-[85%]",
                         buildingUnits.length === 1 &&
-                        "pl-0 basis-full flex justify-center",
+                          "pl-0 basis-full flex justify-center",
                       )}
                     >
                       <div

@@ -74,6 +74,36 @@ const getCachedEdges = (geometry) => {
 };
 
 /**
+ * Safely disposes all materials in a given glassScene.
+ * Kills active GSAP tweens on materials to prevent memory leak references.
+ */
+const disposeSceneMaterials = (scene) => {
+  if (!scene) return;
+  scene.traverse((child) => {
+    if (child.isMesh) {
+      if (child.material) {
+        const materials = Array.isArray(child.material) ? child.material : [child.material];
+        materials.forEach((m) => {
+          gsap.killTweensOf([m.color, m]);
+          m.dispose();
+        });
+      }
+
+      // Clean up outline LineSegments materials
+      child.children.forEach((subChild) => {
+        if (subChild.material) {
+          const subMaterials = Array.isArray(subChild.material) ? subChild.material : [subChild.material];
+          subMaterials.forEach((m) => {
+            gsap.killTweensOf(m);
+            m.dispose();
+          });
+        }
+      });
+    }
+  });
+};
+
+/**
  * Handles the logic for a single building instance.
  * Loads models, sets up hitboxes, and manages unit interactions.
  */
@@ -365,7 +395,13 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
   );
 
 
+  const latestGlassSceneRef = useRef(glassScene);
+  latestGlassSceneRef.current = glassScene;
+  const hasNewEffectRunRef = useRef(false);
+
   useEffect(() => {
+    hasNewEffectRunRef.current = true;
+
     // Only update highlights and camera focus for the active building
     // Inactive buildings don't need to waste cycles on selection changes
     if (isTransitioning || !isActiveBuilding) return;
@@ -383,6 +419,24 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
     });
 
     if (focusObj) focusCameraOnMesh(focusObj);
+
+    return () => {
+      hasNewEffectRunRef.current = false;
+
+      if (rotationTween.current) {
+        rotationTween.current.kill();
+        rotationTween.current = null;
+      }
+
+      // Dispose materials only when the component is unmounting or glassScene changes.
+      // If selection changes, hasNewEffectRunRef is set to true synchronously in the next effect.
+      const sceneToDispose = glassScene;
+      setTimeout(() => {
+        if (!hasNewEffectRunRef.current || latestGlassSceneRef.current !== sceneToDispose) {
+          disposeSceneMaterials(sceneToDispose);
+        }
+      }, 0);
+    };
   }, [
     activeSelection,
     glassScene,

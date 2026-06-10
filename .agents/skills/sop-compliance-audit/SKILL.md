@@ -1,5 +1,5 @@
 ---
-name: SOP Compliance Audit
+name: sop-compliance-audit
 description: Automated audit of the codebase against the React.js Internal Coding Standard SOP
 ---
 

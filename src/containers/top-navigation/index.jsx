@@ -52,7 +52,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
                   <ICONS.ChevronLeft
                     size={30}
                     strokeWidth={2}
-                    className="size-[30px] rtl:-scale-x-100"
+                    className="size-[30px] rtl:-scale-x-100 text-accent-yellow"
                   />
                 </Button>
 
@@ -64,7 +64,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
                       : "cursor-default",
                   )}
                 >
-                  {currentBuilding?.name + " Building"}
+                  <span className="text-accent-yellow">{currentBuilding?.name}</span>{" Building"}
                 </div>
 
                 <Button
@@ -82,7 +82,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
                   <ICONS.ChevronRight
                     size={30}
                     strokeWidth={2}
-                    className="size-[30px] rtl:-scale-x-100"
+                    className="size-[30px] rtl:-scale-x-100 text-accent-yellow"
                   />
                 </Button>
               </div>
@@ -105,7 +105,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
                       )}
                       onClick={() => handleSelect(idx)}
                     >
-                      {b.name + " Building"}
+                      <span className="text-accent-yellow">{b.name}</span>{" Building"}
                     </DropdownMenuItem>
                   ))}
                 </div>

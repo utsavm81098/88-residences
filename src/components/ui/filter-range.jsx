@@ -25,8 +25,10 @@ function FilterRange({
       className="flex flex-col gap-2 pt-2"
       {...props}
     >
-      <label className="text-[13px] font-medium text-white/70">{label}</label>
-      <div className="flex justify-between items-center text-[11px] font-bold text-white/60 px-1">
+      <label className="text-[12px] sm:text-[16px] font-medium text-white/70">
+        {label}
+      </label>
+      <div className="flex justify-between items-center text-[12px] sm:text-[16px] font-bold text-white/60 px-1">
         <span>
           {prefix}
           {formatValue(displayMin)} {unit}

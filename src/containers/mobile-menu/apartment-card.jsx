@@ -82,11 +82,11 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
               >
                 <UNIT_ICONS.direction {...ICON_PROPS_DEFAULT} />
               </span>
-              <div className="text-[13px] font-semibold leading-tight">
+              <div className="text-[14px] font-semibold leading-tight">
                 {getLocalizedString(unit?.property_direction?.name, lang)}
               </div>
             </div>
-            <div className="text-[10px] text-slate-500 font-medium normal-case">
+            <div className="text-[12px] text-slate-500 font-medium normal-case">
               {t("direction")}
             </div>
           </div>
@@ -103,13 +103,13 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
                 <UNIT_ICONS.bedrooms {...ICON_PROPS_DEFAULT} />
               </span>
               <div
-                className="text-[13px] font-semibold leading-tight"
+                className="text-[14px] font-semibold leading-tight"
                 dir="ltr"
               >
                 {extractDigit(unit.bedrooms?.slug)}
               </div>
             </div>
-            <div className="text-[10px] text-slate-500 font-medium normal-case">
+            <div className="text-[12px] text-slate-500 font-medium normal-case">
               {Number(extractDigit(unit.bedrooms?.slug)) === 1
                 ? t("bedroom", "Bedroom")
                 : t("bedrooms", "Bedrooms")}
@@ -128,13 +128,13 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
                 <UNIT_ICONS.area {...ICON_PROPS_DEFAULT} />
               </span>
               <div
-                className="text-[13px] font-semibold leading-tight"
+                className="text-[14px] font-semibold leading-tight"
                 dir="ltr"
               >
                 {unit.apartment_area}
               </div>
             </div>
-            <div className="text-[10px] text-slate-500 font-medium normal-case">
+            <div className="text-[12px] text-slate-500 font-medium normal-case">
               {t("area_m2")}
             </div>
           </div>

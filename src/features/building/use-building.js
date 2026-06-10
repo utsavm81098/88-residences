@@ -78,7 +78,9 @@ const useBuildingTransition = ({ groupRefs, controlsRef }) => {
     const targetConfig = BUILDING_CONFIG[currentBuildingIndex];
     const isDesktop = !isMobile;
     const bypassHeroAngle = isMobile || (isDesktop && selectedUnit !== null);
-    const targetAngle = bypassHeroAngle ? startAzimuth : (targetConfig.heroAngle ?? startAzimuth);
+    const targetAngle = bypassHeroAngle
+      ? startAzimuth
+      : (targetConfig.heroAngle ?? startAzimuth);
     const delta = Math.atan2(
       Math.sin(targetAngle - startAzimuth),
       Math.cos(targetAngle - startAzimuth),

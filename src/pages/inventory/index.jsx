@@ -16,6 +16,8 @@ import { Suspense } from "react";
 import { CanvasLoader } from "@/containers/canvas-loader";
 import { CANVAS_GL_CONFIG } from "@/utils/constant";
 import SidebarPanel from "@/containers/sidebar-panel";
+import { ComponentErrorBoundary } from "@/components/error-boundary";
+import { useGLTF } from "@react-three/drei";
 
 const Inventory = () => {
   const dispatch = useDispatch();
@@ -29,7 +31,13 @@ const Inventory = () => {
     dispatch(resetBuilding());
   };
 
-  const canvasHeight = isMobile ? `calc(100% - ${snapHeight + bottomMenuHeight}px)` : "100%";
+  const handleResetCache = () => {
+    useGLTF.clear();
+  };
+
+  const canvasHeight = isMobile
+    ? `calc(100% - ${snapHeight + bottomMenuHeight}px)`
+    : "100%";
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-background">
@@ -47,28 +55,30 @@ const Inventory = () => {
       >
         <TopNavigation {...{ onReset: handleResetCamera }} />
         <div className="w-full h-full" dir="ltr">
-          <Canvas
-            dpr={[1.5, Math.min(window.devicePixelRatio, 2)]}
-            performance={{ min: 0.5, debounce: 200 }}
-            frameloop="always"
-            gl={CANVAS_GL_CONFIG}
-            shadows
-          >
-            {/* {import.meta.env.DEV && <Stats />} */}
-            <Suspense fallback={<CanvasLoader />}>
-              <SceneEnvironment>
-                <Building
-                  {...{
-                    controlsRef,
-                    modelRef,
-                    position: [0, 0.02, 0],
-                  }}
-                />
-                <AdaptiveControls {...{ controlsRef }} />
-                <DirectionLabel {...{ controlsRef }} />
-              </SceneEnvironment>
-            </Suspense>
-          </Canvas>
+          <ComponentErrorBoundary name="3D Canvas" onReset={handleResetCache}>
+            <Canvas
+              dpr={[1.5, Math.min(window.devicePixelRatio, 2)]}
+              performance={{ min: 0.5, debounce: 200 }}
+              frameloop="always"
+              gl={CANVAS_GL_CONFIG}
+              shadows
+            >
+              {/* {import.meta.env.DEV && <Stats />} */}
+              <Suspense fallback={<CanvasLoader />}>
+                <SceneEnvironment>
+                  <Building
+                    {...{
+                      controlsRef,
+                      modelRef,
+                      position: [0, 0.02, 0],
+                    }}
+                  />
+                  <AdaptiveControls {...{ controlsRef }} />
+                  <DirectionLabel {...{ controlsRef }} />
+                </SceneEnvironment>
+              </Suspense>
+            </Canvas>
+          </ComponentErrorBoundary>
         </div>
         <BuildingTooltip />
       </div>

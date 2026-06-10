@@ -9,7 +9,7 @@ function FilterGroup({ label, children, className, ...props }) {
       {...props}
     >
       {label && (
-        <label className="text-[13px] font-medium text-white/70">{label}</label>
+        <label className="text-[16px] font-medium text-white/70">{label}</label>
       )}
       {children}
     </div>

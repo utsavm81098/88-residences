@@ -73,6 +73,7 @@ const useDirectionLabel = ({ controlsRef }) => {
   });
   const prevConfigRef = useRef(config);
   const tweenRef = useRef(null);
+  const cameraTweenRef = useRef(null);
 
   useEffect(() => {
     const prevConfig = prevConfigRef.current;
@@ -126,6 +127,10 @@ const useDirectionLabel = ({ controlsRef }) => {
         tweenRef.current.kill();
         tweenRef.current = null;
       }
+      if (cameraTweenRef.current) {
+        cameraTweenRef.current.kill();
+        cameraTweenRef.current = null;
+      }
     };
   }, [config]);
 
@@ -176,7 +181,12 @@ const useDirectionLabel = ({ controlsRef }) => {
         ) -
         Math.PI;
 
-      gsap.to(
+      // Kill any in-flight camera move before starting a new one
+      if (cameraTweenRef.current) {
+        cameraTweenRef.current.kill();
+      }
+
+      cameraTweenRef.current = gsap.to(
         { angle: startAngle },
         {
           angle: endAngle,
@@ -193,6 +203,9 @@ const useDirectionLabel = ({ controlsRef }) => {
             camera.position.copy(_newPos);
             camera.lookAt(target);
             controls.update();
+          },
+          onComplete: () => {
+            cameraTweenRef.current = null;
           },
         },
       );
