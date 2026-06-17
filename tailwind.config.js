@@ -12,6 +12,8 @@ export default {
         foreground: "hsl(var(--foreground))",
         sidebar: "hsl(var(--sidebar-bg))",
         "sidebar-bg": "hsl(var(--sidebar-bg))",
+        "mobile-topbar-bg": "hsl(var(--mobile-topbar-bg))",
+        "mobile-topbar-border": "hsl(var(--mobile-topbar-border))",
         nav: "hsl(var(--nav-bg))",
         "card-bg": "hsl(var(--card-bg))",
         "accent-yellow": "hsl(var(--accent-yellow))",

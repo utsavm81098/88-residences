@@ -55,6 +55,8 @@ const NavSidebar = ({
               src={logo}
               alt="88 Residences"
               className="h-8 w-auto object-contain transition-all duration-300"
+              loading="eager"
+              fetchPriority="high"
             />
           ) : (
             <Logo className="h-8 w-8 transition-all duration-300" />

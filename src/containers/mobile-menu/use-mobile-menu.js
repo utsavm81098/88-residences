@@ -9,6 +9,7 @@ import useToggleState from "@/hooks/use-toggle-state";
 import useBottomMenuHeight from "@/hooks/use-bottom-menu-height";
 
 import { getActiveFiltersCount } from "@/utils/filter-helper";
+import { WEBSITE_URL } from "@/utils/constant";
 
 /**
  * Hook for the mobile bottom sheet menu.
@@ -16,12 +17,17 @@ import { getActiveFiltersCount } from "@/utils/filter-helper";
 export const useMobileMenu = ({ buildingUnits }) => {
   const sheetRef = useRef(null);
   const lastSyncedIndex = useRef(-1);
+  const lastScrollHeight = useRef(0);
   const dispatch = useDispatch();
   const { bottomMenuHeight } = useBottomMenuHeight();
 
-  const { mobileSelectedUnit, filters } = useSelector(
+  const { mobileSelectedUnit, filters, currentBuilding, loading } = useSelector(
     (state) => state.building,
   );
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [isTruncated, setIsTruncated] = useState(false);
+  const resizeObserverRef = useRef(null);
+  const timeoutRef = useRef(null);
 
   const activeFiltersCount = useMemo(
     () => getActiveFiltersCount(filters),
@@ -41,9 +47,11 @@ export const useMobileMenu = ({ buildingUnits }) => {
 
   const animateTo = useCallback(
     (height) => {
-      if (!sheetRef.current) return;
-      dispatch(setSnapHeight(height));
+      if (!sheetRef.current || height <= 0) return;
+      if (height === lastScrollHeight.current) return;
+      lastScrollHeight.current = height;
 
+      dispatch(setSnapHeight(height));
       gsap.killTweensOf(sheetRef.current);
       gsap.to(sheetRef.current, {
         height,
@@ -54,32 +62,19 @@ export const useMobileMenu = ({ buildingUnits }) => {
     [dispatch],
   );
 
-  // Capture initial height and observe changes
+  // ResizeObserver for container size adjustments (e.g. screen resizes, orientations)
   useEffect(() => {
     if (!sheetRef.current) return;
 
-    const updateHeight = () => {
-      requestAnimationFrame(() => {
-        if (!sheetRef.current) return;
-        const height = sheetRef.current.scrollHeight;
-        if (height > 0) {
-          dispatch(setSnapHeight(height));
-          gsap.killTweensOf(sheetRef.current);
-          gsap.to(sheetRef.current, {
-            height,
-            duration: 0.3,
-            ease: "power2.out",
-          });
-        }
-      });
-    };
-
-    updateHeight();
+    const contentEl = sheetRef.current.firstElementChild;
+    if (!contentEl) return;
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const height = entry.target.scrollHeight || entry.contentRect.height;
-        if (height > 0) {
+        const height = entry.contentRect.height;
+        // Only trigger layout updates if the content height has actually changed
+        if (height > 0 && height !== lastScrollHeight.current) {
+          lastScrollHeight.current = height;
           dispatch(setSnapHeight(height));
           gsap.killTweensOf(sheetRef.current);
           gsap.to(sheetRef.current, {
@@ -91,39 +86,67 @@ export const useMobileMenu = ({ buildingUnits }) => {
       }
     });
 
-    observer.observe(sheetRef.current);
+    observer.observe(contentEl);
     return () => observer.disconnect();
-  }, [dispatch, buildingUnits]);
+  }, [dispatch]);
 
-  const handleApi = useCallback(
-    (apiInstance) => {
-      if (!apiInstance) return;
-      setApi(apiInstance);
+  // Handle active content/building/units change and recalculate height
+  useEffect(() => {
+    if (!sheetRef.current) return;
 
-      const updateActive = () => {
-        const index = apiInstance.selectedScrollSnap();
-        if (lastSyncedIndex.current === index) return;
+    const updateHeight = () => {
+      const contentEl = sheetRef.current.firstElementChild;
+      if (!contentEl) return;
+      const height = contentEl.getBoundingClientRect().height;
+      if (height > 0 && height !== lastScrollHeight.current) {
+        lastScrollHeight.current = height;
+        dispatch(setSnapHeight(height));
+        gsap.killTweensOf(sheetRef.current);
+        gsap.to(sheetRef.current, {
+          height,
+          duration: 0.3,
+          ease: "power2.out",
+        });
+      }
+    };
 
-        lastSyncedIndex.current = index;
-        const unit = unitsRef.current[index];
+    updateHeight();
+    const timeoutId = setTimeout(updateHeight, 50); // safety fallback for dynamic layouts settling
+    return () => clearTimeout(timeoutId);
+  }, [buildingUnits, currentBuilding, dispatch]);
 
-        if (unit) {
-          dispatch(setMobileSelectedUnit(unit));
-        }
-      };
+  const handleApi = useCallback((apiInstance) => {
+    if (!apiInstance) return;
+    setApi(apiInstance);
+  }, []);
 
-      apiInstance.on("select", updateActive);
-    },
-    [dispatch],
-  );
+  // Listen to carousel snaps with active cleanup to prevent memory leaks
+  useEffect(() => {
+    if (!api) return;
+
+    const updateActive = () => {
+      const index = api.selectedScrollSnap();
+      if (lastSyncedIndex.current === index) return;
+
+      lastSyncedIndex.current = index;
+      const unit = unitsRef.current[index];
+
+      if (unit) {
+        dispatch(setMobileSelectedUnit(unit));
+      }
+    };
+
+    api.on("select", updateActive);
+    return () => {
+      api.off("select", updateActive);
+    };
+  }, [api, dispatch]);
 
   // Sync carousel position & handle building changes
   useEffect(() => {
     if (!api || !unitsRef.current.length) return;
 
-    // Use a stable reference for the current selected unit to sync carousel
     const currentUnit = mobileSelectedUnit;
-
     const foundIndex = currentUnit
       ? unitsRef.current.findIndex((u) => u.id === currentUnit.id)
       : -1;
@@ -146,17 +169,84 @@ export const useMobileMenu = ({ buildingUnits }) => {
     }
   }, [buildingUnits, mobileSelectedUnit, api, dispatch]);
 
-  // Re-snap logic on window resize
+  const textRef = useCallback(
+    (node) => {
+      // Clean up previous observer and timeout
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+        resizeObserverRef.current = null;
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      if (node) {
+        const check = () => {
+          const truncated = node.scrollWidth > node.clientWidth + 1;
+          setIsTruncated(truncated);
+          if (!truncated) {
+            setTooltipOpen(false);
+          }
+        };
+
+        check();
+        timeoutRef.current = setTimeout(check, 50);
+
+        const observer = new ResizeObserver(() => {
+          check();
+        });
+        observer.observe(node);
+        resizeObserverRef.current = observer;
+      }
+    },
+    [currentBuilding, buildingUnits],
+  );
+
+  // Ensure clean up of refs on unmount
   useEffect(() => {
-    const handleResize = () => {
-      if (sheetRef.current) {
-        const height = sheetRef.current.scrollHeight;
-        dispatch(setSnapHeight(height));
+    return () => {
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
     };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [dispatch]);
+  }, []);
+
+  const handleTooltipToggle = useCallback(
+    (e) => {
+      e.stopPropagation();
+      if (isTruncated) {
+        setTooltipOpen((prev) => !prev);
+      }
+    },
+    [isTruncated],
+  );
+
+  const handleTooltipOpenChange = useCallback(
+    (open) => {
+      if (isTruncated) {
+        setTooltipOpen(open);
+      } else {
+        setTooltipOpen(false);
+      }
+    },
+    [isTruncated],
+  );
+
+  const handleEnquiryClick = useCallback(
+    (e) => {
+      e.stopPropagation();
+      openEnquiry();
+    },
+    [openEnquiry],
+  );
+
+  const handleBackClick = useCallback(() => {
+    window.location.href = WEBSITE_URL;
+  }, []);
 
   return {
     sheetRef,
@@ -171,6 +261,14 @@ export const useMobileMenu = ({ buildingUnits }) => {
     activeFiltersCount,
     mobileSelectedUnit,
     bottomMenuHeight,
+    tooltipOpen,
+    isTruncated,
+    textRef,
+    handleTooltipToggle,
+    handleTooltipOpenChange,
+    handleEnquiryClick,
+    handleBackClick,
+    loading,
   };
 };
 

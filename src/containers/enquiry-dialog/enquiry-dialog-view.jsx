@@ -55,6 +55,8 @@ const EnquiryDialogView = ({
             src={logo}
             alt="88 Residences"
             className="h-6 sm:h-7 w-auto object-contain"
+            loading="eager"
+            fetchPriority="high"
           />
         </div>
         <DialogHeader className="text-start flex flex-col gap-2 sm:gap-3">

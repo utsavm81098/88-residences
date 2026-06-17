@@ -7,6 +7,7 @@ import { RouterProvider } from "react-router";
 import router from "@/routes";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const AppProviders = () => {
   const { i18n } = useTranslation();
@@ -17,7 +18,9 @@ const AppProviders = () => {
       <DirectionProvider dir={dir}>
         <GlobalErrorBoundary>
           <AuthProvider>
-            <RouterProvider router={router} />
+            <TooltipProvider>
+              <RouterProvider router={router} />
+            </TooltipProvider>
           </AuthProvider>
         </GlobalErrorBoundary>
 

@@ -36,6 +36,8 @@
     --sold: 0 84% 60%;
     --reserved: 38 92% 50%;
     --radius: 0.625rem;
+    --mobile-topbar-bg: 197 10% 14.3%;
+    --mobile-topbar-border: 0 0% 100% / 0.2;
   }
 
   body {

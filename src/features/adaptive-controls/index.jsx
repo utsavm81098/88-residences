@@ -27,4 +27,3 @@ const AdaptiveControls = ({ controlsRef }) => {
 };
 
 export default AdaptiveControls;
-

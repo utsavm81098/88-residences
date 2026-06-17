@@ -86,121 +86,145 @@ const InventoryList = ({
           className="flex-1 overflow-y-auto custom-scrollbar bg-sidebar-bg block relative"
         >
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-white/30 gap-3">
-              <ICONS.RotateCw
-                className="animate-spin"
-                size={32}
-                strokeWidth={1}
-              />
-              <span className="text-[12px] uppercase tracking-widest animate-pulse">
-                {t("loading")}...
-              </span>
-            </div>
-          ) : (
-            <Accordion
-              type="multiple"
-              className="border-none rounded-none block w-full"
-              value={activeAccordion || []}
-              onValueChange={setActiveAccordion}
-            >
-              {finalData?.length === 0 ? (
+            <TableRow className="block border-none hover:bg-transparent">
+              <TableCell className="block p-0 border-none w-full" colSpan={5}>
                 <div className="flex flex-col items-center justify-center py-20 text-white/30 gap-3">
-                  <ICONS.Search size={32} strokeWidth={1} />
-                  <span className="text-[16px] uppercase tracking-widest">
-                    {t("no_results_found")}
+                  <ICONS.RotateCw
+                    className="animate-spin"
+                    size={32}
+                    strokeWidth={1}
+                  />
+                  <span className="text-[12px] uppercase tracking-widest animate-pulse">
+                    {t("loading")}...
                   </span>
-                  <Button
-                    variant="link"
-                    onClick={handleClearFilters}
-                    className="text-accent-yellow text-[11px] h-auto p-0"
-                  >
-                    {t("clear_all_filters")}
-                  </Button>
                 </div>
-              ) : (
-                finalData.map(([building, units]) => (
-                  <div
-                    key={building}
-                    ref={(el) => (itemRefs.current[building] = el)}
-                    className="block"
-                  >
-                    <AccordionItem
-                      value={building}
-                      className="border-none block"
-                    >
-                      <AccordionTrigger
-                        className={cn(
-                          "px-2 py-3 hover:no-underline border-b border-white/5 flex justify-between text-white/90 transition-colors",
-                          activeAccordion?.includes(building) &&
-                            "bg-white/[0.02]",
-                        )}
+              </TableCell>
+            </TableRow>
+          ) : (
+            <TableRow className="block border-none hover:bg-transparent">
+              <TableCell className="block p-0 border-none w-full" colSpan={5}>
+                <Accordion
+                  type="multiple"
+                  className="border-none rounded-none block w-full"
+                  value={activeAccordion || []}
+                  onValueChange={setActiveAccordion}
+                >
+                  {finalData?.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-white/30 gap-3">
+                      <ICONS.Search size={32} strokeWidth={1} />
+                      <span className="text-[16px] uppercase tracking-widest">
+                        {t("no_results_found")}
+                      </span>
+                      <Button
+                        variant="link"
+                        onClick={handleClearFilters}
+                        className="text-accent-yellow text-[11px] h-auto p-0"
                       >
-                        <span className="text-[14px] font-bold tracking-widest">
-                          {building + " Building"}
-                        </span>
-                      </AccordionTrigger>
-                      <AccordionContent className="border-b border-white/5 pb-0">
-                        {units.map((unit, idx) => {
-                          const unitId = `${building}-${unit?.apartment_number}`;
-                          const isSelected =
-                            selectedUnit?.id === unit.id &&
-                            selectedUnit?.apartment_number ===
-                              unit?.apartment_number;
+                        {t("clear_all_filters")}
+                      </Button>
+                    </div>
+                  ) : (
+                    finalData.map(([building, units]) => (
+                      <div
+                        key={building}
+                        ref={(el) => (itemRefs.current[building] = el)}
+                        className="block"
+                      >
+                        <AccordionItem
+                          value={building}
+                          className="border-none block"
+                        >
+                          <AccordionTrigger
+                            className={cn(
+                              "px-2 py-3 hover:no-underline border-b border-white/5 flex justify-between text-white/90 transition-colors",
+                              activeAccordion?.includes(building) &&
+                                "bg-white/[0.02]",
+                            )}
+                          >
+                            <span className="text-[14px] font-bold tracking-widest">
+                              {building + " " + t("building")}
+                            </span>
+                          </AccordionTrigger>
+                          <AccordionContent className="border-b border-white/5 pb-0">
+                            {units.map((unit, idx) => {
+                              const unitId = `${building}-${unit?.apartment_number}`;
+                              const isSelected =
+                                selectedUnit?.id === unit.id &&
+                                selectedUnit?.apartment_number ===
+                                  unit?.apartment_number;
 
-                          return (
-                            <TableRow
-                              key={unitId}
-                              className={cn(
-                                "flex gap-3 px-2 py-3.5 items-center cursor-pointer transition-all border-s-2",
-                                isSelected
-                                  ? "bg-accent-yellow/20 border-s-accent-yellow text-accent-yellow border-t-transparent hover:bg-accent-yellow/20"
-                                  : "hover:bg-white/5 border-transparent text-white/80",
-                              )}
-                              onClick={() => onUnitSelect(unit)}
-                            >
-                              <TableCell className="w-[35px] shrink-0 text-[16px] font-bold text-center p-0 flex items-center justify-center h-auto border-none">
-                                {unit?.apartment_number || idx + 1}
-                              </TableCell>
-                              <TableCell className="flex-1 min-w-0 text-[16px] text-center opacity-70 p-0 flex items-center justify-center h-auto border-none">
-                                {getLocalizedString(
-                                  unit?.property_direction?.name,
-                                  i18n.language,
-                                ) || "Front"}
-                              </TableCell>
-                              <TableCell className="flex-1 min-w-0 text-[16px] text-center font-bold p-0 flex items-center justify-center h-auto border-none">
-                                {parseInt(
-                                  getLocalizedString(
-                                    unit?.bedrooms?.name,
-                                    i18n.language,
-                                  ),
-                                ) || "1"}
-                              </TableCell>
-                              <TableCell className="flex-1 min-w-0 text-[16px] text-center opacity-70 p-0 flex items-center justify-center h-auto border-none">
-                                {unit?.apartment_area || "0"}
-                              </TableCell>
-                              <TableCell className="w-[80px] shrink-0 text-[16px] font-bold p-0 flex items-center justify-center h-auto border-none">
-                                {unit?.apartment_sold ? (
-                                  <Badge
-                                    variant="sold"
-                                    className="px-1.5 py-0.5 text-[9px] uppercase tracking-wider rounded-md"
+                              return (
+                                <TableRow
+                                  key={unitId}
+                                  as="div"
+                                  className={cn(
+                                    "flex gap-3 px-2 py-3.5 items-center cursor-pointer transition-all border-s-2",
+                                    isSelected
+                                      ? "bg-accent-yellow/20 border-s-accent-yellow text-accent-yellow border-t-transparent hover:bg-accent-yellow/20"
+                                      : "hover:bg-white/5 border-transparent text-white/80",
+                                  )}
+                                  onClick={() => onUnitSelect(unit)}
+                                >
+                                  <TableCell
+                                    as="div"
+                                    className="w-[35px] shrink-0 text-[16px] font-bold text-center p-0 flex items-center justify-center h-auto border-none"
                                   >
-                                    {t("sold", "Sold")}
-                                  </Badge>
-                                ) : (
-                                  <span dir="ltr">
-                                    {unit?.apartment_price || 0}
-                                  </span>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </AccordionContent>
-                    </AccordionItem>
-                  </div>
-                ))
-              )}
-            </Accordion>
+                                    {unit?.apartment_number || idx + 1}
+                                  </TableCell>
+                                  <TableCell
+                                    as="div"
+                                    className="flex-1 min-w-0 text-[16px] text-center opacity-70 p-0 flex items-center justify-center h-auto border-none"
+                                  >
+                                    {getLocalizedString(
+                                      unit?.property_direction?.name,
+                                      i18n.language,
+                                    ) || "Front"}
+                                  </TableCell>
+                                  <TableCell
+                                    as="div"
+                                    className="flex-1 min-w-0 text-[16px] text-center font-bold p-0 flex items-center justify-center h-auto border-none"
+                                  >
+                                    {parseInt(
+                                      getLocalizedString(
+                                        unit?.bedrooms?.name,
+                                        i18n.language,
+                                      ),
+                                    ) || "1"}
+                                  </TableCell>
+                                  <TableCell
+                                    as="div"
+                                    className="flex-1 min-w-0 text-[16px] text-center opacity-70 p-0 flex items-center justify-center h-auto border-none"
+                                  >
+                                    {unit?.apartment_area || "0"}
+                                  </TableCell>
+                                  <TableCell
+                                    as="div"
+                                    className="w-[80px] shrink-0 text-[16px] font-bold p-0 flex items-center justify-center h-auto border-none"
+                                  >
+                                    {unit?.apartment_sold ? (
+                                      <Badge
+                                        variant="sold"
+                                        className="px-1.5 py-0.5 text-[9px] uppercase tracking-wider rounded-md"
+                                      >
+                                        {t("sold", "Sold")}
+                                      </Badge>
+                                    ) : (
+                                      <span dir="ltr">
+                                        {unit?.apartment_price || 0}
+                                      </span>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </AccordionContent>
+                        </AccordionItem>
+                      </div>
+                    ))
+                  )}
+                </Accordion>
+              </TableCell>
+            </TableRow>
           )}
         </TableBody>
       </Table>

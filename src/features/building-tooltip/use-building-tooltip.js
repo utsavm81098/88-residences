@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import gsap from "gsap";
 import { extractDigit } from "@/utils/helper";
@@ -21,6 +21,17 @@ export const useBuildingTooltip = () => {
   );
   const isMobile = useIsMobile();
 
+  const [popupUnit, setPopupUnit] = useState(null);
+  const [prevSelectedUnit, setPrevSelectedUnit] = useState(null);
+
+  // Synchronously update popupUnit when selectedUnit changes to a truthy value
+  if (selectedUnit !== prevSelectedUnit) {
+    setPrevSelectedUnit(selectedUnit);
+    if (selectedUnit) {
+      setPopupUnit(selectedUnit);
+    }
+  }
+
   // Memoize derived boolean — avoids recalculation on unrelated renders
   const showHoverTooltip = useMemo(() => {
     if (!visible || !unit) return false;
@@ -34,12 +45,7 @@ export const useBuildingTooltip = () => {
   const hoverTooltipRef = useRef(null);
   const desktopPopupRef = useRef(null);
 
-  // Keep track of active state and current unit for the global event listener without triggering re-renders
-  const isActiveRef = useRef(showHoverTooltip);
-  isActiveRef.current = showHoverTooltip;
 
-  const unitRef = useRef(unit);
-  unitRef.current = unit;
 
   // ── Performance Optimizations: Dimension & Logic Caching ──────────
   const dimensionsRef = useRef({ width: 280, height: 140 });
@@ -73,16 +79,20 @@ export const useBuildingTooltip = () => {
 
   // ── Mouse position Tracking ────
   useEffect(() => {
+    if (!showHoverTooltip) return;
+
     const handleMouseMove = (e) => {
-      if (!isActiveRef.current || !hoverTooltipRef.current) return;
+      const el = hoverTooltipRef.current;
+      if (!el) return;
+
+      const { clientX: x, clientY: y } = e;
 
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
 
       rafIdRef.current = requestAnimationFrame(() => {
-        const el = hoverTooltipRef.current;
-        if (!el) return;
+        const currentEl = hoverTooltipRef.current;
+        if (!currentEl) return;
 
-        const { clientX: x, clientY: y } = e;
         const OFFSET_X = 16;
         const OFFSET_Y = 16;
 
@@ -108,7 +118,7 @@ export const useBuildingTooltip = () => {
           posY = window.innerHeight - height;
         }
 
-        el.style.transform = `translate(${posX}px, ${posY}px)`;
+        currentEl.style.transform = `translate(${posX}px, ${posY}px)`;
       });
     };
 
@@ -117,7 +127,7 @@ export const useBuildingTooltip = () => {
       window.removeEventListener("mousemove", handleMouseMove);
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     };
-  }, []);
+  }, [showHoverTooltip]);
 
   // ── Desktop selection popup animation ────
   useEffect(() => {
@@ -131,7 +141,7 @@ export const useBuildingTooltip = () => {
         node,
         {
           opacity: 0,
-          y: -20,
+          y: -80,
           scale: 0.95,
           transformOrigin: "top right",
           pointerEvents: "none",
@@ -140,19 +150,22 @@ export const useBuildingTooltip = () => {
           opacity: 1,
           y: 0,
           scale: 1,
-          duration: 0.4,
-          ease: "back.out(1.2)",
+          duration: 0.8,
+          ease: "power3.out",
           pointerEvents: "auto",
         },
       );
     } else {
       gsap.to(node, {
         opacity: 0,
-        y: -20,
+        y: -30,
         scale: 0.95,
-        duration: 0.3,
-        ease: "power2.in",
+        duration: 0.5,
+        ease: "power3.in",
         pointerEvents: "none",
+        onComplete: () => {
+          setPopupUnit(null);
+        },
       });
     }
 
@@ -174,6 +187,7 @@ export const useBuildingTooltip = () => {
     unit,
     status,
     selectedUnit,
+    popupUnit,
     selectedBuilding,
     showHoverTooltip,
     desktopPopupRef,

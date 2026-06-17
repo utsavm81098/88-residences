@@ -95,6 +95,8 @@ export default function MobileNavContainer() {
                   src={logo}
                   alt="88 Residences"
                   className="h-6 w-auto object-contain"
+                  loading="eager"
+                  fetchPriority="high"
                 />
               </a>
             </div>

@@ -37,7 +37,7 @@ export const useAdaptiveControls = (controlsRef) => {
     const prevMax = prevConfig.orbit.max;
     const nextMin = config.orbit.min;
     const nextMax = config.orbit.max;
-    
+
     const prevCameraZ = prevConfig.cameraZ;
     const nextCameraZ = config.cameraZ;
 
@@ -46,7 +46,8 @@ export const useAdaptiveControls = (controlsRef) => {
       prevMin === nextMin &&
       prevMax === nextMax &&
       prevCameraZ === nextCameraZ
-    ) return;
+    )
+      return;
 
     // Kill any in-progress orbit transition
     if (tweenRef.current) {
@@ -55,12 +56,14 @@ export const useAdaptiveControls = (controlsRef) => {
 
     const controls = controlsRef.current;
     // Capture current camera distance to target to transition smoothly from it
-    const startDistance = controls ? camera.position.distanceTo(controls.target) : prevCameraZ;
+    const startDistance = controls
+      ? camera.position.distanceTo(controls.target)
+      : prevCameraZ;
 
-    const animated = { 
-      min: prevMin, 
+    const animated = {
+      min: prevMin,
       max: prevMax,
-      cameraZ: prevCameraZ
+      cameraZ: prevCameraZ,
     };
 
     tweenRef.current = gsap.to(animated, {
@@ -74,25 +77,27 @@ export const useAdaptiveControls = (controlsRef) => {
 
         if (controls) {
           const target = controls.target;
-          
+
           // Calculate animated camera distance based on configuration difference
-          const progress = (nextCameraZ - prevCameraZ === 0) 
-            ? 0 
-            : (animated.cameraZ - prevCameraZ) / (nextCameraZ - prevCameraZ);
-          const targetDistance = startDistance + (nextCameraZ - prevCameraZ) * progress;
-          
+          const progress =
+            nextCameraZ - prevCameraZ === 0
+              ? 0
+              : (animated.cameraZ - prevCameraZ) / (nextCameraZ - prevCameraZ);
+          const targetDistance =
+            startDistance + (nextCameraZ - prevCameraZ) * progress;
+
           const clampedDist = Math.max(
             animated.min,
             Math.min(animated.max, targetDistance),
           );
-          
+
           // Calculate normalized direction vector from target to camera
           _dir.copy(camera.position).sub(target).normalize();
-          
+
           // Calculate new camera position without allocating new Vector3 objects
           _targetPos.copy(target).addScaledVector(_dir, clampedDist);
           camera.position.copy(_targetPos);
-          
+
           controls.update();
         }
       },
@@ -118,7 +123,7 @@ export const useAdaptiveControls = (controlsRef) => {
     dispatch(setDragging(false));
   }, [dispatch]);
 
-  const POLAR = { min: 1.22, max: 1.5 };
+  const POLAR = { min: 1.22, max: 1.56 };
   const TARGET = [0, 10, 0];
 
   return {
@@ -132,4 +137,3 @@ export const useAdaptiveControls = (controlsRef) => {
 };
 
 export default useAdaptiveControls;
-

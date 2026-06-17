@@ -58,20 +58,20 @@ export const UNIT_ICONS = {
 
 export const NAV_ITEMS = [
   { id: "home", label: "home", icon: ICONS.Home },
-  { id: "inventory", label: "inventory", icon: ICONS.Search },
+  { id: "inventory", label: "inventory", icon: ICONS.Package },
 ];
 
 export const NAV_ITEMS_MOBILE = [
   { id: "home", label: "home", icon: ICONS.Home },
-  { id: "inventory", label: "inventory", icon: ICONS.Search },
+  { id: "inventory", label: "inventory", icon: ICONS.Package },
   { id: "more", label: "more", icon: ICONS.Menu },
 ];
 
 export const FILTER_OPTIONS = {
   rooms: ["1", "2", "3", "studio"],
   direction: ["front", "rear", "side"],
-  priceRange: { min: 100000, max: 300000 },
-  areaRange: { min: 30, max: 120 },
+  priceRange: { min: 140000, max: 350000 },
+  areaRange: { min: 35, max: 105 },
 };
 
 // ── Grid ───────────────────────────────────────────────────────────────────────
@@ -110,6 +110,7 @@ const typeAConfig = {
     rotation: [0, 0, 0],
     backgroundRotation: [0, 0, 0],
     intensity: 2.0,
+    resolution: 1024,
   },
   lighting: {
     // Match reference viewer (Math.PI * 0.8 ≈ 2.51) to get the bright specular highlight on glass

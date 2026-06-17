@@ -9,7 +9,7 @@ const BuildingTooltip = () => {
     lang,
     unit,
     status,
-    selectedUnit,
+    popupUnit,
     selectedBuilding,
     showHoverTooltip,
     desktopPopupRef,
@@ -36,13 +36,13 @@ const BuildingTooltip = () => {
 
       {/* ── Desktop Selection Popup ── */}
       <ComponentErrorBoundary name="DesktopPopup">
-        {!isMobile && selectedUnit ? (
+        {!isMobile && (
           <DesktopPopup
-            selectedUnit={selectedUnit}
+            selectedUnit={popupUnit}
             desktopPopupRef={desktopPopupRef}
             selectedBuilding={selectedBuilding}
           />
-        ) : null}
+        )}
       </ComponentErrorBoundary>
     </Fragment>
   );

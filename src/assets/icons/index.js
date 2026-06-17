@@ -22,6 +22,7 @@ import {
   Menu,
   Mail,
   FileText,
+  Package,
 } from "lucide-react";
 
 export const ICONS = {
@@ -52,4 +53,5 @@ export const ICONS = {
   Menu,
   Mail,
   FileText,
+  Package,
 };

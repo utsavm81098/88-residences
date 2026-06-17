@@ -45,7 +45,7 @@
   "show_apartments": "הצג דירות",
   "select_language": "בחר שפה",
   "more": "עוד",
-  "find_property": "מצא נכס",
+  "find_property": "בחר את הנכס שלך",
   "loading": "טוען",
   "loading_model": "טוען דגם",
   "submitting": "טוען...",
@@ -62,5 +62,9 @@
   "validation_phone": "אנא הזן מספר טלפון תקין",
   "enquiry_greeting": "אנא חזור אליי בנוגע לדירה זו:",
   "bedroom": "חדר שינה",
-  "bedrooms": "חדרי שינה"
+  "bedrooms": "חדרי שינה",
+  "direction_n": "צפון",
+  "direction_s": "דרום",
+  "direction_e": "מזרח -כיוון הים",
+  "direction_w": "מערב"
 }

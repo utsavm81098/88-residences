@@ -1,4 +1,5 @@
 import React from "react";
+import DOMPurify from "dompurify";
 import { cn } from "@/lib/utils";
 
 /**
@@ -9,10 +10,15 @@ import { cn } from "@/lib/utils";
 export const SvgIcon = ({ svgdata, className }) => {
   if (!svgdata) return null;
 
+  // Sanitize SVG to prevent XSS injection (SOP §16 security compliance)
+  const cleanSvg = DOMPurify.sanitize(svgdata, {
+    USE_PROFILES: { html: false, svg: true },
+  });
+
   return (
     <div
       className={cn("flex items-center justify-center shrink-0", className)}
-      dangerouslySetInnerHTML={{ __html: svgdata }}
+      dangerouslySetInnerHTML={{ __html: cleanSvg }}
     />
   );
 };

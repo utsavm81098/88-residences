@@ -1,11 +1,12 @@
 import { Text, Billboard } from "@react-three/drei";
 import useDirectionLabel, { useLabel } from "./use-direction-label";
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 
 const DIRECTION_NAMES = {
   N: "NORTH",
   S: "SOUTH",
-  E: "EAST",
+  E: "Sea Side - East",
   W: "WEST",
 };
 
@@ -51,6 +52,7 @@ const Label = memo(function Label({
 });
 
 const DirectionLabel = ({ controlsRef }) => {
+  const { t } = useTranslation();
   const { positions, fontSize, moveCamera, isDragging, isTransitioning } =
     useDirectionLabel({
       controlsRef,
@@ -70,7 +72,7 @@ const DirectionLabel = ({ controlsRef }) => {
           isDragging={isDragging}
           onMoveCamera={moveCamera}
         >
-          {DIRECTION_NAMES[dir]}
+          {t(`direction_${dir.toLowerCase()}`, DIRECTION_NAMES[dir])}
         </Label>
       ))}
     </group>

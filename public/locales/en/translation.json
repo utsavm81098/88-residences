@@ -45,7 +45,7 @@
   "show_apartments": "Show Apartments",
   "select_language": "Select Language",
   "more": "More",
-  "find_property": "Find Property",
+  "find_property": "Choose your home",
   "loading": "Loading",
   "loading_model": "Loading Model",
   "submitting": "loading...",
@@ -62,5 +62,9 @@
   "validation_phone": "Please enter a valid phone number",
   "enquiry_greeting": "Please get back to me regarding this apartment:",
   "bedroom": "Bedroom",
-  "bedrooms": "Bedrooms"
+  "bedrooms": "Bedrooms",
+  "direction_n": "NORTH",
+  "direction_s": "SOUTH",
+  "direction_e": "Sea Side - East",
+  "direction_w": "WEST"
 }

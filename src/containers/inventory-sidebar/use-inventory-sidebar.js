@@ -26,8 +26,8 @@ export const useInventorySidebar = () => {
   const [activeAccordionState, setActiveAccordionState] = useState(null);
 
   const activeAccordion = useMemo(() => {
-    return activeAccordionState ?? Object.keys(inventory || {});
-  }, [activeAccordionState, inventory]);
+    return activeAccordionState ?? [];
+  }, [activeAccordionState]);
 
   const finalData = useMemo(() => {
     // Group back by building name for the sidebar accordion

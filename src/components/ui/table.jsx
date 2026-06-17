@@ -55,10 +55,11 @@ function TableFooter({
 
 function TableRow({
   className,
+  as: Component = "tr",
   ...props
 }) {
   return (
-    <tr
+    <Component
       data-slot="table-row"
       className={cn(
         "border-b transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted",
@@ -85,10 +86,11 @@ function TableHead({
 
 function TableCell({
   className,
+  as: Component = "td",
   ...props
 }) {
   return (
-    <td
+    <Component
       data-slot="table-cell"
       className={cn(
         "p-3 align-middle whitespace-nowrap [&:has([role=checkbox])]:pe-0",
