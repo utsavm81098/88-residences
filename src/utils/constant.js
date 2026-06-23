@@ -7,7 +7,7 @@ const BASE_URL = import.meta.env.BASE_URL.endsWith("/")
   ? import.meta.env.BASE_URL.slice(0, -1)
   : import.meta.env.BASE_URL;
 
-const getAssetPath = (path) => `${BASE_URL}${path}`;
+export const getAssetPath = (path) => `${BASE_URL}${path}`;
 
 export const statusType = {
   SOLD: "sold",
@@ -100,7 +100,7 @@ const typeAConfig = {
   hitbox: getAssetPath("/models/a-hitbox.glb"),
   heroAngle: 0,
   environment: {
-    files: "/hdr/sky-40m.hdr",
+    files: getAssetPath("/hdr/sky-40m.hdr"),
     background: false,
     rotation: [0, 0, 0],
     backgroundRotation: [0, 0, 0],
