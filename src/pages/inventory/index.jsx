@@ -8,4 +8,3 @@ import InventoryContainer from "@/containers/inventory";
 export default function Inventory() {
   return <InventoryContainer />;
 }
-

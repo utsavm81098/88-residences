@@ -1,4 +1,5 @@
-import { Fragment } from "react";
+import { Fragment, useState, useEffect } from "react";
+import { useThree } from "@react-three/fiber";
 import {
   Environment,
   PerspectiveCamera,
@@ -19,12 +20,27 @@ const SceneEnvironment = ({ children }) => {
     directColor,
     ambientIntensity,
     ambientColor,
+    exposure,
+    toneMapping,
     preset,
     config,
     fov,
     onPerformanceDecline,
     onPerformanceIncline,
   } = useSceneEnvironment();
+
+  const { gl, scene } = useThree();
+  const [lightTarget, setLightTarget] = useState(null);
+
+  useEffect(() => {
+    gl.toneMapping = Number(toneMapping);
+    gl.toneMappingExposure = Math.pow(2, exposure);
+    gl.needsUpdate = true;
+
+    if (environment && environment.intensity !== undefined) {
+      scene.environmentIntensity = environment.intensity;
+    }
+  }, [gl, scene, toneMapping, exposure, environment?.intensity]);
 
   const isAssetGenerator = preset === Preset.ASSET_GENERATOR;
 
@@ -51,31 +67,56 @@ const SceneEnvironment = ({ children }) => {
               color={ambientColor}
               name="ambient_light"
             />
+            {/* Camera-attached directional: ~60° angle from camera forward (matches reference viewer) */}
             <directionalLight
-              position={[5, -23, 10]}
+              position={[0.5, 0, 0.866]}
               intensity={directIntensity}
               color={directColor}
               name="main_light"
+              target={lightTarget || undefined}
             />
           </Fragment>
         )}
       </PerspectiveCamera>
+
+      {/* Shared light target at the building's center */}
+      <object3D ref={setLightTarget} position={[0, 10, 0]} />
 
       {isAssetGenerator && <hemisphereLight name="hemi_light" />}
 
       {!lighting.punctualLights && !isAssetGenerator && (
         <Fragment>
           <ambientLight intensity={ambientIntensity} color={ambientColor} />
+          {/* Main sun light — primary illumination */}
           <directionalLight
             position={[30, 40, 30]}
             intensity={directIntensity}
             color={directColor}
             castShadow
+            target={lightTarget || undefined}
+            shadow-mapSize-width={1024}
+            shadow-mapSize-height={1024}
+            shadow-camera-near={0.5}
+            shadow-camera-far={200}
+            shadow-camera-left={-50}
+            shadow-camera-right={50}
+            shadow-camera-top={50}
+            shadow-camera-bottom={-50}
+            shadow-bias={-0.0001}
+          />
+          {/* Warm fill light — opposite side for depth (three-point lighting) */}
+          <directionalLight
+            position={[-20, 15, -20]}
+            intensity={directIntensity * 0.3}
+            color="#ffeedd"
           />
         </Fragment>
       )}
 
-      <Environment {...environment} />
+      <Environment
+        {...environment}
+        environmentIntensity={environment?.intensity ?? 1.0}
+      />
       <Grid {...GRID_CONFIG} />
       {children}
       <EffectComposer multisampling={8} stencilBuffer={false}>

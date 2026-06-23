@@ -1,19 +1,24 @@
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useThree } from "@react-three/fiber";
+import * as THREE from "three";
 import useResponsiveConfig from "@/hooks/use-responsive-config";
 import { logger } from "@/utils/logger";
+import { BUILDING_CONFIG } from "@/utils/constant";
 
 // Note: Preloading is now handled centrally in src/utils/preloader.js
 
 export const useSceneEnvironment = () => {
-  const { currentBuilding } = useSelector((state) => state.building);
+  const { currentBuildingIndex } = useSelector((state) => state.building);
+  const currentBuilding = BUILDING_CONFIG[currentBuildingIndex];
   const { environment, lighting = {} } = currentBuilding || {};
   const {
     directIntensity = 1.0,
     directColor = "#ffffff",
     ambientIntensity = 0.36,
     ambientColor = "#ffffff",
+    exposure = 0.0,
+    toneMapping = THREE.LinearToneMapping,
     preset = null,
   } = lighting;
 
@@ -24,7 +29,7 @@ export const useSceneEnvironment = () => {
   // Uses a fixed reference aspect (1.2 = typical desktop landscape) so the camera never
   // jumps when the window crosses a responsive breakpoint during resize.
   const fov = useMemo(() => {
-    const baseFov = 35;
+    const baseFov = 60;
     const baseAspect = 1.2;
     const aspect = size.width / size.height;
 
@@ -35,8 +40,8 @@ export const useSceneEnvironment = () => {
         Math.atan(Math.tan(baseFovRad / 2) * (baseAspect / aspect)) *
         (180 / Math.PI);
 
-      // Clamp max FOV to 60 degrees to prevent perspective fish-eye distortion
-      return Math.min(60, Math.round(calculatedFov));
+      // Clamp max FOV to 85 degrees to prevent perspective fish-eye distortion on narrow screens
+      return Math.min(85, Math.round(calculatedFov));
     }
 
     return baseFov;
@@ -57,6 +62,8 @@ export const useSceneEnvironment = () => {
     directColor,
     ambientIntensity,
     ambientColor,
+    exposure,
+    toneMapping,
     preset,
     config,
     fov,

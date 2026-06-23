@@ -25,37 +25,89 @@ const _temp = new THREE.Vector3();
 
 // ── Constants (Coding Standards Compliance) ──────────────────────────────────
 const EDGES_THRESHOLD_ANGLE = 15;
-const OUTLINE_BASE_OPACITY = 0.6;
+const OUTLINE_BASE_OPACITY = 0.3;
+// const OUTLINE_BASE_OPACITY = 0.6;
 const OUTLINE_HOVER_OPACITY = 1.0;
 const ANIMATION_DURATION = 0.25;
 const CAMERA_FOCUS_DURATION = 1.2;
 const MOUSE_DRAG_THRESHOLD = 2;
 
+const DEFAULT_OPACITIES = {
+  available: {
+    base: 0.1,
+    hover: 0.45,
+    selected: 0.65,
+  },
+  sold: {
+    base: 0.2,
+    hover: 0.45,
+    selected: 0.65,
+  },
+};
+
+// Helper to parse hex strings with optional alpha channel (e.g. #RRGGBBAA) into Three.js Color and opacity
+const parseColorAndOpacity = (colorStr, defaultOpacity = 1.0) => {
+  if (colorStr instanceof THREE.Color) {
+    return { color: colorStr, opacity: defaultOpacity };
+  }
+  if (typeof colorStr === "string" && colorStr.startsWith("#")) {
+    if (colorStr.length === 9) {
+      const rgbPart = colorStr.substring(0, 7);
+      const alphaPart = colorStr.substring(7, 9);
+      const color = new THREE.Color(rgbPart);
+      const opacity = parseInt(alphaPart, 16) / 255;
+      return { color, opacity };
+    } else {
+      return { color: new THREE.Color(colorStr), opacity: defaultOpacity };
+    }
+  }
+  return { color: new THREE.Color(colorStr), opacity: defaultOpacity };
+};
+
+const availableBase = parseColorAndOpacity(
+  UNIT_COLORS.available.base,
+  DEFAULT_OPACITIES.available.base,
+);
+const soldBase = parseColorAndOpacity(
+  UNIT_COLORS.sold.base,
+  DEFAULT_OPACITIES.sold.base,
+);
+
 // ── Shared Materials (Performance Optimization) ──────────────────────────────
 const BASE_MATERIALS = {
-  available: new THREE.MeshPhongMaterial({
-    color: UNIT_COLORS.available.base,
+  available: new THREE.MeshBasicMaterial({
+    color: availableBase.color,
     transparent: true,
-    opacity: UNIT_COLORS.available.baseOpacity,
+    opacity: availableBase.opacity,
     depthWrite: false,
     depthTest: true,
     side: THREE.FrontSide,
-    toneMapped: false,
-    shininess: 30,
-    specular: new THREE.Color(0x111111),
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
+    polygonOffsetUnits: -1,
   }),
-  sold: new THREE.MeshPhongMaterial({
-    color: UNIT_COLORS.sold.base,
+  sold: new THREE.MeshBasicMaterial({
+    color: soldBase.color,
     transparent: true,
-    opacity: UNIT_COLORS.sold.baseOpacity,
+    opacity: soldBase.opacity,
     depthWrite: false,
     depthTest: true,
     side: THREE.FrontSide,
-    toneMapped: false,
-    shininess: 30,
-    specular: new THREE.Color(0x111111),
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
+    polygonOffsetUnits: -1,
   }),
 };
+
+// ── Shared Edge Material Template ────────────────────────────────────────────
+const EDGE_MATERIAL_TEMPLATE = new THREE.LineBasicMaterial({
+  color: 0xffffff,
+  transparent: true,
+  opacity: OUTLINE_BASE_OPACITY,
+  depthTest: true,
+  depthWrite: false,
+  toneMapped: false,
+});
 
 // ── Performance Cache ────────────────────────────────────────────────────────
 const EDGES_CACHE = new Map();
@@ -82,7 +134,9 @@ const disposeSceneMaterials = (scene) => {
   scene.traverse((child) => {
     if (child.isMesh) {
       if (child.material) {
-        const materials = Array.isArray(child.material) ? child.material : [child.material];
+        const materials = Array.isArray(child.material)
+          ? child.material
+          : [child.material];
         materials.forEach((m) => {
           gsap.killTweensOf([m.color, m]);
           m.dispose();
@@ -92,7 +146,9 @@ const disposeSceneMaterials = (scene) => {
       // Clean up outline LineSegments materials
       child.children.forEach((subChild) => {
         if (subChild.material) {
-          const subMaterials = Array.isArray(subChild.material) ? subChild.material : [subChild.material];
+          const subMaterials = Array.isArray(subChild.material)
+            ? subChild.material
+            : [subChild.material];
           subMaterials.forEach((m) => {
             gsap.killTweensOf(m);
             m.dispose();
@@ -115,8 +171,10 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
     mobileSelectedUnit,
     inventory,
     isTransitioning,
-    currentBuilding,
+    currentBuildingIndex,
   } = useSelector((state) => state.building);
+
+  const currentBuilding = BUILDING_CONFIG[currentBuildingIndex];
 
   // Determine if this instance is the active building
   const isActiveBuilding = currentBuilding?.name === config.name;
@@ -147,43 +205,88 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
     const buildingClone = building.scene.clone();
     buildingClone.traverse((child) => {
       if (child.isMesh) {
-        child.raycast = () => { };
+        child.raycast = () => {};
         child.frustumCulled = false;
+        child.receiveShadow = true;
+
+        // Enhance PBR materials for richer environment reflections
+        const materials = Array.isArray(child.material)
+          ? child.material
+          : [child.material];
+
+        const enhanced = materials.map((mat) => {
+          if (!mat.isMeshStandardMaterial && !mat.isMeshPhysicalMaterial) {
+            return mat;
+          }
+
+          // Clone material to avoid mutating shared GLB cache
+          const cloned = mat.clone();
+
+          const nameLC = (mat.name || "").toLowerCase();
+
+          // Glass materials must remain glossy and reflective
+          const isGlass =
+            nameLC.includes("glass") ||
+            nameLC.includes("grass") || // WIN_GRASS
+            (cloned.transmission !== undefined && cloned.transmission > 0);
+
+          // Metallic materials must remain reflective
+          const isMetal =
+            nameLC.includes("metal") ||
+            nameLC.includes("aluminium") ||
+            cloned.metalness > 0.5;
+
+          // Robust classification: any material that is not glass, and not metal, is structural.
+          // In addition, any metal part explicitly named "big" (window frame) or "railing" is matte (structural).
+          const isStructural =
+            !isGlass &&
+            (!isMetal || nameLC.includes("big") || nameLC.includes("railing"));
+
+          if (isStructural) {
+            // Structural surfaces: concrete walls, floors, pillars, ceilings, stone, panels, etc.
+            // Force envMapIntensity to 0.0 to completely eliminate HDR sky reflections/color cast (no "HDR shadows").
+            cloned.roughness = Math.max(cloned.roughness, 0.7);
+            cloned.envMapIntensity = 0.0;
+          } else {
+            // Glass, metal, and other designed reflective materials get rich reflections.
+            cloned.envMapIntensity = 1.0;
+          }
+
+          return cloned;
+        });
+
+        child.material = materials.length === 1 ? enhanced[0] : enhanced;
+
         // Performance: Disable matrix auto-update for static building parts
         child.matrixAutoUpdate = false;
         child.updateMatrix();
       }
     });
     return buildingClone;
-  }, [building]);
+  }, [building, currentBuilding]);
 
   const glassScene = useMemo(() => {
     const scene = glassHitbox.scene.clone();
-
-    // Performance: Shared line material
-    const edgeMaterial = new THREE.LineBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: OUTLINE_BASE_OPACITY,
-      depthTest: true,
-      depthWrite: false,
-      toneMapped: false,
-    });
-
     scene.traverse((child) => {
       if (child.isLight) {
         child.visible = false;
         return;
       }
       if (!child.isMesh) return;
-
       child.castShadow = false;
       child.receiveShadow = false;
       child.frustumCulled = false;
-
       const unit = unitMap[child.name];
       const statusKey = unit?.apartment_sold ? "sold" : "available";
       const cfg = UNIT_COLORS[statusKey];
+      const defaults = DEFAULT_OPACITIES[statusKey];
+
+      const baseInfo = parseColorAndOpacity(cfg.base, defaults.base);
+      const hoverInfo = parseColorAndOpacity(cfg.hover, defaults.hover);
+      const selectedInfo = parseColorAndOpacity(
+        cfg.selected,
+        defaults.selected,
+      );
 
       // Assign material and pre-populate userData
       child.material = BASE_MATERIALS[statusKey].clone();
@@ -191,19 +294,26 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
         ...child.userData,
         status: statusKey,
         unitName: child.name,
-        baseColor: cfg.base.clone(),
-        hoverColor: cfg.hover.clone(),
-        selectedColor: cfg.selected.clone(),
-        baseOpacity: cfg.baseOpacity,
-        hoverOpacity: cfg.hoverOpacity,
-        selectedOpacity: cfg.selectedOpacity,
+        baseColor: baseInfo.color,
+        hoverColor: hoverInfo.color,
+        selectedColor: selectedInfo.color,
+        baseOpacity: baseInfo.opacity,
+        hoverOpacity: hoverInfo.opacity,
+        selectedOpacity: selectedInfo.opacity,
       };
 
-      // Performance: Use cached edges geometry
+      // Set renderOrder directly on child mesh so it renders on top of building walls/glass
+      child.renderOrder = 10;
+
+      // Each mesh gets its own edge material clone so GSAP can animate outlines independently
       const edges = getCachedEdges(child.geometry);
-      const edgeLines = new THREE.LineSegments(edges, edgeMaterial);
-      edgeLines.raycast = () => { };
+      const edgeLines = new THREE.LineSegments(
+        edges,
+        EDGE_MATERIAL_TEMPLATE.clone(),
+      );
+      edgeLines.raycast = () => {};
       edgeLines.frustumCulled = false;
+      edgeLines.renderOrder = 11; // Ensure outlines render on top of hitbox color overlays
       child.add(edgeLines);
       child.userData[OUTLINE_KEY] = edgeLines;
 
@@ -394,7 +504,6 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
     [unitMap, dispatch, isMobile],
   );
 
-
   const latestGlassSceneRef = useRef(glassScene);
   latestGlassSceneRef.current = glassScene;
   const hasNewEffectRunRef = useRef(false);
@@ -412,7 +521,7 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
 
       const isSelected =
         activeSelection?.buildingName === config.name &&
-        activeSelection?.title === child.name;
+        activeSelection?.title === child.userData.unitName;
 
       animateMesh(child, isSelected ? "selected" : "base");
       if (isSelected) focusObj = child;
@@ -432,7 +541,10 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
       // If selection changes, hasNewEffectRunRef is set to true synchronously in the next effect.
       const sceneToDispose = glassScene;
       setTimeout(() => {
-        if (!hasNewEffectRunRef.current || latestGlassSceneRef.current !== sceneToDispose) {
+        if (
+          !hasNewEffectRunRef.current ||
+          latestGlassSceneRef.current !== sceneToDispose
+        ) {
           disposeSceneMaterials(sceneToDispose);
         }
       }, 0);

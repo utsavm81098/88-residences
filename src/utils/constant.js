@@ -20,20 +20,14 @@ export const Preset = {
 
 export const UNIT_COLORS = {
   available: {
-    base: new THREE.Color("#6B8EB5"),
-    hover: new THREE.Color("#51A5F0"),
-    selected: new THREE.Color("#3794EB"),
-    baseOpacity: 0.1,
-    hoverOpacity: 0.6,
-    selectedOpacity: 0.8,
+    base: "#4E8AEB",
+    hover: "#1F5ED4",
+    selected: "#1245AD",
   },
   sold: {
-    base: new THREE.Color("#F87171"),
-    hover: new THREE.Color("#F87171"),
-    selected: new THREE.Color("#EF4444"),
-    baseOpacity: 0.1,
-    hoverOpacity: 0.5,
-    selectedOpacity: 0.7,
+    base: "#E04F68",
+    hover: "#C41832",
+    selected: "#8B1022",
   },
 };
 export const OUTLINE_KEY = "__edgeLines";
@@ -90,11 +84,12 @@ export const GRID_CONFIG = {
   renderOrder: 1,
 };
 
-export const EXPOSURE = -1.4;
+export const EXPOSURE = 0.0;
+// export const EXPOSURE = 1;
 
 export const CANVAS_GL_CONFIG = {
   antialias: true,
-  toneMapping: THREE.LinearToneMapping,
+  toneMapping: THREE.ACESFilmicToneMapping,
   toneMappingExposure: Math.pow(2, EXPOSURE),
   powerPreference: "high-performance",
   outputColorSpace: THREE.SRGBColorSpace,
@@ -105,20 +100,22 @@ const typeAConfig = {
   hitbox: getAssetPath("/models/a-hitbox.glb"),
   heroAngle: 0,
   environment: {
-    files: Array(6).fill(getAssetPath("/cube-map/py.png")),
+    files: "/hdr/sky-40m.hdr",
     background: false,
     rotation: [0, 0, 0],
     backgroundRotation: [0, 0, 0],
-    intensity: 2.0,
-    resolution: 1024,
+    intensity: 1.0,
+    resolution: 2048,
   },
   lighting: {
-    // Match reference viewer (Math.PI * 0.8 ≈ 2.51) to get the bright specular highlight on glass
-    directIntensity: 1.5,
+    // Match reference viewer: camera-attached lights at ~60° angle
+    directIntensity: 0.03,
     directColor: "#ffffff",
-    ambientIntensity: 0.8, // Match ref viewer
+    ambientIntensity: 1.35,
     ambientColor: "#ffffff",
     punctualLights: true,
+    exposure: 0.0, // No tone mapping boost (Math.pow(2,0)=1.0)
+    toneMapping: THREE.ACESFilmicToneMapping,
   },
 };
 
