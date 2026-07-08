@@ -70,15 +70,16 @@ export const FILTER_OPTIONS = {
 
 // ── Grid ───────────────────────────────────────────────────────────────────────
 export const GRID_CONFIG = {
-  position: [0, 0.01, 0],
+  position: [0, 0.02, 0],
   args: [100, 100],
   cellSize: 2,
-  cellThickness: 0,
+  cellThickness: 0.6,
+  cellColor: "#1a1510",
   sectionSize: 10,
-  sectionThickness: 0.9,
-  sectionColor: "#ffffff",
-  fadeDistance: 200,
-  fadeStrength: 1,
+  sectionThickness: 0.6,
+  sectionColor: "#d4af37",
+  fadeDistance: 180,
+  fadeStrength: 1.2,
   followCamera: false,
   infiniteGrid: true,
   renderOrder: 1,
@@ -100,7 +101,7 @@ const typeAConfig = {
   hitbox: getAssetPath("/models/a-hitbox.glb"),
   heroAngle: 0,
   environment: {
-    files: getAssetPath("/hdr/sky-40m.hdr"),
+    files: getAssetPath("/hdr/sky-40m-compressed.exr"),
     background: false,
     rotation: [0, 0, 0],
     backgroundRotation: [0, 0, 0],

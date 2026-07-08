@@ -10,6 +10,7 @@ import {
 } from "@react-three/drei";
 import { EffectComposer, SMAA } from "@react-three/postprocessing";
 import useSceneEnvironment from "./use-scene-environment";
+import GroundSurface from "./ground-surface";
 import { GRID_CONFIG, Preset } from "@/utils/constant";
 
 const SceneEnvironment = ({ children }) => {
@@ -117,6 +118,7 @@ const SceneEnvironment = ({ children }) => {
         {...environment}
         environmentIntensity={environment?.intensity ?? 1.0}
       />
+      <GroundSurface />
       <Grid {...GRID_CONFIG} />
       {children}
       <EffectComposer multisampling={8} stencilBuffer={false}>
