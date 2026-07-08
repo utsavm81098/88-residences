@@ -30,8 +30,8 @@ export const HomeContainer = () => {
       </div> */}
 
       {/* 2. Development Mode Coordinates HUD Overlay */}
-      {/* {import.meta.env.DEV && cameraData && (
-        <div className="absolute bottom-6 left-6 z-20 p-4 bg-black/80 border border-white/10 rounded-lg text-white font-mono text-[11px] max-w-[340px] pointer-events-auto">
+      {import.meta.env.DEV && cameraData && (
+        <div className="absolute bottom-6 right-6 z-20 p-4 bg-black/80 border border-white/10 rounded-lg text-white font-mono text-[11px] max-w-[340px] pointer-events-auto">
           <h4 className="text-accent-yellow font-bold uppercase tracking-widest text-[9px] mb-2">
             Dev Camera Coordinates
           </h4>
@@ -48,7 +48,7 @@ export const HomeContainer = () => {
             <code className="text-white/70">use-home-scene.js</code> if you want to lock the landing view.
           </p>
         </div>
-      )} */}
+      )}
 
       {/* 3. Three.js Viewport */}
       <div className="w-full h-full flex justify-center items-center" dir="ltr">

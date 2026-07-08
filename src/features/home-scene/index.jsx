@@ -13,17 +13,13 @@ export const HomeScene = ({ controlsRef, onCameraChange }) => {
     onCameraChange,
   });
 
-  // Default camera positionOffset: place the camera to see the building box from the front/side
-  // We offset by 150 units in X and Z, and 60 units in Y relative to the box center
-  const defaultCameraPosition = [
-    focusCenter[0] + 150,
-    focusCenter[1] + 60,
-    focusCenter[2] + 150,
-  ];
+  // Hardcoded camera position and target from the user's manual adjustment
+  const orbitTarget = [-19.5, 10.02, 20.1];
+  const defaultCameraPosition = [121.96, 42.5, 100.36];
 
   return (
     <React.Fragment>
-      {/* 1. Perspective Camera focused near the box's elevation */}
+      {/* 1. Perspective Camera — narrower FOV for telephoto aerial feel */}
       <PerspectiveCamera
         makeDefault
         fov={35}
@@ -32,25 +28,28 @@ export const HomeScene = ({ controlsRef, onCameraChange }) => {
         position={defaultCameraPosition}
       />
 
-      {/* 2. Interactive Orbit Controls focused on the box's center */}
+      {/* 2. Interactive Orbit Controls */}
       <OrbitControls
         ref={controlsRef}
         makeDefault
         enableDamping
         dampingFactor={0.05}
-        target={focusCenter}
+        target={orbitTarget}
         enablePan={true}
         enableZoom={true}
         maxDistance={250}
-        minDistance={120}
-        maxPolarAngle={Math.PI / 2 - 0.1} // Prevent going below the ground plane/surface level
+        minDistance={60}
+        maxPolarAngle={Math.PI / 2 - 0.05} // Allow looking horizontally to see building facades & horizon
+        minPolarAngle={0.1} // Allow looking from above
+        autoRotate={false}
+        autoRotateSpeed={0.3} // Slow, elegant rotation (if enabled)
       />
 
       {/* 3. Environment Map (sky-40m.hdr) for metallic reflections */}
       <Environment
         files={getAssetPath("/hdr/sky-40m.hdr")}
         background={false} // Use GLB's baked sky panorama dome
-        environmentIntensity={1.5}
+        environmentIntensity={0.8}
         resolution={2048}
       />
 
