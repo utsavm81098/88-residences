@@ -1,7 +1,15 @@
 import { jwtDecode } from "jwt-decode";
 import { logger } from "./logger";
-import { DASHBOARD_PREFIX } from "./constant";
+import { DASHBOARD_PREFIX, WEBSITE_URL } from "./constant";
 import { SUPPORTED_LANGS } from "./languages";
+
+export const getWebsiteRedirectUrl = (i18nOrLang) => {
+  const langStr = typeof i18nOrLang === "string" ? i18nOrLang : i18nOrLang?.language;
+  const detectedLang = langStr?.split("-")[0].toLowerCase() || "en";
+  const isHebrew = detectedLang === "he" || window.location.pathname.includes("dashboard-he");
+  return isHebrew ? `${WEBSITE_URL}/?lang=he` : WEBSITE_URL;
+};
+
 
 export const getDashboardRoute = (i18n, pathId = "") => {
   const detectedLang = i18n?.language?.split("-")[0].toLowerCase() || "en";

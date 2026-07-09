@@ -3,7 +3,8 @@ import { useMobileNav } from "./use-mobile-nav";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { NAV_ITEMS_MOBILE, WEBSITE_URL } from "@/utils/constant";
+import { NAV_ITEMS_MOBILE } from "@/utils/constant";
+import { getWebsiteRedirectUrl } from "@/utils/helper";
 import logo from "@/assets/logo.png";
 import { SvgIcon } from "@/components/ui/svg-icon";
 
@@ -83,11 +84,11 @@ export default function MobileNavContainer() {
             {/* ── Logo ── */}
             <div className="flex justify-start pb-2">
               <a
-                href={WEBSITE_URL}
+                href={getWebsiteRedirectUrl(i18n)}
                 onClick={(e) => {
                   e.preventDefault();
                   setIsMoreOpen(false);
-                  window.location.href = WEBSITE_URL;
+                  window.location.href = getWebsiteRedirectUrl(i18n);
                 }}
                 className="outline-none active:scale-95 transition-transform"
               >

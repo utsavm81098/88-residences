@@ -5,8 +5,7 @@ import { useTranslation } from "react-i18next";
 import { setActivePanel } from "@/store/slices/sidebar-slice";
 import { logger } from "@/utils/logger";
 import { LANGUAGES } from "@/utils/languages";
-import { getDashboardRoute, getLanguageSwitchPath } from "@/utils/helper";
-import { WEBSITE_URL } from "@/utils/constant";
+import { getDashboardRoute, getLanguageSwitchPath, getWebsiteRedirectUrl } from "@/utils/helper";
 
 export function useSidebarNav() {
   const dispatch = useDispatch();
@@ -51,7 +50,7 @@ export function useSidebarNav() {
   const onNavItemClick = useCallback(
     (id) => {
       if (id === "home") {
-        window.location.href = WEBSITE_URL;
+        window.location.href = getWebsiteRedirectUrl(i18n);
         return;
       }
       const targetPath = getDashboardRoute(i18n, id);
@@ -65,7 +64,7 @@ export function useSidebarNav() {
 
       dispatch(setActivePanel(id === "home" ? null : id));
     },
-    [navigate, dispatch, i18n.language, location.pathname],
+    [navigate, dispatch, i18n, location.pathname],
   );
 
   const currentActiveId = isInventoryPage ? "inventory" : "home";

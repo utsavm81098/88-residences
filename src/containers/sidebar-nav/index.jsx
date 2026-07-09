@@ -2,7 +2,8 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { SvgIcon } from "@/components/ui/svg-icon";
 import { useTranslation } from "react-i18next";
-import { NAV_ITEMS, WEBSITE_URL } from "@/utils/constant";
+import { NAV_ITEMS } from "@/utils/constant";
+import { getWebsiteRedirectUrl } from "@/utils/helper";
 import { useSidebarNav } from "./use-sidebar-nav";
 import { Logo } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
@@ -43,10 +44,10 @@ const NavSidebar = ({
         )}
       >
         <a
-          href={WEBSITE_URL}
+          href={getWebsiteRedirectUrl(i18n)}
           onClick={(e) => {
             e.preventDefault();
-            window.location.href = WEBSITE_URL;
+            window.location.href = getWebsiteRedirectUrl(i18n);
           }}
           className="flex items-center gap-3 transition-transform hover:scale-105 active:scale-95"
         >
