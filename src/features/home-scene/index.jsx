@@ -1,14 +1,60 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   OrbitControls,
   PerspectiveCamera,
   Environment,
 } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
+import * as THREE from "three";
 import useHomeScene from "./use-home-scene";
-import { getAssetPath } from "@/utils/constant";
+
+/**
+ * CameraAttachedLights — Punctual lights parented to the camera.
+ *
+ * Matches the gltf-viewer (donmccurdy) lighting setup:
+ * - AmbientLight at intensity 0.3
+ * - DirectionalLight at intensity 0.8 * Math.PI (~2.51), positioned at
+ *   60° from camera forward axis (0.5, 0, 0.866)
+ *
+ * Camera-attached lights move with the camera, producing even illumination
+ * from every viewing angle — unlike world-fixed directional lights which
+ * create hot spots and visible directional shadows.
+ */
+const CameraAttachedLights = () => {
+  const { camera, scene } = useThree();
+
+  useEffect(() => {
+    // Ambient: soft fill (gltf-viewer default = 0.3)
+    const ambient = new THREE.AmbientLight("#FFFFFF", 0.3);
+    ambient.name = "home_ambient_light";
+    camera.add(ambient);
+
+    // Directional: camera-attached at ~60° from camera forward
+    // (gltf-viewer default = 0.8 * Math.PI)
+    const directional = new THREE.DirectionalLight(
+      "#FFFFFF",
+      0.8 * Math.PI
+    );
+    directional.position.set(0.5, 0, 0.866);
+    directional.name = "home_main_light";
+    camera.add(directional);
+
+    // Camera must be in the scene graph for its children to render
+    scene.add(camera);
+
+    return () => {
+      camera.remove(ambient);
+      camera.remove(directional);
+      ambient.dispose();
+      directional.dispose();
+    };
+  }, [camera, scene]);
+
+  return null;
+};
 
 export const HomeScene = ({ controlsRef, onCameraChange }) => {
-  const { scene, focusCenter } = useHomeScene({
+  const { scene } = useHomeScene({
     controlsRef,
     onCameraChange,
   });
@@ -39,36 +85,17 @@ export const HomeScene = ({ controlsRef, onCameraChange }) => {
         enableZoom={true}
         maxDistance={250}
         minDistance={60}
-        maxPolarAngle={Math.PI / 2 - 0.05} // Allow looking horizontally to see building facades & horizon
-        minPolarAngle={0.1} // Allow looking from above
+        maxPolarAngle={Math.PI / 2 - 0.05}
+        minPolarAngle={0.1}
         autoRotate={false}
-        autoRotateSpeed={0.3} // Slow, elegant rotation (if enabled)
+        autoRotateSpeed={0.3}
       />
 
-      {/* 3. Environment Map (sky-40m.hdr) for metallic reflections */}
-      <Environment
-        files={getAssetPath("/hdr/sky-40m.hdr")}
-        background={false} // Use GLB's baked sky panorama dome
-        environmentIntensity={0.8}
-        resolution={2048}
-      />
+      {/* 3. Neutral Environment — matches gltf-viewer's RoomEnvironment */}
+      <Environment preset="apartment" background={false} />
 
-      {/* 4. Lights: Base lighting setup to supplement reflections */}
-      <ambientLight intensity={0.6} />
-
-      {/* Camera-aligned/directional sun light */}
-      <directionalLight
-        position={[
-          focusCenter[0] + 80,
-          focusCenter[1] + 120,
-          focusCenter[2] + 80,
-        ]}
-        intensity={1.2}
-        castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-bias={-0.0001}
-      />
+      {/* 4. Camera-attached punctual lights (gltf-viewer pattern) */}
+      <CameraAttachedLights />
 
       {/* 5. Render the GLB Scene hierarchy */}
       <primitive object={scene} />

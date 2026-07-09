@@ -90,7 +90,7 @@ export const EXPOSURE = 0.0;
 
 export const CANVAS_GL_CONFIG = {
   antialias: true,
-  toneMapping: THREE.NeutralToneMapping,
+  toneMapping: THREE.LinearToneMapping,
   toneMappingExposure: Math.pow(2, EXPOSURE),
   powerPreference: "high-performance",
   outputColorSpace: THREE.SRGBColorSpace,

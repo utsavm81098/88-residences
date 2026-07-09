@@ -1,5 +1,5 @@
-import { useMemo, useEffect, useRef } from "react";
-import { useGLTF } from "@react-three/drei";
+import { useMemo, useRef } from "react";
+import { useGLTF, useEnvironment } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { configureLoader } from "@/utils/preloader";
@@ -7,104 +7,81 @@ import { getAssetPath } from "@/utils/constant";
 import { logger } from "@/utils/logger";
 
 const MODEL_PATH = getAssetPath("/models/88-fixed.glb");
+const SKY_HDR_PATH = getAssetPath("/hdr/sky-40m-compressed.exr");
+
+/**
+ * Allowlist of building glass material names from the GLB.
+ * Only these materials receive the sky HDR envMap.
+ * Excludes car windshields and other non-building glass.
+ */
+const BUILDING_GLASS_NAMES = new Set([
+  "glass",
+  "balcon_glass",
+  "win_glass",
+]);
+
+const isBuildingGlass = (mat) => {
+  const matName = (mat.name || "").toLowerCase();
+  return BUILDING_GLASS_NAMES.has(matName);
+};
 
 export const useHomeScene = ({ controlsRef, onCameraChange }) => {
   // 1. Load the GLB model using the preconfigured loader (Draco, KTX2, etc.)
   const { scene } = useGLTF(MODEL_PATH, true, true, configureLoader);
 
-  // 2. Clone the scene once to prevent cache mutation
+  // 2. Load sky HDR environment map — used exclusively for glass reflections
+  const skyEnvMap = useEnvironment({ files: SKY_HDR_PATH });
+
+  // 3. Clone the scene and apply sky HDR only to glass materials
   const sceneClone = useMemo(() => {
     const clone = scene.clone();
-    
-    // Traverse and configure shadows and matrix updates
+
     clone.traverse((child) => {
       if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
         child.frustumCulled = false;
-        
-        // Ensure standard materials reflect the environment HDR map
+
+        // Apply sky HDR envMap only to glass materials
         if (child.material) {
           const materials = Array.isArray(child.material)
             ? child.material
             : [child.material];
-          
-          const mappedMaterials = materials.map((mat) => {
-            if (mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial) {
+
+          const updatedMaterials = materials.map((mat) => {
+            if (
+              (mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial) &&
+              isBuildingGlass(mat)
+            ) {
               const clonedMat = mat.clone();
-
-              const matName = (mat.name || "").toLowerCase();
-              const meshName = (child.name || "").toLowerCase();
-
-              // Glass materials must remain glossy and reflective
-              const isGlass =
-                mat.transparent ||
-                mat.opacity < 1.0 ||
-                matName.includes("glass") ||
-                matName.includes("window") ||
-                matName.includes("glazing") ||
-                meshName.includes("glass") ||
-                meshName.includes("window") ||
-                meshName.includes("glazing") ||
-                (clonedMat.transmission !== undefined && clonedMat.transmission > 0);
-
-              // Metallic materials must remain reflective
-              const isMetal =
-                matName.includes("metal") ||
-                matName.includes("aluminium") ||
-                meshName.includes("metal") ||
-                clonedMat.metalness > 0.5 ||
-                child.name === "Box028";
-
-              // Robust classification: any material that is not glass, and not metal, is structural.
-              // In addition, any metal part explicitly named "big" (window frame) or "railing" is matte (structural).
-              const isStructural =
-                !isGlass &&
-                (!isMetal || matName.includes("big") || matName.includes("railing") || meshName.includes("railing"));
-
-              if (isStructural) {
-                // Structural surfaces: concrete walls, floors, pillars, ceilings, stone, grass, roads, etc.
-                // Force envMapIntensity to 0.0 to completely eliminate HDR reflections/color cast (no "HDR shadows")
-                clonedMat.envMapIntensity = 0.0;
-                clonedMat.roughness = Math.max(clonedMat.roughness, 0.7);
-              } else {
-                // Glass, metal, and other designed reflective materials get rich reflections from scene.environment automatically.
-                if (isGlass) {
-                  // Glass: crystal-clear reflections (roughness=0 for sharp HDR)
-                  clonedMat.envMapIntensity = 2.0;
-                  clonedMat.roughness = 0.0;
-                  clonedMat.transparent = true;
-                  clonedMat.needsUpdate = true;
-                } else {
-                  // Metals or other shiny parts
-                  clonedMat.envMapIntensity = 1.0;
-                  clonedMat.roughness = Math.min(clonedMat.roughness, 0.1);
-                }
-              }
-              
-              // Enable flat shading on Box028 to prevent wavy/distorted reflections
-              if (child.name === "Box028") {
-                clonedMat.flatShading = true;
-                clonedMat.roughness = 0.0;
-                clonedMat.metalness = 1.0;
-                clonedMat.needsUpdate = true;
-              }
+              // Override per-material envMap with sky HDR (overrides scene.environment)
+              clonedMat.envMap = skyEnvMap;
+              // Boost envMapIntensity so sky reflection is clearly visible
+              clonedMat.envMapIntensity = 2.5;
+              // Force high metalness — non-metallic glass (metallic=0) has almost no
+              // reflection at normal viewing angles due to Fresnel. Setting metalness
+              // high ensures the sky HDR is visible from all angles, not just grazing.
+              clonedMat.metalness = 0.9;
+              // Keep roughness very low for sharp, mirror-like sky reflections
+              clonedMat.roughness = 0.0;
+              clonedMat.needsUpdate = true;
+              logger.info(
+                `[useHomeScene] Sky HDR applied to glass: ${mat.name} (mesh: ${child.name})`
+              );
               return clonedMat;
             }
             return mat;
           });
-          
+
           child.material = Array.isArray(child.material)
-            ? mappedMaterials
-            : mappedMaterials[0];
+            ? updatedMaterials
+            : updatedMaterials[0];
         }
       }
     });
-    
-    return clone;
-  }, [scene]);
 
-  // 3. Compute combined bounding box of non-huge meshes to focus OrbitControls on the overall scene center
+    return clone;
+  }, [scene, skyEnvMap]);
+
+  // 4. Compute combined bounding box of non-huge meshes to focus OrbitControls on the overall scene center
   const focusData = useMemo(() => {
     const combinedBox = new THREE.Box3();
     let hasContent = false;
@@ -168,7 +145,7 @@ export const useHomeScene = ({ controlsRef, onCameraChange }) => {
   // Ref to track last coordinates to avoid redundant callbacks
   const lastCoordsRef = useRef("");
 
-  // 4. Update HUD coordinates in Dev mode during controls updates
+  // 5. Update HUD coordinates in Dev mode during controls updates
   useFrame(({ camera }) => {
     if (!onCameraChange || !import.meta.env.DEV) return;
 

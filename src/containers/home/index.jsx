@@ -60,7 +60,6 @@ export const HomeContainer = () => {
             dpr={[1.5, Math.min(window.devicePixelRatio, 2)]}
             performance={{ min: 0.5, debounce: 200 }}
             gl={CANVAS_GL_CONFIG}
-            shadows
           >
             <Suspense fallback={<CanvasLoader />}>
               <HomeScene
