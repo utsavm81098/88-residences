@@ -11,6 +11,7 @@ import {
 import { EffectComposer, SMAA } from "@react-three/postprocessing";
 import useSceneEnvironment from "./use-scene-environment";
 import { GRID_CONFIG, Preset } from "@/utils/constant";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const SceneEnvironment = ({ children }) => {
   const {
@@ -31,6 +32,12 @@ const SceneEnvironment = ({ children }) => {
 
   const { gl, scene } = useThree();
   const [lightTarget, setLightTarget] = useState(null);
+  const isMobile = useIsMobile();
+
+  // On mobile: disable multisampling entirely (SMAA is sufficient).
+  // On desktop: use 4x MSAA for quality.
+  // multisampling=8 was allocating ~300MB+ of GPU framebuffers on mobile.
+  const multisampling = isMobile ? 0 : 4;
 
   useEffect(() => {
     gl.toneMapping = Number(toneMapping);
@@ -113,13 +120,17 @@ const SceneEnvironment = ({ children }) => {
         </Fragment>
       )}
 
+      {/* Reduce PMREM cubemap resolution on mobile to save ~80MB GPU memory.
+          2048 is only needed for high-quality reflections on desktop.
+          With background: false, the cubemap isn't visible — it only drives IBL lighting. */}
       <Environment
         {...environment}
+        resolution={isMobile ? 256 : (environment?.resolution ?? 2048)}
         environmentIntensity={environment?.intensity ?? 1.0}
       />
       <Grid {...GRID_CONFIG} />
       {children}
-      <EffectComposer multisampling={8} stencilBuffer={false}>
+      <EffectComposer multisampling={multisampling} stencilBuffer={false}>
         <SMAA />
       </EffectComposer>
     </Fragment>

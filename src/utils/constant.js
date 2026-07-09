@@ -88,7 +88,7 @@ export const EXPOSURE = 0.0;
 // export const EXPOSURE = 1;
 
 export const CANVAS_GL_CONFIG = {
-  antialias: true,
+  antialias: false,
   toneMapping: THREE.ACESFilmicToneMapping,
   toneMappingExposure: Math.pow(2, EXPOSURE),
   powerPreference: "high-performance",
@@ -100,7 +100,7 @@ const typeAConfig = {
   hitbox: getAssetPath("/models/a-hitbox.glb"),
   heroAngle: 0,
   environment: {
-    files: getAssetPath("/hdr/sky-40m.hdr"),
+    files: getAssetPath("/hdr/sky-40m-compressed.exr"),
     background: false,
     rotation: [0, 0, 0],
     backgroundRotation: [0, 0, 0],

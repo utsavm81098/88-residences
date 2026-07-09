@@ -11,6 +11,22 @@ import BuildingTooltip from "@/features/building-tooltip";
 import { CanvasLoader } from "@/containers/canvas-loader";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
 import { CANVAS_GL_CONFIG } from "@/utils/constant";
+import useWebGLRecovery from "@/hooks/use-webgl-recovery";
+import { logger } from "@/utils/logger";
+
+/**
+ * Safety net inside the Canvas: intercepts WebGL context loss to prevent tab crash.
+ * Must be a separate component because R3F hooks require Canvas context.
+ */
+function WebGLRecoveryGuard({ onFatalLoss }) {
+  useWebGLRecovery({
+    onContextLost: onFatalLoss,
+    onContextRestored: () => {
+      logger.info("WebGL context restored — scene will re-initialize");
+    },
+  });
+  return null;
+}
 
 /**
  * InventoryContainer - Coordinates the main 3D canvas viewport,
@@ -46,11 +62,11 @@ export default function InventoryContainer() {
         >
           <ComponentErrorBoundary name="3D Canvas" onReset={handleResetCache}>
             <Canvas
-              dpr={[1.5, Math.min(window.devicePixelRatio, 2)]}
+              dpr={[1, Math.min(window.devicePixelRatio, 2)]}
               performance={{ min: 0.5, debounce: 200 }}
               gl={CANVAS_GL_CONFIG}
-              shadows
             >
+              <WebGLRecoveryGuard onFatalLoss={handleResetCache} />
               <Suspense fallback={<CanvasLoader />}>
                 <SceneEnvironment>
                   <Building
