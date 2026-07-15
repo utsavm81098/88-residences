@@ -5,7 +5,6 @@ import HomeScene from "@/features/home-scene";
 import CanvasLoader from "@/containers/canvas-loader";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
 import { CANVAS_GL_CONFIG } from "@/utils/constant";
-import { Button } from "@/components/ui/button";
 
 export const HomeContainer = () => {
   const controlsRef = useRef();
@@ -36,16 +35,17 @@ export const HomeContainer = () => {
             Dev Camera Coordinates
           </h4>
           <div className="mb-1">
-            <span className="text-white/50">Position:</span>{" "}
-            [{cameraData.position.join(", ")}]
+            <span className="text-white/50">Position:</span> [
+            {cameraData.position.join(", ")}]
           </div>
           <div className="mb-2">
-            <span className="text-white/50">Target:</span>{" "}
-            [{cameraData.target.join(", ")}]
+            <span className="text-white/50">Target:</span> [
+            {cameraData.target.join(", ")}]
           </div>
           <p className="text-[10px] text-white/40 leading-relaxed">
             Drag the view to rotate, then hardcode these values in{" "}
-            <code className="text-white/70">use-home-scene.js</code> if you want to lock the landing view.
+            <code className="text-white/70">use-home-scene.js</code> if you want
+            to lock the landing view.
           </p>
         </div>
       )}
