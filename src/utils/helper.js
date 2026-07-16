@@ -93,3 +93,39 @@ export const extractDigit = (str) => {
   const match = str.match(/\d+/);
   return match ? match[0] : str;
 };
+
+export const pushGtmEvent = (eventName, data = {}) => {
+  if (typeof window === "undefined") return;
+  window.dataLayer = window.dataLayer || [];
+
+  switch (eventName) {
+    case "cf7submission": {
+      const { formId, formData } = data;
+      const response = [];
+      if (formData) {
+        for (const [name, value] of formData.entries()) {
+          // Ignore internal CF7 fields
+          if (name.startsWith("_wpcf7")) continue;
+          
+          // Map 'message' to 'apartment_info' to match GTM expected format
+          const keyName = name === "message" ? "apartment_info" : name;
+          response.push({ name: keyName, value });
+        }
+      }
+
+      window.dataLayer.push({
+        event: eventName,
+        formId: formId ? parseInt(formId, 10) : undefined,
+        response: response,
+      });
+      break;
+    }
+    default:
+      console.warn(`GTM Event '${eventName}' is not specifically handled.`);
+      window.dataLayer.push({
+        event: eventName,
+        ...data,
+      });
+      break;
+  }
+};

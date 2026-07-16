@@ -64,7 +64,10 @@ const TopNavigationContainer = memo(({ onReset }) => {
                       : "cursor-default",
                   )}
                 >
-                  <span className="text-accent-yellow">{currentBuilding?.name}</span>{" Building"}
+                  <span className="text-accent-yellow">
+                    {currentBuilding?.name}
+                  </span>
+                  {" Building"}
                 </div>
 
                 <Button
@@ -105,7 +108,8 @@ const TopNavigationContainer = memo(({ onReset }) => {
                       )}
                       onClick={() => handleSelect(idx)}
                     >
-                      <span className="text-accent-yellow">{b.name}</span>{" Building"}
+                      <span className="text-accent-yellow">{b.name}</span>
+                      {" Building"}
                     </DropdownMenuItem>
                   ))}
                 </div>
@@ -120,7 +124,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
           <Button
             variant="ghost"
             size="icon-xl"
-            className="bg-nav/85 backdrop-blur-md border border-white/10 rounded-full text-white shadow-2xl pointer-events-auto hover:border-white/20 size-[80px]"
+            className="hidden bg-nav/85 backdrop-blur-md border border-white/10 rounded-full text-white shadow-2xl pointer-events-auto hover:border-white/20 size-[80px]"
             onClick={onReset}
           >
             <ICONS.RotateCw size={30} strokeWidth={2} className="size-[30px]" />

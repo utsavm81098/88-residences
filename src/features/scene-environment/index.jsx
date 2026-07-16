@@ -34,10 +34,9 @@ const SceneEnvironment = ({ children }) => {
   const [lightTarget, setLightTarget] = useState(null);
   const isMobile = useIsMobile();
 
-  // On mobile: disable multisampling entirely (SMAA is sufficient).
-  // On desktop: use 4x MSAA for quality.
-  // multisampling=8 was allocating ~300MB+ of GPU framebuffers on mobile.
-  const multisampling = isMobile ? 0 : 4;
+  // Disable hardware multisampling entirely because we are using SMAA (software anti-aliasing).
+  // Combining MSAA and SMAA causes WebGL buffer conflicts (glBlitFramebuffer warning).
+  const multisampling = 0;
 
   useEffect(() => {
     gl.toneMapping = Number(toneMapping);
