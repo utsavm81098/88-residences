@@ -7,11 +7,8 @@ import {
 import useHomeScene from "./use-home-scene";
 import { getAssetPath } from "@/utils/constant";
 
-export const HomeScene = ({ controlsRef, onCameraChange }) => {
-  const { scene, focusCenter } = useHomeScene({
-    controlsRef,
-    onCameraChange,
-  });
+export const HomeScene = ({ controlsRef }) => {
+  const { scene } = useHomeScene();
 
   // Hardcoded camera position and target from the user's manual adjustment
   const orbitTarget = [-19.5, 10.02, 20.1];
@@ -35,26 +32,22 @@ export const HomeScene = ({ controlsRef, onCameraChange }) => {
         enableDamping
         dampingFactor={0.05}
         target={orbitTarget}
-        enablePan={true}
+        enablePan={false} // Disabled pan to prevent user from dragging the model out of view
         enableZoom={true}
-        maxDistance={250}
-        minDistance={60}
-        maxPolarAngle={Math.PI / 2 - 0.05} // Allow looking horizontally to see building facades & horizon
-        minPolarAngle={0.1} // Allow looking from above
         autoRotate={false}
         autoRotateSpeed={0.3} // Slow, elegant rotation (if enabled)
       />
 
       {/* 3. Environment Map (sky-40m.hdr) for metallic reflections */}
-      <Environment
+      {/* <Environment
         files={getAssetPath("/hdr/80m-nano-green.jpg")}
         background={false} // Use GLB's baked sky panorama dome
         environmentIntensity={0.8}
         resolution={2048}
-      />
+      /> */}
 
       {/* 4. Lights: Base lighting setup to supplement reflections */}
-      <ambientLight intensity={0.6} />
+      <ambientLight intensity={0.3} />
 
       {/* 5. Render the GLB Scene hierarchy */}
       <primitive object={scene} />

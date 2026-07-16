@@ -8,12 +8,6 @@ export const useHome = (controlsRef) => {
     setCameraData(data);
   }, []);
 
-  const handleResetCamera = useCallback(() => {
-    if (controlsRef.current) {
-      controlsRef.current.reset();
-    }
-  }, [controlsRef]);
-
   const handleResetCache = useCallback(() => {
     useGLTF.clear();
   }, []);
@@ -21,7 +15,6 @@ export const useHome = (controlsRef) => {
   return {
     cameraData,
     handleCameraChange,
-    handleResetCamera,
     handleResetCache,
   };
 };

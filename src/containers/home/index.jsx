@@ -8,26 +8,11 @@ import { CANVAS_GL_CONFIG } from "@/utils/constant";
 
 export const HomeContainer = () => {
   const controlsRef = useRef();
-  const {
-    cameraData,
-    handleCameraChange,
-    handleResetCamera,
-    handleResetCache,
-  } = useHome(controlsRef);
+  const { cameraData, handleCameraChange, handleResetCache } =
+    useHome(controlsRef);
 
   return (
     <div className="relative flex-1 w-full h-full overflow-hidden bg-background">
-      {/* 1. Reset Camera button in top corner for utility */}
-      {/* <div className="absolute top-6 right-6 z-20 flex gap-3">
-        <Button
-          onClick={handleResetCamera}
-          variant="outline"
-          className="bg-black/50 border-white/10 text-white hover:bg-white/10 hover:text-white"
-        >
-          Reset Camera
-        </Button>
-      </div> */}
-
       {/* 2. Development Mode Coordinates HUD Overlay */}
       {import.meta.env.DEV && cameraData && (
         <div className="absolute bottom-6 right-6 z-20 p-4 bg-black/80 border border-white/10 rounded-lg text-white font-mono text-[11px] max-w-[340px] pointer-events-auto">
