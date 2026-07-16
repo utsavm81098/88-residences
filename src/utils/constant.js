@@ -96,6 +96,16 @@ export const CANVAS_GL_CONFIG = {
   outputColorSpace: THREE.SRGBColorSpace,
 };
 
+export const HOME_GL_CONFIG = {
+  antialias: true,
+  alpha: true,
+  preserveDrawingBuffer: true,
+  toneMapping: THREE.NeutralToneMapping,
+  toneMappingExposure: Math.pow(2, EXPOSURE),
+  powerPreference: "high-performance",
+  outputColorSpace: THREE.SRGBColorSpace,
+};
+
 const typeAConfig = {
   model: getAssetPath("/models/type-a-1024.glb"),
   hitbox: getAssetPath("/models/a-hitbox.glb"),

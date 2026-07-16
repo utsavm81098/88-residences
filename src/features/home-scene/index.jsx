@@ -1,4 +1,5 @@
-import React from "react";
+import React, { Fragment } from "react";
+import * as THREE from "three";
 import {
   OrbitControls,
   PerspectiveCamera,
@@ -6,16 +7,17 @@ import {
 } from "@react-three/drei";
 import useHomeScene from "./use-home-scene";
 import { getAssetPath } from "@/utils/constant";
+import DevMarkers from "./dev-markers";
 
-export const HomeScene = ({ controlsRef }) => {
+export const HomeScene = ({ controlsRef, isAutoRotate, onCameraChange }) => {
   const { scene } = useHomeScene();
 
   // Hardcoded camera position and target from the user's manual adjustment
-  const orbitTarget = [-19.5, 10.02, 20.1];
-  const defaultCameraPosition = [121.96, 42.5, 100.36];
+  const orbitTarget = [-9.49, 19.47, -21.04];
+  const defaultCameraPosition = [-173.97, 48.34, -97.77];
 
   return (
-    <React.Fragment>
+    <Fragment>
       {/* 1. Perspective Camera — narrower FOV for telephoto aerial feel */}
       <PerspectiveCamera
         makeDefault
@@ -32,26 +34,35 @@ export const HomeScene = ({ controlsRef }) => {
         enableDamping
         dampingFactor={0.05}
         target={orbitTarget}
-        enablePan={false} // Disabled pan to prevent user from dragging the model out of view
+        enablePan={false}
         enableZoom={true}
-        autoRotate={false}
-        autoRotateSpeed={0.3} // Slow, elegant rotation (if enabled)
+        autoRotate={isAutoRotate}
+        autoRotateSpeed={2}
+        minDistance={120}
+        maxDistance={210}
+        minPolarAngle={THREE.MathUtils.degToRad(5)}
+        maxPolarAngle={Math.PI / 2 - THREE.MathUtils.degToRad(10)} // 10 degrees above the ground plane
       />
 
-      {/* 3. Environment Map (sky-40m.hdr) for metallic reflections */}
-      {/* <Environment
+      {/* 3. Environment Map (IBL) — 80m-nano-green, matching GLTF Editor exactly */}
+      {/*    Pure IBL only — no additional scene lights */}
+      <Environment
         files={getAssetPath("/hdr/80m-nano-green.jpg")}
-        background={false} // Use GLB's baked sky panorama dome
-        environmentIntensity={0.8}
+        background={true}
+        backgroundBlurriness={0}
+        environmentIntensity={1.0}
+        environmentRotation={[0, Math.PI / 2, 0]}
         resolution={2048}
-      /> */}
+      />
 
-      {/* 4. Lights: Base lighting setup to supplement reflections */}
-      <ambientLight intensity={0.3} />
+      {/* 5. DEV-only: Draggable target (red) + camera position (green) markers */}
+      {import.meta.env.DEV && (
+        <DevMarkers controlsRef={controlsRef} onCameraChange={onCameraChange} />
+      )}
 
-      {/* 5. Render the GLB Scene hierarchy */}
+      {/* 6. Render the GLB Scene hierarchy */}
       <primitive object={scene} />
-    </React.Fragment>
+    </Fragment>
   );
 };
 

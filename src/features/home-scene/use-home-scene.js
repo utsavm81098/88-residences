@@ -21,6 +21,7 @@ export const useHomeScene = () => {
         child.frustumCulled = false;
       }
     });
+
     return clone;
   }, [scene]);
 
