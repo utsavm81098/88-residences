@@ -6,6 +6,12 @@ import { logger } from "@/utils/logger";
 
 const ENV_PATH = getAssetPath("/hdr/80m-nano-green.jpg");
 
+// 80m-nano-green.jpg is an 8-bit sRGB JPEG, not a true HDR — its brightest
+// pixel caps at ~1.0 linear, far below a real sun's radiance. This multiplier
+// compensates so IBL lighting reaches a comparable brightness to a true HDR
+// source, without swapping the (deliberately real, site-photo) asset itself.
+const ENVIRONMENT_INTENSITY = 1.0;
+
 /**
  * EnvironmentSetup — manually loads the equirectangular JPEG via
  * Three.js TextureLoader (correct sRGB handling) and converts it
@@ -17,7 +23,7 @@ const ENV_PATH = getAssetPath("/hdr/80m-nano-green.jpg");
  * with dummy metadata and Drei then sets colorSpace = 'srgb-linear',
  * double-linearizing the sRGB data and washing out reflections.
  */
-const EnvironmentSetup = ({ environmentRotation = [0, Math.PI / 2, 0] }) => {
+const EnvironmentSetup = ({ environmentRotation = [0, 0, 0] }) => {
   const gl = useThree((state) => state.gl);
   const scene = useThree((state) => state.scene);
 
@@ -57,15 +63,21 @@ const EnvironmentSetup = ({ environmentRotation = [0, Math.PI / 2, 0] }) => {
     const prevBgBlurriness = scene.backgroundBlurriness;
     const prevEnvIntensity = scene.environmentIntensity;
     const prevEnvRotation = scene.environmentRotation?.clone();
+    const prevBgRotation = scene.backgroundRotation?.clone();
 
     // Set environment (for IBL reflections on materials)
     scene.environment = envMap;
-    scene.environmentIntensity = 1.0;
+    scene.environmentIntensity = ENVIRONMENT_INTENSITY;
     scene.environmentRotation = new THREE.Euler(...environmentRotation);
 
     // Set background (visible panorama behind the scene)
+    // NOTE: backgroundRotation is a separate Euler from environmentRotation in
+    // three.js — background and environment are otherwise the same texture,
+    // so without this they render 90° out of sync with each other (the sky
+    // behind the model vs. what glass/metal reflects would not match).
     scene.background = envMap;
     scene.backgroundBlurriness = 0;
+    scene.backgroundRotation = new THREE.Euler(...environmentRotation);
 
     logger.info("[EnvironmentSetup] Scene environment applied");
 
@@ -77,6 +89,9 @@ const EnvironmentSetup = ({ environmentRotation = [0, Math.PI / 2, 0] }) => {
       scene.environmentIntensity = prevEnvIntensity;
       if (prevEnvRotation) {
         scene.environmentRotation = prevEnvRotation;
+      }
+      if (prevBgRotation) {
+        scene.backgroundRotation = prevBgRotation;
       }
     };
   }, [envMap, scene, environmentRotation]);
