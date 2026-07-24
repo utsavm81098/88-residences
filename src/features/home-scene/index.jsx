@@ -84,7 +84,7 @@ export const HomeScene = ({
         enableDamping
         dampingFactor={0.05}
         target={orbitTarget}
-        enablePan={true}
+        enablePan={false}
         enableZoom={true}
         autoRotate={isAutoRotate}
         autoRotateSpeed={2}
