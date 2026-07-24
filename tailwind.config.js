@@ -3,6 +3,10 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      spacing: {
+        "nav-rail": "55px",
+        "nav-expanded": "225px",
+      },
       colors: {
         dark: "rgba(45, 45, 45, 0.85)",
         border: "hsl(var(--border))",

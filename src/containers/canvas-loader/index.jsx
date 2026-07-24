@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 export const CanvasLoader = () => {
   const { progress } = useProgress();
   const { t, i18n } = useTranslation();
-  
+
   // Ensure visual indication starts at least at 8% and caps at 100%
   const displayProgress = Math.max(8, Math.min(100, Math.round(progress)));
   const dir = i18n.dir();
@@ -25,7 +25,10 @@ export const CanvasLoader = () => {
           <span className="text-[10px] text-white/40 font-open-sans uppercase tracking-widest mb-3">
             {t("loading_model", "Loading Model")}
           </span>
-          <i dir="ltr" className="w-full bg-white/15 h-[3px] rounded-full overflow-hidden flex mb-2 justify-start">
+          <i
+            dir="ltr"
+            className="w-full bg-white/15 h-[3px] rounded-full overflow-hidden flex mb-2 justify-start"
+          >
             <b
               className="h-full block transition-all duration-300 ease-out bg-accent-yellow"
               style={{
@@ -33,7 +36,10 @@ export const CanvasLoader = () => {
               }}
             />
           </i>
-          <em className="text-xs font-semibold text-accent-yellow font-open-sans not-italic" dir="ltr">
+          <em
+            className="text-xs font-semibold text-accent-yellow font-open-sans not-italic"
+            dir="ltr"
+          >
             {displayProgress}%
           </em>
         </div>
@@ -43,4 +49,3 @@ export const CanvasLoader = () => {
 };
 
 export default CanvasLoader;
-

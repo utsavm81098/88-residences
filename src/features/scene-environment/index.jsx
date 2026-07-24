@@ -10,6 +10,7 @@ import {
 } from "@react-three/drei";
 import { EffectComposer, SMAA } from "@react-three/postprocessing";
 import useSceneEnvironment from "./use-scene-environment";
+import GroundSurface from "./ground-surface";
 import { GRID_CONFIG, Preset } from "@/utils/constant";
 
 const SceneEnvironment = ({ children }) => {
@@ -36,11 +37,7 @@ const SceneEnvironment = ({ children }) => {
     gl.toneMapping = Number(toneMapping);
     gl.toneMappingExposure = Math.pow(2, exposure);
     gl.needsUpdate = true;
-
-    if (environment && environment.intensity !== undefined) {
-      scene.environmentIntensity = environment.intensity;
-    }
-  }, [gl, scene, toneMapping, exposure, environment?.intensity]);
+  }, [gl, toneMapping, exposure]);
 
   const isAssetGenerator = preset === Preset.ASSET_GENERATOR;
 
@@ -117,6 +114,7 @@ const SceneEnvironment = ({ children }) => {
         {...environment}
         environmentIntensity={environment?.intensity ?? 1.0}
       />
+      <GroundSurface />
       <Grid {...GRID_CONFIG} />
       {children}
       <EffectComposer multisampling={8} stencilBuffer={false}>
