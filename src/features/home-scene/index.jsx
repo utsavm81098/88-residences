@@ -84,12 +84,12 @@ export const HomeScene = ({
         enableDamping
         dampingFactor={0.05}
         target={orbitTarget}
-        enablePan={false}
+        enablePan={true}
         enableZoom={true}
         autoRotate={isAutoRotate}
         autoRotateSpeed={2}
         minDistance={120}
-        maxDistance={250}
+        maxDistance={210}
         minPolarAngle={THREE.MathUtils.degToRad(5)}
         maxPolarAngle={Math.PI / 2 - THREE.MathUtils.degToRad(10)}
       />
