@@ -23,7 +23,7 @@ export default function MainLayout() {
           Navigation Rail Wrapper 
           Occupies fixed space in the layout flow to prevent shifting 
       */}
-      <div className="hidden lg:block w-[55px] h-full shrink-0 relative z-[110]">
+      <div className="hidden lg:block w-nav-expanded h-full shrink-0 relative z-[110]">
         <SidebarNavContainer />
       </div>
 

@@ -30,7 +30,7 @@ const NavSidebar = ({
       className={cn(
         "absolute top-0 bottom-0 bg-background z-[100] flex flex-col transition-all duration-300 ease-in-out overflow-hidden",
         "start-0 border-e border-white/10",
-        isExpanded ? "w-[225px]" : "w-[55px]",
+        "w-nav-expanded",
       )}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}

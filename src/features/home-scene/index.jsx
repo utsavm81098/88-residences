@@ -48,7 +48,7 @@ export const HomeScene = ({
 
   // Hardcoded camera position and target from the user's manual adjustment
   const orbitTarget = [-5.0, 20, -7.0];
-  const defaultCameraPosition = [-173, 53, -88];
+  const defaultCameraPosition = [-220, 53, -88];
 
   const lightProps = {
     // Premium sun: a real specular glint on the tuned glass without blowing
@@ -88,8 +88,8 @@ export const HomeScene = ({
         enableZoom={true}
         autoRotate={isAutoRotate}
         autoRotateSpeed={2}
-        // minDistance={120}
-        // maxDistance={210}
+        minDistance={120}
+        maxDistance={210}
         minPolarAngle={THREE.MathUtils.degToRad(5)}
         maxPolarAngle={Math.PI / 2 - THREE.MathUtils.degToRad(10)}
       />

@@ -4,7 +4,7 @@ import { useGLTF } from "@react-three/drei";
 import { configureLoader } from "@/utils/preloader";
 import { getAssetPath } from "@/utils/constant";
 
-const MODEL_PATH = getAssetPath("/models/88-fixed.glb");
+const MODEL_PATH = getAssetPath("/models/88RES 06(1).glb");
 
 // Materials that should read as reflective glazing. Match ONLY the material named exactly "GLASS"
 const GLASS_NAME_RE = /^glass$/i;
