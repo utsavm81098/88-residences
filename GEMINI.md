@@ -115,6 +115,13 @@ The following rules are enforced by `.agents/rules/` — see each rule file for 
 - **Styling** (`.agents/rules/styling-theming.md`): Design tokens, Tailwind-only, `cn()` utility
 - **Testing** (`.agents/rules/testing-standards.md`): Vitest, behavior-driven tests, coverage targets
 
+### Skills & Workflows
+
+- **Domain skills** live in `.claude/skills/` — 30 skills covering `r3f-*` (11), `threejs-*` (10), `gsap-*` (8), and `sop-compliance-audit`. This is the **single** skills folder shared by all agent tools; read the relevant `SKILL.md` before writing 3D or animation code. Prefer `r3f-*` over `threejs-*` for component work, since rendering goes through React Three Fiber.
+- **Task workflows** live in `.agents/workflows/` — `new-component`, `new-container`, `new-feature`, `new-hook`, `new-store-slice`, `code-review`, `frontend-architecture`, `orchestrator`. Follow the matching file instead of improvising.
+
+See [CLAUDE.md](CLAUDE.md) for the same wiring expressed for Claude Code.
+
 ---
 
 ---
