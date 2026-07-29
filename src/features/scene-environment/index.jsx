@@ -3,14 +3,15 @@ import { useThree } from "@react-three/fiber";
 import {
   Environment,
   PerspectiveCamera,
-  Grid,
   PerformanceMonitor,
   AdaptiveDpr,
   AdaptiveEvents,
 } from "@react-three/drei";
 import { EffectComposer, SMAA } from "@react-three/postprocessing";
 import useSceneEnvironment from "./use-scene-environment";
-import { GRID_CONFIG, Preset } from "@/utils/constant";
+import SceneGround from "@/features/scene-ground";
+import GradientSky from "./gradient-sky";
+import { GROUND_CONFIG, Preset } from "@/utils/constant";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const SceneEnvironment = ({ children }) => {
@@ -127,7 +128,14 @@ const SceneEnvironment = ({ children }) => {
         resolution={isMobile ? 256 : (environment?.resolution ?? 2048)}
         environmentIntensity={environment?.intensity ?? 1.0}
       />
-      <Grid {...GRID_CONFIG} />
+      {/* 360° Gradient Sky Dome (Zenith: #2f7fca, Horizon: #bcdcf2) */}
+      <GradientSky topColor="#2f7fca" bottomColor="#bcdcf2" />
+
+      {/* Horizon Fog matching sky horizon color */}
+      <fog attach="fog" args={["#bcdcf2", 60, 250]} />
+
+      {/* Floor fill and grid lines composited in one shader on one surface */}
+      <SceneGround {...GROUND_CONFIG} />
       {children}
       <EffectComposer multisampling={multisampling} stencilBuffer={false}>
         <SMAA />

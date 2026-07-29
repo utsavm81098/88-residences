@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { SvgIcon } from "@/components/ui/svg-icon";
 import { useTranslation } from "react-i18next";
 import { NAV_ITEMS } from "@/utils/constant";
+import { ICONS } from "@/assets/icons";
 import { getWebsiteRedirectUrl } from "@/utils/helper";
 import { useSidebarNav } from "./use-sidebar-nav";
 import { Logo } from "@/components/ui/logo";
@@ -29,8 +30,8 @@ const NavSidebar = ({
   return (
     <aside
       className={cn(
-        "absolute top-0 bottom-0 bg-background z-[100] flex flex-col transition-all duration-300 ease-in-out overflow-hidden",
-        "start-0 border-e border-white/10",
+        "absolute top-0 bottom-0 bg-white z-[100] flex flex-col transition-all duration-300 ease-in-out overflow-hidden border-e-2 border-e-gray-200",
+        "start-0",
         isExpanded ? "w-[225px]" : "w-[55px]",
       )}
       onMouseEnter={onMouseEnter}
@@ -39,7 +40,7 @@ const NavSidebar = ({
       {/* ── Logo ── */}
       <div
         className={cn(
-          "flex items-center shrink-0 transition-all duration-300 pt-6 pb-4",
+          "flex items-center shrink-0 transition-all duration-300 pt-5 pb-4",
           isExpanded ? "px-6" : "px-0 justify-center",
         )}
       >
@@ -66,58 +67,64 @@ const NavSidebar = ({
       </div>
 
       {/* ── Navigation Items ── */}
-      <nav className="flex-1 px-2 py-2 space-y-4 overflow-y-auto custom-scrollbar overflow-x-hidden">
-        {NAV_ITEMS.map((item) => (
-          <Button
-            key={item.id}
-            variant="ghost"
-            onClick={() => onNavItemClick?.(item.id)}
-            className={cn(
-              "w-full flex items-center rounded-lg transition-all duration-300 group relative h-11 justify-start",
-              !isExpanded && "justify-center px-0",
-              isExpanded && "px-3 gap-4",
-              activeNavItem === item.id
-                ? "text-accent-yellow bg-white/5"
-                : "text-white/40 hover:bg-white/5 hover:text-white",
-            )}
-          >
-            {/* Icon Wrapper */}
-            <div
+      <nav className="flex-1 px-2.5 py-4 space-y-3 overflow-y-auto custom-scrollbar overflow-x-hidden flex flex-col items-center">
+        {NAV_ITEMS.map((item) => {
+          const isActive =
+            activeNavItem === item.id ||
+            (item.id === "inventory" && activeNavItem === "inventory");
+
+          return (
+            <Button
+              key={item.id}
+              variant="ghost"
+              onClick={() => onNavItemClick?.(item.id)}
               className={cn(
-                "flex items-center justify-center shrink-0 transition-colors",
-                isExpanded ? "w-5 h-5" : "w-8 h-8",
-                activeNavItem === item.id
-                  ? "text-accent-yellow"
-                  : "text-white/40 group-hover:text-white",
+                "w-full flex items-center rounded-xl transition-all duration-200 group relative h-10 justify-start cursor-pointer outline-none",
+                !isExpanded && "justify-center px-0 w-10 h-10",
+                isExpanded && "px-3 gap-3.5",
+                isActive
+                  ? "bg-accent-yellow/10 border border-accent-yellow/40 text-accent-yellow shadow-2xs font-semibold hover:!bg-accent-yellow/20 hover:!text-accent-yellow"
+                  : "text-gray-400 border border-transparent hover:!bg-accent-yellow/10 hover:!border-accent-yellow/30 hover:!text-accent-yellow",
               )}
             >
-              {item.icon && (
-                <item.icon
-                  size={isExpanded ? 20 : 22}
-                  strokeWidth={activeNavItem === item.id ? 2.5 : 1.5}
-                />
-              )}
-            </div>
-
-            {/* Label */}
-            {isExpanded && (
-              <span
+              {/* Icon Wrapper */}
+              <div
                 className={cn(
-                  "text-[13px] font-bold tracking-wide transition-all duration-500 whitespace-nowrap overflow-hidden text-start",
+                  "flex items-center justify-center shrink-0 transition-colors",
+                  isExpanded ? "w-5 h-5" : "w-6 h-6",
+                  isActive
+                    ? "text-accent-yellow"
+                    : "text-gray-400 group-hover:text-accent-yellow",
                 )}
               >
-                {t(item.label)}
-              </span>
-            )}
-          </Button>
-        ))}
+                {item.icon && (
+                  <item.icon size={20} strokeWidth={isActive ? 2 : 1.75} />
+                )}
+              </div>
+
+              {/* Label */}
+              {isExpanded && (
+                <span
+                  className={cn(
+                    "text-[14px] tracking-wide transition-all duration-300 whitespace-nowrap overflow-hidden text-start",
+                    isActive
+                      ? "font-bold text-gray-800"
+                      : "font-medium text-gray-600 group-hover:text-gray-900",
+                  )}
+                >
+                  {t(item.label)}
+                </span>
+              )}
+            </Button>
+          );
+        })}
       </nav>
 
       {/* ── Bottom Section (Lang + Chat) ── */}
       <div
         className={cn(
-          "flex justify-center border-t border-white/5 space-y-4 mb-6 shrink-0",
-          isExpanded ? "p-3" : "p-0 py-4",
+          "flex justify-center border-t border-gray-100 space-y-4 mb-4 shrink-0",
+          isExpanded ? "p-3" : "p-0 py-3",
         )}
       >
         {/* Language Switcher */}
@@ -125,10 +132,10 @@ const NavSidebar = ({
           variant="ghost"
           onClick={() => onLanguageChange?.(targetLang.code)}
           className={cn(
-            "flex items-center transition-all duration-300 group/lang h-11 outline-none justify-start",
+            "flex items-center transition-all duration-200 group/lang h-10 outline-none justify-start cursor-pointer",
             isExpanded
-              ? "w-full gap-4 px-3 bg-white/5 hover:bg-white/10 rounded-lg"
-              : "w-11 justify-center rounded-full hover:bg-white/5 p-0",
+              ? "w-full gap-3 px-3 bg-gray-50 hover:!bg-gray-100 text-gray-800 rounded-xl border border-gray-100 hover:!border-gray-200"
+              : "w-10 h-10 justify-center rounded-xl hover:!bg-gray-100 text-gray-800 p-0 border border-transparent hover:!border-gray-200",
           )}
         >
           <span className="shrink-0 flex items-center justify-center w-[18px] h-[18px]">
@@ -140,7 +147,7 @@ const NavSidebar = ({
           {isExpanded && (
             <span
               className={cn(
-                "text-[11px] font-bold transition-all duration-500 whitespace-nowrap overflow-hidden text-start text-white/90",
+                "text-[13px] font-semibold transition-all duration-300 whitespace-nowrap overflow-hidden text-start text-gray-800 group-hover/lang:text-gray-900",
               )}
             >
               {targetLang?.label}

@@ -43,8 +43,8 @@ export default function InventoryContainer() {
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-background">
-      {/* Active Content Panel (Takes 340px) - Co-exists with the global sidebar in the layout */}
-      <div className="hidden lg:block w-[340px] h-full border-e border-white/5 shrink-0">
+      {/* Active Content Panel (Takes 380px) - Co-exists with the global sidebar in the layout */}
+      <div className="hidden lg:block w-[380px] h-full border-e border-gray-100 shrink-0">
         <SidebarPanel />
       </div>
 

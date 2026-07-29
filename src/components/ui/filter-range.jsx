@@ -1,9 +1,11 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Slider } from "./slider";
+import { cn } from "@/lib/utils";
 
 function FilterRange({
   label,
+  icon: Icon,
   min,
   max,
   step = 1,
@@ -12,6 +14,7 @@ function FilterRange({
   unit = "",
   formatValue = (val) => val?.toLocaleString() ?? "",
   prefix = "",
+  className,
   ...props
 }) {
   const { i18n } = useTranslation();
@@ -22,23 +25,31 @@ function FilterRange({
     <div
       data-slot="filter-range"
       dir={i18n.dir()}
-      className="flex flex-col gap-2 pt-2"
+      className={cn(
+        "bg-white border border-border-light rounded-[10px] p-2.5 sm:p-3 shadow-2xs flex flex-col justify-between",
+        className,
+      )}
       {...props}
     >
-      <label className="text-[12px] sm:text-[16px] font-medium text-white/70">
-        {label}
-      </label>
-      <div className="flex justify-between items-center text-[12px] sm:text-[16px] font-bold text-white/60 px-1">
+      {label && (
+        <div className="flex items-center gap-2 mb-1 sm:mb-1.5">
+          {Icon && <Icon size={16} className="text-gray-500" />}
+          <label className="text-[14px] font-bold text-gray-800">{label}</label>
+        </div>
+      )}
+      <div className="flex justify-between items-center text-[13px] font-bold text-gray-800 mb-1 sm:mb-1.5 px-0.5">
         <span>
           {prefix}
-          {formatValue(displayMin)} {unit}
+          {formatValue(displayMin)}
+          {unit ? ` ${unit}` : ""}
         </span>
         <span>
           {prefix}
-          {formatValue(displayMax)} {unit}
+          {formatValue(displayMax)}
+          {unit ? ` ${unit}` : ""}
         </span>
       </div>
-      <div className="px-2 pt-2 pb-1">
+      <div className="px-1 py-1">
         <Slider
           min={min}
           max={max}

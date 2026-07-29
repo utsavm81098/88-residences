@@ -4,42 +4,29 @@ import { FilterGroup } from "@/components/ui/filter-group";
 import { FilterTabs } from "@/components/ui/filter-tabs";
 import { FilterRange } from "@/components/ui/filter-range";
 import { FILTER_OPTIONS } from "@/utils/constant";
+import { ICONS } from "@/assets/icons";
 import { cn } from "@/lib/utils";
 
-/**
- * Common filter components used in both InventorySidebar (Desktop)
- * and FilterOverlay (Mobile/Tablet).
- */
 const InventoryFilters = ({ filters, onFilterChange, className }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return (
-    <div className={cn("flex flex-col gap-4 w-full", className)}>
-      {/* Rooms Filter */}
-      <FilterGroup
-        label={t("bedrooms")}
-        className="flex-row items-center justify-between gap-2"
-      >
+    <div dir={i18n.dir()} className={cn("grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3.5 w-full", className)}>
+      {/* Bedrooms Filter */}
+      <FilterGroup label={t("bedrooms")} icon={ICONS.Bedrooms}>
         <FilterTabs
           value={filters.rooms}
           onValueChange={(val) => onFilterChange("rooms", val)}
           options={FILTER_OPTIONS.rooms}
-          triggerClassName="text-[10px] sm:text-[16px] p-2"
-          className="w-auto"
         />
       </FilterGroup>
 
       {/* Direction Filter */}
-      <FilterGroup
-        label={t("direction")}
-        className="flex-row items-center justify-between gap-2"
-      >
+      <FilterGroup label={t("direction")} icon={ICONS.Compass}>
         <FilterTabs
           value={filters.direction}
           onValueChange={(val) => onFilterChange("direction", val)}
           options={FILTER_OPTIONS.direction}
-          triggerClassName="text-[10px] sm:text-[16px] p-2"
-          className="w-auto"
         />
       </FilterGroup>
 
