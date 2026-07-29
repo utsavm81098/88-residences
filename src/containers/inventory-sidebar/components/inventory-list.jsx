@@ -35,7 +35,10 @@ const InventoryList = ({
   const { t, i18n } = useTranslation();
 
   return (
-    <div dir={i18n.dir()} className="flex-1 flex flex-col gap-3.5 w-full min-h-0">
+    <div
+      dir={i18n.dir()}
+      className="flex-1 flex flex-col gap-3.5 w-full min-h-0"
+    >
       {/* ── Summary Count Card ── */}
       <div className="bg-white border border-border-light rounded-[10px] p-3 px-4 shadow-2xs flex items-center gap-3 font-bold text-gray-800 text-[14px] shrink-0">
         {ICONS.Building2 ? (
@@ -50,7 +53,10 @@ const InventoryList = ({
 
       {/* ── Fixed Table Header Bar (Table, TableHeader, TableRow, TableHead) ── */}
       <div className="shrink-0 px-[3px]">
-        <Table containerClassName="overflow-hidden" className="w-full table-fixed">
+        <Table
+          containerClassName="overflow-hidden"
+          className="w-full table-fixed"
+        >
           <TableHeader className="border-none [&_tr]:border-none">
             <TableRow className="border-none hover:bg-transparent">
               <TableHead
@@ -119,9 +125,12 @@ const InventoryList = ({
       </div>
 
       {/* ── Accordion Building List (ONLY THIS DIV SCROLLS) ── */}
+      {/* scrollbar-gutter:stable reserves the scrollbar track up front. Without it,
+          expanding a panel past the viewport makes the scrollbar appear mid-animation,
+          which narrows the content box and jolts every row sideways. */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto custom-scrollbar p-0.5 min-h-0 pe-0"
+        className="flex-1 overflow-y-auto custom-scrollbar p-0.5 min-h-0 pe-0 [scrollbar-gutter:stable]"
       >
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16 text-gray-400 gap-3">
@@ -158,12 +167,21 @@ const InventoryList = ({
                 className="bg-white border border-border-light rounded-[10px] shadow-2xs overflow-hidden"
               >
                 <AccordionItem value={building} className="border-none">
-                  <AccordionTrigger className="px-4 py-3.5 hover:no-underline flex justify-between items-center text-gray-800 font-bold text-[14px] border-none bg-white transition-colors">
+                  {/* Open state tints the label + icon with --accent-yellow (#e5ba5d).
+                      The label inherits from the trigger; the icon needs the group
+                      variant to beat its own text-gray-700. */}
+                  <AccordionTrigger className="px-4 py-3.5 hover:no-underline flex justify-between items-center text-gray-800 font-bold text-[14px] border-none bg-white transition-colors data-[state=open]:text-accent-yellow">
                     <div className="flex items-center gap-2.5">
                       {ICONS.Building2 ? (
-                        <ICONS.Building2 size={18} className="text-gray-700" />
+                        <ICONS.Building2
+                          size={18}
+                          className="text-gray-700 transition-colors group-data-[state=open]/accordion-trigger:text-accent-yellow"
+                        />
                       ) : (
-                        <ICONS.Building size={18} className="text-gray-700" />
+                        <ICONS.Building
+                          size={18}
+                          className="text-gray-700 transition-colors group-data-[state=open]/accordion-trigger:text-accent-yellow"
+                        />
                       )}
                       <span>
                         {building} {t("building", "Building")}
@@ -172,7 +190,10 @@ const InventoryList = ({
                   </AccordionTrigger>
 
                   <AccordionContent className="pb-0 p-0 border-t border-border-light">
-                    <Table containerClassName="overflow-hidden" className="w-full table-fixed">
+                    <Table
+                      containerClassName="overflow-hidden"
+                      className="w-full table-fixed"
+                    >
                       <TableBody>
                         {units.map((unit, idx) => {
                           const unitId = `${building}-${unit?.apartment_number}`;
@@ -204,6 +225,8 @@ const InventoryList = ({
                           return (
                             <TableRow
                               key={unitId}
+                              // Drives the staggered reveal (see index.css)
+                              style={{ "--row-i": idx }}
                               onClick={() => onUnitSelect(unit)}
                               className={cn(
                                 "cursor-pointer transition-colors text-[14px] border-b border-border-light last:border-b-0 hover:!bg-accent-yellow/20 hover:!text-gray-900",
