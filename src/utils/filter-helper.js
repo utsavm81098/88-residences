@@ -75,29 +75,45 @@ export const filterUnits = (units, selectedFilters) => {
     }
 
     // 2. Rooms check
-    if (selectedFilters.rooms?.length > 0) {
-      const unitRoomStr = unit.bedrooms?.name?.en || unit.rooms || "";
-      const unitRoomVal = parseInt(unitRoomStr);
+    if (selectedFilters.rooms) {
+      const roomsArr = Array.isArray(selectedFilters.rooms)
+        ? selectedFilters.rooms
+        : selectedFilters.rooms !== "all"
+        ? [selectedFilters.rooms]
+        : [];
 
-      const roomMatch = selectedFilters.rooms.some((r) => {
-        if (r === "studio")
-          return String(unitRoomStr).toLowerCase().includes("studio");
-        return parseInt(r) === unitRoomVal;
-      });
-      if (!roomMatch) return false;
+      if (roomsArr.length > 0) {
+        const unitRoomStr = unit.bedrooms?.name?.en || unit.rooms || "";
+        const unitRoomVal = parseInt(unitRoomStr);
+
+        const roomMatch = roomsArr.some((r) => {
+          if (r === "studio")
+            return String(unitRoomStr).toLowerCase().includes("studio");
+          return parseInt(r) === unitRoomVal;
+        });
+        if (!roomMatch) return false;
+      }
     }
 
     // 3. Direction check
-    if (selectedFilters.direction?.length > 0) {
-      const unitDir = (
-        unit.property_direction?.name?.en ||
-        unit.direction ||
-        ""
-      ).toLowerCase();
-      const directionMatch = selectedFilters.direction.some((d) =>
-        unitDir.includes(d.toLowerCase()),
-      );
-      if (!directionMatch) return false;
+    if (selectedFilters.direction) {
+      const directionArr = Array.isArray(selectedFilters.direction)
+        ? selectedFilters.direction
+        : selectedFilters.direction !== "all"
+        ? [selectedFilters.direction]
+        : [];
+
+      if (directionArr.length > 0) {
+        const unitDir = (
+          unit.property_direction?.name?.en ||
+          unit.direction ||
+          ""
+        ).toLowerCase();
+        const directionMatch = directionArr.some((d) =>
+          unitDir.includes(d.toLowerCase()),
+        );
+        if (!directionMatch) return false;
+      }
     }
 
     // 4. Price Range check

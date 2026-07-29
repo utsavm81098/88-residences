@@ -15,10 +15,10 @@ export const useInventory = () => {
   const controlsRef = useRef();
   const modelRef = useRef();
 
-  const { bottomMenuHeight: combinedBottomHeight } = useBottomMenuHeight(120, [
+  const { bottomMenuHeight: combinedBottomHeight } = useBottomMenuHeight(
+    52,
     "bottomMenu",
-    "mobileTopBar",
-  ]);
+  );
 
   const handleResetCamera = () => {
     dispatch(resetBuilding());

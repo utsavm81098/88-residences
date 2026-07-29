@@ -68,20 +68,19 @@ export const FILTER_OPTIONS = {
   areaRange: { min: 35, max: 105 },
 };
 
-// ── Grid ───────────────────────────────────────────────────────────────────────
-export const GRID_CONFIG = {
-  position: [0, 0.01, 0],
-  args: [100, 100],
+// ── Ground ─────────────────────────────────────────────────────────────────────
+export const GROUND_CONFIG = {
+  size: 1200, // must exceed 2 * fadeDistance so the plane edge is never reachable
+  floorColor: "#859d5b",
+  cellColor: "#3f8f52",
+  sectionColor: "#276b36",
   cellSize: 2,
-  cellThickness: 0,
   sectionSize: 10,
-  sectionThickness: 0.9,
-  sectionColor: "#ffffff",
-  fadeDistance: 200,
-  fadeStrength: 1,
-  followCamera: false,
-  infiniteGrid: true,
-  renderOrder: 1,
+  cellThickness: 0,
+  sectionThickness: 1.25,
+  fadeDistance: 250,
+  lodStart: 0.12,
+  lodEnd: 0.35,
 };
 
 export const EXPOSURE = 0.0;

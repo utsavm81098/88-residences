@@ -17,18 +17,20 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
   return (
     <div
       className={cn(
-        "w-full snap-center bg-card-mobile border-2 rounded-[18px] p-3 flex flex-col gap-2 relative transition-all active:scale-[0.98] shadow-lg shrink-0",
-        isSelected ? "border-blue-500" : "border-transparent",
+        "w-full snap-center bg-white border-2 rounded-[18px] p-3 flex flex-col gap-2 relative transition-all active:scale-[0.98] shrink-0 text-gray-900",
+        isSelected
+          ? "border-accent-yellow ring-accent-yellow/30"
+          : "border-gray-200",
       )}
       dir={isRtl ? "rtl" : "ltr"}
     >
       <div className="flex justify-between items-center w-full min-h-8">
         <div className="flex items-center gap-1.5" dir="ltr">
-          <span className="text-white/60 font-bold text-[13px]">
+          <span className="text-gray-900 font-bold text-[14px]">
             {unit?.apartment_number}
           </span>
-          <span className="text-white/30 text-[13px] font-medium">-</span>
-          <span className="text-white/60 font-bold text-[13px]">
+          <span className="text-gray-300 text-[14px] font-medium">-</span>
+          <span className="text-gray-700 font-bold text-[14px]">
             {getLocalizedString(unit.bedrooms?.name, lang)}
           </span>
         </div>
@@ -61,7 +63,7 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
           </Badge>
         ) : (
           <span
-            className="text-[16px] font-semibold text-white tracking-tight leading-none"
+            className="text-[16px] font-bold text-gray-900 tracking-tight leading-none"
             dir="ltr"
           >
             {unit?.apartment_price}
@@ -72,7 +74,7 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
       {/* ── Stats Grid ── */}
       <div className="flex flex-row items-center justify-between gap-x-2">
         {unit?.property_direction?.name && (
-          <div className="flex flex-col items-start gap-0 text-white text-start">
+          <div className="flex flex-col items-start gap-0 text-gray-800 text-start">
             <div className="flex items-center gap-1">
               <span
                 className={cn(
@@ -92,7 +94,7 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
           </div>
         )}
         {unit.bedrooms && (
-          <div className="flex flex-col items-center gap-0 text-white text-center">
+          <div className="flex flex-col items-center gap-0 text-gray-800 text-center">
             <div className="flex items-center gap-1">
               <span
                 className={cn(
@@ -103,7 +105,7 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
                 <UNIT_ICONS.bedrooms {...ICON_PROPS_DEFAULT} />
               </span>
               <div
-                className="text-[14px] font-semibold leading-tight"
+                className="text-[14px] font-semibold leading-tight text-gray-900"
                 dir="ltr"
               >
                 {extractDigit(unit.bedrooms?.slug)}
@@ -117,7 +119,7 @@ const ApartmentCard = ({ unit, isSelected, selectedBuilding }) => {
           </div>
         )}
         {unit.apartment_area && (
-          <div className="flex flex-col items-end gap-0 text-white text-end">
+          <div className="flex flex-col items-end gap-0 text-gray-800 text-end">
             <div className="flex items-center gap-1">
               <span
                 className={cn(

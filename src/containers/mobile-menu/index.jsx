@@ -67,52 +67,45 @@ const MobileMenuContainer = memo(
           Children elements use pointer-events-auto.
         */}
         <div
-          className="fixed left-0 right-0 z-[1000] pointer-events-none flex flex-col justify-end items-center"
+          className="fixed left-0 right-0 z-[1000] pointer-events-none flex flex-col justify-end items-center bg-[#859d5b]"
           style={{ bottom: `${bottomMenuHeight}px` }}
         >
           {/* ── MOBILE TOP BAR (Floating Search Bar + Back Button) ── */}
-          <div
-            id="mobileTopBar"
-            className="w-full px-4 mb-3 flex items-center justify-between pointer-events-auto"
-          >
-            <Button
-              variant="ghost"
-              size="icon-lg"
-              className="text-white rounded-full transition-colors active:scale-95 border border-mobile-topbar-border bg-mobile-topbar-bg hover:bg-white/10"
-              onClick={handleBackClick}
-            >
-              <ICONS.ChevronLeft
-                size={28}
-                strokeWidth={2.5}
-                className="rtl:-scale-x-100"
-              />
-            </Button>
-            <div
-              className="flex items-center gap-3 bg-mobile-topbar-bg px-5 py-2.5 rounded-full border border-mobile-topbar-border text-white font-medium text-[15px] shadow-xl w-auto min-w-[160px] max-w-[70%] justify-center cursor-pointer active:scale-95 transition-all relative whitespace-nowrap"
-              onClick={openFilter}
-            >
-              <ICONS.Search size={18} className="text-white/60 shrink-0" />
-              {t("find_property")}
-              {activeFiltersCount > 0 && (
-                <div className="absolute -top-2 -end-2 w-6 h-6 rounded-full bg-accent-yellow flex items-center justify-center text-[11px] font-bold text-black border-2 border-sidebar">
-                  {activeFiltersCount}
-                </div>
-              )}
-            </div>
-            <div className="w-[36px]"></div>
-          </div>
 
           {/* Bottom Sheet */}
           <div
             ref={sheetRef}
-            className="w-full bg-sidebar rounded-t-3xl shadow-2xl overflow-hidden pointer-events-auto"
+            className="w-full !bg-white border-t border-gray-200 rounded-t-3xl overflow-hidden pointer-events-auto text-gray-900"
           >
-            <div className="px-4 py-2 overflow-y-auto max-h-[calc(100vh-70px)] flex flex-col gap-2 items-center overflow-hidden">
-              <div className="flex items-center justify-between relative w-full">
+            <div className="py-2 overflow-y-auto max-h-[calc(100vh-70px)] flex flex-col gap-2 items-center overflow-hidden">
+              <div className="w-full px-4 bg-white flex items-center justify-between pointer-events-auto">
+                <Button
+                  variant="ghost"
+                  size="icon-lg"
+                  className="text-gray-800 rounded-full transition-colors active:scale-95 border border-gray-200 bg-white hover:bg-gray-100 shadow-lg"
+                  onClick={handleBackClick}
+                >
+                  <ICONS.Home size={28} strokeWidth={2.5} />
+                </Button>
+                <div
+                  className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-full border border-gray-200 text-gray-800 font-semibold text-[15px] shadow-lg w-auto min-w-[160px] max-w-[70%] justify-center cursor-pointer active:scale-95 transition-all relative whitespace-nowrap hover:bg-gray-50"
+                  onClick={openFilter}
+                >
+                  <ICONS.Search size={18} className="text-gray-500 shrink-0" />
+                  <p className="leading-none">{t("find_property")}</p>
+                  {activeFiltersCount > 0 && (
+                    <div className="absolute -top-2 -end-2 w-6 h-6 rounded-full bg-accent-yellow flex items-center justify-center text-[11px] font-bold text-white border-2 border-white shadow-md">
+                      {activeFiltersCount}
+                    </div>
+                  )}
+                </div>
+                <div className="w-[36px]"></div>
+              </div>
+              <div className="px-4 flex items-center justify-between relative w-full">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-white rounded-full border-0 hover:bg-white/10 shrink-0"
+                  className="text-gray-700 rounded-full border-0 hover:bg-gray-100 hover:text-gray-900 shrink-0"
                   onClick={handlePrev}
                   disabled={buildings.length <= 1}
                 >
@@ -124,7 +117,7 @@ const MobileMenuContainer = memo(
                 </Button>
 
                 <div className="flex-1 flex items-center justify-center gap-2 min-w-0">
-                  <div className="flex items-center gap-1.5 cursor-pointer py-1 px-1 rounded-xl active:bg-white/5 transition-colors min-w-0 max-w-[180px] justify-center flex-1">
+                  <div className="flex items-center gap-1.5 cursor-pointer py-1 px-1 rounded-xl active:bg-gray-100 transition-colors min-w-0 max-w-[180px] justify-center flex-1">
                     <Tooltip
                       open={tooltipOpen}
                       onOpenChange={handleTooltipOpenChange}
@@ -132,7 +125,7 @@ const MobileMenuContainer = memo(
                       <TooltipTrigger asChild>
                         <span
                           ref={textRef}
-                          className="font-bold text-[16px] tracking-wide whitespace-nowrap truncate min-w-0"
+                          className="font-bold text-[16px] tracking-wide whitespace-nowrap truncate min-w-0 text-gray-900"
                           onClick={handleTooltipToggle}
                         >
                           {t("block_name", "Block {{name}}", {
@@ -146,7 +139,7 @@ const MobileMenuContainer = memo(
                         })}
                       </TooltipContent>
                     </Tooltip>
-                    <span className="text-white/50 text-[13px] font-medium whitespace-nowrap shrink-0">
+                    <span className="text-gray-500 text-[13px] font-medium whitespace-nowrap shrink-0">
                       ({buildingUnits?.length} {t("apt_count", "apt.")})
                     </span>
                   </div>
@@ -154,7 +147,7 @@ const MobileMenuContainer = memo(
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 px-3 gap-1.5 text-[12px] uppercase font-bold rounded-full border border-accent-yellow/30 text-accent-yellow bg-accent-yellow/5 hover:!bg-accent-yellow hover:!text-white transition-all duration-300 group shadow-lg shrink-0"
+                    className="h-7 px-3 gap-1.5 text-[12px] uppercase font-bold rounded-full border border-accent-yellow/30 text-accent-yellow bg-accent-yellow/5 hover:!bg-accent-yellow hover:!text-white transition-all duration-300 group shrink-0"
                     onClick={handleEnquiryClick}
                   >
                     <ICONS.Mail
@@ -168,7 +161,7 @@ const MobileMenuContainer = memo(
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-white rounded-full border-0 hover:bg-white/10 shrink-0"
+                  className="text-gray-700 rounded-full border-0 hover:bg-gray-100 hover:text-gray-900 shrink-0"
                   onClick={handleNext}
                   disabled={buildings.length <= 1}
                 >
@@ -181,7 +174,7 @@ const MobileMenuContainer = memo(
               </div>
 
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-5 text-white/30 gap-3">
+                <div className="flex flex-col items-center justify-center py-5 text-gray-400 gap-3">
                   <ICONS.RotateCw
                     className="animate-spin"
                     size={32}
@@ -232,7 +225,7 @@ const MobileMenuContainer = memo(
                   </CarouselContent>
                 </Carousel>
               ) : (
-                <div className="w-full h-32 flex items-center justify-center text-white/50 text-sm">
+                <div className="w-full h-32 flex items-center justify-center text-gray-500 text-sm">
                   {t(
                     "no_units_available",
                     "No units currently available for this building.",

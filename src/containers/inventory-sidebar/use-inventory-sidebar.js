@@ -75,6 +75,26 @@ export const useInventorySidebar = () => {
     () => (finalData || []).reduce((acc, [_, units]) => acc + units.length, 0),
     [finalData],
   );
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (Array.isArray(filters?.rooms)) {
+      count += filters.rooms.length;
+    } else if (filters?.rooms && filters.rooms !== "all") {
+      count += 1;
+    }
+
+    if (Array.isArray(filters?.direction)) {
+      count += filters.direction.length;
+    } else if (filters?.direction && filters.direction !== "all") {
+      count += 1;
+    }
+
+    if (filters?.price?.length === 2) count += 1;
+    if (filters?.areas?.length === 2) count += 1;
+    return count || 4;
+  }, [filters]);
+
   // Auto-scroll to specific building when it changes
   useEffect(() => {
     if (
@@ -98,6 +118,7 @@ export const useInventorySidebar = () => {
     onFilterChange,
     finalData,
     totalApartments,
+    activeFilterCount,
     handleClearFilters,
     activeAccordion,
     setActiveAccordion: setActiveAccordionState,

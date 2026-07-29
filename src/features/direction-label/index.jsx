@@ -36,7 +36,7 @@ const Label = memo(function Label({
       <Text
         ref={textRef}
         fontSize={fontSize}
-        color="white"
+        color="black"
         anchorX="center"
         anchorY="middle"
         depthTest={false}
