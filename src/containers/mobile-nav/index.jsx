@@ -1,9 +1,10 @@
 import React from "react";
 import { useMobileNav } from "./use-mobile-nav";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { NAV_ITEMS_MOBILE, WEBSITE_URL } from "@/utils/constant";
+import { NAV_ITEMS_MOBILE } from "@/utils/constant";
+import { getWebsiteRedirectUrl } from "@/utils/helper";
 import logo from "@/assets/logo.png";
 import { SvgIcon } from "@/components/ui/svg-icon";
 
@@ -13,7 +14,10 @@ import { SvgIcon } from "@/components/ui/svg-icon";
 const MobileNavBar = ({ activeNavItem, onNavItemClick }) => {
   const { t } = useTranslation();
   return (
-    <div id="bottomMenu" className="flex items-center justify-between bg-sidebar px-6 pt-2 pb-[calc(8px+env(safe-area-inset-bottom))] border-t border-white/5 w-full opacity-100">
+    <div
+      id="bottomMenu"
+      className="flex items-center justify-between !bg-white px-4 pt-2 pb-[calc(8px+env(safe-area-inset-bottom))] border-t border-gray-200 w-full opacity-100"
+    >
       {NAV_ITEMS_MOBILE.map((item) => {
         const isActive = activeNavItem === item.id;
         const Icon = item.icon;
@@ -22,23 +26,26 @@ const MobileNavBar = ({ activeNavItem, onNavItemClick }) => {
           <button
             key={item.id}
             onClick={() => onNavItemClick(item.id)}
-            className="relative flex flex-col items-center justify-center gap-0.5 min-w-[60px] outline-none"
+            className={cn(
+              "relative flex flex-col items-center justify-center gap-0.5 min-w-[64px] py-1 px-3 rounded-xl outline-none cursor-pointer transition-all duration-200",
+              isActive
+                ? "bg-accent-yellow/10 text-accent-yellow"
+                : "hover:bg-gray-100 active:bg-gray-200 text-gray-800",
+            )}
           >
             <div
               className={cn(
-                "transition-colors duration-300",
-                isActive
-                  ? "text-accent-yellow"
-                  : "text-white/50 hover:text-white/80",
+                "transition-colors duration-300 flex items-center justify-center",
+                isActive ? "text-accent-yellow" : "text-gray-800",
               )}
             >
-              <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+              <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
             </div>
 
             <span
               className={cn(
-                "text-[10px] font-bold tracking-tight transition-colors duration-300 uppercase",
-                isActive ? "text-accent-yellow" : "text-white/40",
+                "text-[10px] tracking-tight transition-colors duration-300 uppercase whitespace-nowrap",
+                isActive ? "text-accent-yellow font-bold" : "text-gray-800 font-bold",
               )}
             >
               {t(item.label)}
@@ -75,19 +82,20 @@ export default function MobileNavContainer() {
           {...{
             side: "bottom",
             className:
-              "h-full top-0 w-full bg-sidebar border-none p-0 rounded-none overflow-hidden flex flex-col",
+              "h-full top-0 w-full !bg-white border-none p-0 rounded-none overflow-hidden flex flex-col !text-gray-900 [&>button]:!bg-gray-100 [&>button]:hover:!bg-gray-200 [&>button]:!text-gray-700 [&>button]:hover:!text-gray-900",
           }}
         >
           <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+          <SheetDescription className="sr-only">Mobile Navigation Menu</SheetDescription>
           <div className="flex-1 p-6 space-y-4 overflow-y-auto custom-scrollbar">
             {/* ── Logo ── */}
             <div className="flex justify-start pb-2">
               <a
-                href={WEBSITE_URL}
+                href={getWebsiteRedirectUrl(i18n)}
                 onClick={(e) => {
                   e.preventDefault();
                   setIsMoreOpen(false);
-                  window.location.href = WEBSITE_URL;
+                  window.location.href = getWebsiteRedirectUrl(i18n);
                 }}
                 className="outline-none active:scale-95 transition-transform"
               >
@@ -113,10 +121,10 @@ export default function MobileNavContainer() {
                       setIsMoreOpen(false);
                     }}
                     className={cn(
-                      "flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-300",
+                      "flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-300 cursor-pointer",
                       activeNavItem === item.id
-                        ? "bg-accent-yellow/10 border border-accent-yellow/20 text-accent-yellow"
-                        : "bg-white/5 border border-transparent text-white/60 hover:bg-white/10 hover:text-white",
+                        ? "bg-accent-yellow/10 border border-accent-yellow/30 text-accent-yellow font-bold shadow-xs"
+                        : "bg-gray-50 border border-gray-100 text-gray-700 hover:bg-gray-100 hover:text-gray-900",
                     )}
                   >
                     <div
@@ -124,7 +132,7 @@ export default function MobileNavContainer() {
                         "transition-colors",
                         activeNavItem === item.id
                           ? "text-accent-yellow"
-                          : "text-white/40",
+                          : "text-gray-400",
                       )}
                     >
                       <item.icon size={24} strokeWidth={1.5} />
@@ -138,14 +146,14 @@ export default function MobileNavContainer() {
 
             {/* ── Language Selection ── */}
             <div className="space-y-4">
-              <h3 className="text-[11px] font-bold text-white/30 uppercase tracking-[0.2em] ltr:pl-1 rtl:pr-1">
+              <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-[0.2em] ltr:pl-1 rtl:pr-1">
                 {t("select_language", "Select Language")}
               </h3>
 
               <button
                 onClick={() => onLanguageChange?.(targetLang.code)}
                 className={cn(
-                  "flex items-center w-full gap-4 px-5 py-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all duration-300 outline-none",
+                  "flex items-center w-full gap-4 px-5 py-4 rounded-2xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-all duration-300 outline-none cursor-pointer",
                 )}
               >
                 <span className="shrink-0 flex items-center justify-center w-6 h-6">
@@ -154,7 +162,7 @@ export default function MobileNavContainer() {
                     className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
                   />
                 </span>
-                <span className="text-[14px] font-bold text-white/90 flex-1 text-start">
+                <span className="text-[14px] font-bold text-gray-800 flex-1 text-start">
                   {targetLang?.label}
                 </span>
                 <div className="w-1.5 h-1.5 rounded-full bg-accent-yellow shadow-[0_0_8px_rgba(255,184,0,0.5)]" />

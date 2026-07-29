@@ -9,12 +9,14 @@ import useToggleState from "@/hooks/use-toggle-state";
 import useBottomMenuHeight from "@/hooks/use-bottom-menu-height";
 
 import { getActiveFiltersCount } from "@/utils/filter-helper";
-import { WEBSITE_URL } from "@/utils/constant";
+import { getWebsiteRedirectUrl } from "@/utils/helper";
+import { useTranslation } from "react-i18next";
 
 /**
  * Hook for the mobile bottom sheet menu.
  */
 export const useMobileMenu = ({ buildingUnits }) => {
+  const { i18n } = useTranslation();
   const sheetRef = useRef(null);
   const lastSyncedIndex = useRef(-1);
   const lastScrollHeight = useRef(0);
@@ -245,8 +247,8 @@ export const useMobileMenu = ({ buildingUnits }) => {
   );
 
   const handleBackClick = useCallback(() => {
-    window.location.href = WEBSITE_URL;
-  }, []);
+    window.location.href = getWebsiteRedirectUrl(i18n);
+  }, [i18n]);
 
   return {
     sheetRef,

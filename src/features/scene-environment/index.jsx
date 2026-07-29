@@ -3,15 +3,16 @@ import { useThree } from "@react-three/fiber";
 import {
   Environment,
   PerspectiveCamera,
-  Grid,
   PerformanceMonitor,
   AdaptiveDpr,
   AdaptiveEvents,
 } from "@react-three/drei";
 import { EffectComposer, SMAA } from "@react-three/postprocessing";
 import useSceneEnvironment from "./use-scene-environment";
-import GroundSurface from "./ground-surface";
-import { GRID_CONFIG, Preset } from "@/utils/constant";
+import SceneGround from "@/features/scene-ground";
+import GradientSky from "./gradient-sky";
+import { GROUND_CONFIG, Preset } from "@/utils/constant";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const SceneEnvironment = ({ children }) => {
   const {
@@ -32,12 +33,21 @@ const SceneEnvironment = ({ children }) => {
 
   const { gl, scene } = useThree();
   const [lightTarget, setLightTarget] = useState(null);
+  const isMobile = useIsMobile();
+
+  // Disable hardware multisampling entirely because we are using SMAA (software anti-aliasing).
+  // Combining MSAA and SMAA causes WebGL buffer conflicts (glBlitFramebuffer warning).
+  const multisampling = 0;
 
   useEffect(() => {
     gl.toneMapping = Number(toneMapping);
     gl.toneMappingExposure = Math.pow(2, exposure);
     gl.needsUpdate = true;
-  }, [gl, toneMapping, exposure]);
+
+    if (environment && environment.intensity !== undefined) {
+      scene.environmentIntensity = environment.intensity;
+    }
+  }, [gl, scene, toneMapping, exposure, environment?.intensity]);
 
   const isAssetGenerator = preset === Preset.ASSET_GENERATOR;
 
@@ -110,14 +120,24 @@ const SceneEnvironment = ({ children }) => {
         </Fragment>
       )}
 
+      {/* Reduce PMREM cubemap resolution on mobile to save ~80MB GPU memory.
+          2048 is only needed for high-quality reflections on desktop.
+          With background: false, the cubemap isn't visible — it only drives IBL lighting. */}
       <Environment
         {...environment}
+        resolution={isMobile ? 256 : (environment?.resolution ?? 2048)}
         environmentIntensity={environment?.intensity ?? 1.0}
       />
-      <GroundSurface />
-      <Grid {...GRID_CONFIG} />
+      {/* 360° Gradient Sky Dome (Zenith: #2f7fca, Horizon: #bcdcf2) */}
+      <GradientSky topColor="#2f7fca" bottomColor="#bcdcf2" />
+
+      {/* Horizon Fog matching sky horizon color */}
+      <fog attach="fog" args={["#bcdcf2", 60, 250]} />
+
+      {/* Floor fill and grid lines composited in one shader on one surface */}
+      <SceneGround {...GROUND_CONFIG} />
       {children}
-      <EffectComposer multisampling={8} stencilBuffer={false}>
+      <EffectComposer multisampling={multisampling} stencilBuffer={false}>
         <SMAA />
       </EffectComposer>
     </Fragment>

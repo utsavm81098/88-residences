@@ -36,11 +36,11 @@ const TopNavigationContainer = memo(({ onReset }) => {
         <div className="relative pointer-events-auto">
           <DropdownMenu onOpenChange={(open) => onToggleMenu(open)}>
             <DropdownMenuTrigger asChild>
-              <div className="flex items-center justify-between h-14 px-4 bg-nav/85 backdrop-blur-md border border-white/10 rounded-full shadow-2xl transition-all duration-200 hover:border-white/20 cursor-pointer px-[40px] h-[80px]">
+              <div className="flex items-center justify-between h-14 px-4 bg-white border border-border-light rounded-full shadow-xl transition-all duration-200 hover:border-gray-300 cursor-pointer px-[40px] h-[80px]">
                 <Button
                   variant="ghost"
                   size="icon-lg"
-                  className="text-white/70 hover:text-white rounded-full border-0"
+                  className="text-gray-700 hover:text-gray-900 hover:!bg-gray-100 active:!bg-gray-200 rounded-full border-0 transition-all cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     handlePrev();
@@ -58,19 +58,22 @@ const TopNavigationContainer = memo(({ onReset }) => {
 
                 <div
                   className={cn(
-                    "mx-6 text-white font-open-sans font-semibold text-2xl tracking-wider transition-colors",
+                    "mx-6 text-gray-800 font-open-sans font-semibold text-2xl tracking-wider transition-colors",
                     buildings.length > 1
-                      ? "hover:text-white/80"
+                      ? "hover:text-gray-900"
                       : "cursor-default",
                   )}
                 >
-                  <span className="text-accent-yellow">{currentBuilding?.name}</span>{" Building"}
+                  <span className="text-accent-yellow font-bold">
+                    {currentBuilding?.name}
+                  </span>
+                  <span className="text-gray-800"> Building</span>
                 </div>
 
                 <Button
                   variant="ghost"
                   size="icon-lg"
-                  className="text-white/70 hover:text-white rounded-full border-0"
+                  className="text-gray-700 hover:text-gray-900 hover:!bg-gray-100 active:!bg-gray-200 rounded-full border-0 transition-all cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleNext();
@@ -90,7 +93,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
 
             {buildings.length > 1 && (
               <DropdownMenuContent
-                className="w-[var(--radix-dropdown-menu-trigger-width)] bg-nav/95 backdrop-blur-xl border-white/10 rounded-xl shadow-2xl overflow-hidden p-0 z-[9999]"
+                className="w-[var(--radix-dropdown-menu-trigger-width)] bg-white border border-border-light rounded-2xl shadow-2xl overflow-hidden p-0 z-[9999] text-gray-900 mt-2"
                 align="center"
               >
                 <div className="max-h-[230px] overflow-y-auto custom-scrollbar py-1">
@@ -98,14 +101,15 @@ const TopNavigationContainer = memo(({ onReset }) => {
                     <DropdownMenuItem
                       key={b.name}
                       className={cn(
-                        "px-6 py-4 text-center text-white font-open-sans text-base cursor-pointer transition-colors hover:bg-white/10 focus:bg-white/10 outline-hidden block",
+                        "px-6 py-4 text-center font-open-sans text-base cursor-pointer transition-colors hover:bg-gray-100 focus:bg-gray-100 focus:text-gray-900 outline-none block border-b border-gray-100 last:border-b-0",
                         currentBuilding.name === b.name
-                          ? "bg-white/5 font-bold"
-                          : "font-medium",
+                          ? "bg-accent-yellow/10 font-bold"
+                          : "font-medium text-gray-700",
                       )}
                       onClick={() => handleSelect(idx)}
                     >
-                      <span className="text-accent-yellow">{b.name}</span>{" Building"}
+                      <span className="text-accent-yellow font-bold">{b.name}</span>
+                      <span className="text-gray-800"> Building</span>
                     </DropdownMenuItem>
                   ))}
                 </div>
@@ -120,7 +124,7 @@ const TopNavigationContainer = memo(({ onReset }) => {
           <Button
             variant="ghost"
             size="icon-xl"
-            className="bg-nav/85 backdrop-blur-md border border-white/10 rounded-full text-white shadow-2xl pointer-events-auto hover:border-white/20 size-[80px]"
+            className="hidden bg-nav/85 backdrop-blur-md border border-white/10 rounded-full text-white shadow-2xl pointer-events-auto hover:border-white/20 size-[80px]"
             onClick={onReset}
           >
             <ICONS.RotateCw size={30} strokeWidth={2} className="size-[30px]" />

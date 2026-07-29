@@ -69,6 +69,7 @@ const router = createBrowserRouter([
   {
     path: "/:lang",
     element: <LangGuard />,
+    HydrateFallback: () => null,
     loader: async ({ params }) => {
       // Sync i18next state with the URL parameter before rendering
       const lang = params.lang?.replace(`${DASHBOARD_PREFIX}-`, "");

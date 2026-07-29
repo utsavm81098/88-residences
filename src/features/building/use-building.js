@@ -204,6 +204,7 @@ export const useBuilding = ({ controlsRef }) => {
     previousBuildingIndex,
     isTransitioning,
   } = useSelector((state) => state.building);
+  const isMobile = useIsMobile();
   const groupRefs = useRef({});
   const [warmedUp, setWarmedUp] = useState(false);
   const frames = useRef(0);
@@ -215,11 +216,17 @@ export const useBuilding = ({ controlsRef }) => {
     if (frames.current >= WARMUP_FRAMES) setWarmedUp(true);
   });
   useEffect(() => {
-    if (warmedUp) {
-      preloadBackgroundModels();
-      setMountBackground(true);
-    }
-  }, [warmedUp]);
+    if (!warmedUp) return;
+
+    // Always start preloading model files in the background (network fetch + parse).
+    // This is safe — files are cached by useGLTF and don't hit GPU until mounted.
+    preloadBackgroundModels();
+
+    // On mobile: keep mountBackground false to prevent loading inactive buildings into the scene graph.
+    // This saves maximum GPU memory. They will only mount/render on-demand when active.
+    // On desktop: mount immediately for instant transitions.
+    setMountBackground(!isMobile);
+  }, [warmedUp, isMobile]);
   return {
     currentBuilding,
     currentBuildingIndex,

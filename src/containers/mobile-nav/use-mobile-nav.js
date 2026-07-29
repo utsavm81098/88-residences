@@ -6,9 +6,9 @@ import { setActivePanel } from "@/store/slices/sidebar-slice";
 import { WEB_ROUTES } from "@/routes/routes";
 import { LANGUAGES } from "@/utils/languages";
 import { logger } from "@/utils/logger";
-import { NAV_ITEMS, WEBSITE_URL } from "@/utils/constant";
+import { NAV_ITEMS } from "@/utils/constant";
 import useToggleState from "@/hooks/use-toggle-state";
-import { getDashboardRoute, getLanguageSwitchPath } from "@/utils/helper";
+import { getDashboardRoute, getLanguageSwitchPath, getWebsiteRedirectUrl } from "@/utils/helper";
 
 export function useMobileNav() {
   const dispatch = useDispatch();
@@ -44,7 +44,7 @@ export function useMobileNav() {
   const onNavItemClick = useCallback(
     (id) => {
       if (id === "home") {
-        window.location.href = WEBSITE_URL;
+        window.location.href = getWebsiteRedirectUrl(i18n);
         return;
       }
       if (id === "more") {
@@ -63,7 +63,7 @@ export function useMobileNav() {
 
       dispatch(setActivePanel(id === "home" ? null : id));
     },
-    [dispatch, navigate, i18n.language, location.pathname, openMore],
+    [dispatch, navigate, i18n, location.pathname, openMore],
   );
 
   const onLanguageChange = useCallback(

@@ -126,6 +126,30 @@ const getCachedEdges = (geometry) => {
 };
 
 /**
+ * Safely disposes all materials and textures in a cloned building scene.
+ * Three.js materials/textures hold GPU-side data that persists beyond JS GC.
+ */
+const disposeBuildingScene = (scene) => {
+  if (!scene) return;
+  scene.traverse((child) => {
+    if (!child.isMesh) return;
+    const materials = Array.isArray(child.material)
+      ? child.material
+      : [child.material];
+    materials.forEach((mat) => {
+      // Dispose all texture maps held by the material
+      Object.keys(mat).forEach((key) => {
+        const value = mat[key];
+        if (value && value.isTexture) {
+          value.dispose();
+        }
+      });
+      mat.dispose();
+    });
+  });
+};
+
+/**
  * Safely disposes all materials in a given glassScene.
  * Kills active GSAP tweens on materials to prevent memory leak references.
  */
@@ -192,14 +216,25 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
   const building = useGLTF(config.model, true, true, configureLoader);
   const glassHitbox = useGLTF(config.hitbox, true, true, configureLoader);
 
-  const unitMap = useMemo(() => {
+  const buildingUnits = useMemo(() => {
     const buildingData = inventory?.[config.name];
-    const buildingUnits = Array.isArray(buildingData) ? buildingData : [];
+    return Array.isArray(buildingData) ? buildingData : [];
+  }, [inventory, config.name]);
+
+  // Stable serialized key: only changes when the actual unit data changes,
+  // not on every Redux selector re-render. Prevents explosive glassScene re-builds.
+  const inventoryKey = useMemo(() => {
+    return buildingUnits
+      .map((u) => `${u.title}:${u.apartment_sold ? 1 : 0}`)
+      .join("|");
+  }, [buildingUnits]);
+
+  const unitMap = useMemo(() => {
     return buildingUnits.reduce((acc, unit) => {
       acc[unit.title] = unit;
       return acc;
     }, {});
-  }, [inventory, config.name]);
+  }, [buildingUnits]);
 
   const buildingScene = useMemo(() => {
     const buildingClone = building.scene.clone();
@@ -263,8 +298,28 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
       }
     });
     return buildingClone;
-  }, [building, currentBuilding]);
+  }, [building]);
 
+  // Dispose old buildingScene GPU resources when the scene reference changes or unmounts
+  const prevBuildingSceneRef = useRef(null);
+  useEffect(() => {
+    // If the scene reference changed, dispose the previous one
+    if (prevBuildingSceneRef.current && prevBuildingSceneRef.current !== buildingScene) {
+      disposeBuildingScene(prevBuildingSceneRef.current);
+    }
+    prevBuildingSceneRef.current = buildingScene;
+
+    return () => {
+      // On unmount, dispose the current scene
+      if (prevBuildingSceneRef.current) {
+        disposeBuildingScene(prevBuildingSceneRef.current);
+        prevBuildingSceneRef.current = null;
+      }
+    };
+  }, [buildingScene]);
+
+  // Use inventoryKey (stable string) instead of unitMap (new object every render)
+  // to prevent glassScene from being rebuilt on every Redux state change.
   const glassScene = useMemo(() => {
     const scene = glassHitbox.scene.clone();
     scene.traverse((child) => {
@@ -324,7 +379,8 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
       edgeLines.updateMatrix();
     });
     return scene;
-  }, [glassHitbox, unitMap]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [glassHitbox, inventoryKey]);
 
   const animateMesh = useCallback((mesh, type = "base") => {
     const {
@@ -504,13 +560,28 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
     [unitMap, dispatch, isMobile],
   );
 
-  const latestGlassSceneRef = useRef(glassScene);
-  latestGlassSceneRef.current = glassScene;
-  const hasNewEffectRunRef = useRef(false);
+  // Track glassScene changes for reliable disposal
+  const prevGlassSceneRef = useRef(null);
 
+  // Dedicated disposal effect: runs ONLY when glassScene reference changes or on unmount.
+  // Separated from the selection effect to prevent false disposal on selection changes.
   useEffect(() => {
-    hasNewEffectRunRef.current = true;
+    if (prevGlassSceneRef.current && prevGlassSceneRef.current !== glassScene) {
+      disposeSceneMaterials(prevGlassSceneRef.current);
+    }
+    prevGlassSceneRef.current = glassScene;
 
+    return () => {
+      // On unmount, dispose the current glassScene
+      if (prevGlassSceneRef.current) {
+        disposeSceneMaterials(prevGlassSceneRef.current);
+        prevGlassSceneRef.current = null;
+      }
+    };
+  }, [glassScene]);
+
+  // Selection highlight and camera focus effect — no disposal logic here
+  useEffect(() => {
     // Only update highlights and camera focus for the active building
     // Inactive buildings don't need to waste cycles on selection changes
     if (isTransitioning || !isActiveBuilding) return;
@@ -530,24 +601,10 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
     if (focusObj) focusCameraOnMesh(focusObj);
 
     return () => {
-      hasNewEffectRunRef.current = false;
-
       if (rotationTween.current) {
         rotationTween.current.kill();
         rotationTween.current = null;
       }
-
-      // Dispose materials only when the component is unmounting or glassScene changes.
-      // If selection changes, hasNewEffectRunRef is set to true synchronously in the next effect.
-      const sceneToDispose = glassScene;
-      setTimeout(() => {
-        if (
-          !hasNewEffectRunRef.current ||
-          latestGlassSceneRef.current !== sceneToDispose
-        ) {
-          disposeSceneMaterials(sceneToDispose);
-        }
-      }, 0);
     };
   }, [
     activeSelection,

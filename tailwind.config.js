@@ -10,6 +10,7 @@ export default {
       colors: {
         dark: "rgba(45, 45, 45, 0.85)",
         border: "hsl(var(--border))",
+        "border-light": "hsl(var(--border-light))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",

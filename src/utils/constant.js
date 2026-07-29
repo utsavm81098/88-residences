@@ -68,21 +68,19 @@ export const FILTER_OPTIONS = {
   areaRange: { min: 35, max: 105 },
 };
 
-// ── Grid ───────────────────────────────────────────────────────────────────────
-export const GRID_CONFIG = {
-  position: [0, 0.02, 0],
-  args: [100, 100],
+// ── Ground ─────────────────────────────────────────────────────────────────────
+export const GROUND_CONFIG = {
+  size: 1200, // must exceed 2 * fadeDistance so the plane edge is never reachable
+  floorColor: "#859d5b",
+  cellColor: "#3f8f52",
+  sectionColor: "#276b36",
   cellSize: 2,
-  cellThickness: 0.6,
-  cellColor: "#1a1510",
   sectionSize: 10,
-  sectionThickness: 0.6,
-  sectionColor: "#d4af37",
-  fadeDistance: 180,
-  fadeStrength: 1.2,
-  followCamera: false,
-  infiniteGrid: true,
-  renderOrder: 1,
+  cellThickness: 0,
+  sectionThickness: 1.25,
+  fadeDistance: 250,
+  lodStart: 0.12,
+  lodEnd: 0.35,
 };
 
 export const EXPOSURE = 0.0;
@@ -101,6 +99,8 @@ export const HOME_GL_CONFIG = {
   alpha: true,
   preserveDrawingBuffer: true,
   toneMapping: THREE.NeutralToneMapping,
+  antialias: false,
+  toneMapping: THREE.ACESFilmicToneMapping,
   toneMappingExposure: Math.pow(2, EXPOSURE),
   powerPreference: "high-performance",
   outputColorSpace: THREE.SRGBColorSpace,

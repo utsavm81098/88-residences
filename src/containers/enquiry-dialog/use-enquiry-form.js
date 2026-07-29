@@ -8,7 +8,7 @@ import { IP_CHECK_URL, ERROR_MESSAGES, GA_ID } from "@/utils/app-constants";
 import { logger } from "@/utils/logger";
 import { toast } from "sonner";
 import api from "@/services";
-import { getLocalizedString } from "@/utils/helper";
+import { getLocalizedString, pushGtmEvent } from "@/utils/helper";
 
 /**
  * Custom hook to handle enquiry form logic, state, and validation.
@@ -137,6 +137,7 @@ export const useEnquiryForm = ({ unit, selectedBuilding, setEnquiryOpen }) => {
         : await api.enquiry.postEn(formData);
 
       if (response && response.status === "mail_sent") {
+        pushGtmEvent("cf7submission", { formId, formData });
         toast.success(
           response.message ||
             t(
