@@ -80,8 +80,9 @@ export default {
         },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        // Fast start, long soft settle — reads as weighty rather than snappy.
+        "accordion-down": "accordion-down 260ms cubic-bezier(0.32, 0.72, 0, 1)",
+        "accordion-up": "accordion-up 200ms cubic-bezier(0.32, 0.72, 0, 1)",
       },
     },
   },
