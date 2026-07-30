@@ -1,9 +1,10 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { Outlet } from "react-router";
+import { Outlet, useLocation } from "react-router";
 import { fetchInventory } from "@/store/slices/building-slice";
 import SidebarNavContainer from "@/containers/sidebar-nav";
 import MobileNavContainer from "@/containers/mobile-nav";
+import { SIDEBAR_WIDTH } from "@/utils/constant";
 
 /**
  * MainLayout provides the global navigation structure for the application.
@@ -12,18 +13,34 @@ import MobileNavContainer from "@/containers/mobile-nav";
  */
 export default function MainLayout() {
   const dispatch = useDispatch();
+  const location = useLocation();
 
   useEffect(() => {
     dispatch(fetchInventory());
   }, [dispatch]);
 
+  // The rail is position:absolute, so this wrapper is the only thing reserving
+  // space for it. Its width MUST track the rail's own expanded/collapsed state
+  // (containers/sidebar-nav/use-sidebar-nav.js: isCollapsible = isInventoryPage)
+  // or the opaque rail overhangs onto the page — which is what covered 170px of
+  // the home 3D canvas.
+  const isInventoryPage = (location.pathname.replace(/\/$/, "") || "/").endsWith(
+    "/inventory",
+  );
+  const railWidth = isInventoryPage
+    ? SIDEBAR_WIDTH.collapsed
+    : SIDEBAR_WIDTH.expanded;
+
   return (
     <div className="flex h-screen w-screen bg-background text-white font-open-sans overflow-hidden relative">
-      {/* 
-          Navigation Rail Wrapper 
-          Occupies fixed space in the layout flow to prevent shifting 
+      {/*
+          Navigation Rail Wrapper
+          Occupies fixed space in the layout flow to prevent shifting
       */}
-      <div className="hidden lg:block w-[55px] h-full shrink-0 relative z-[110]">
+      <div
+        className="hidden lg:block h-full shrink-0 relative z-[110]"
+        style={{ width: `${railWidth}px` }}
+      >
         <SidebarNavContainer />
       </div>
 

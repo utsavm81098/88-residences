@@ -17,8 +17,34 @@ const BASIS_PATH = `${BASE_URL}/basis/`;
 const dracoLoader = new DRACOLoader().setDecoderPath(DRACO_PATH);
 const ktx2Loader = new KTX2Loader().setTranscoderPath(BASIS_PATH);
 
+let ktx2SupportDetected = false;
+
 /**
- * Shared loader configuration for performance
+ * KTX2Loader cannot transcode until it knows which compressed texture formats
+ * the GPU supports, and that requires a live WebGLRenderer — which does not
+ * exist at module scope. Without this call KTX2Loader throws
+ * "Missing initialization with `.detectSupport( renderer )`" the moment it meets
+ * a KHR_texture_basisu texture, so any KTX2 asset fails to load.
+ *
+ * Idempotent, so it is safe to call from a render-phase effect on every mount.
+ * Must run BEFORE the first GLB request that could contain KTX2 textures.
+ *
+ * @param {import("three").WebGLRenderer} renderer
+ */
+export const initKTX2 = (renderer) => {
+  if (ktx2SupportDetected || !renderer) return;
+  ktx2Loader.detectSupport(renderer);
+  ktx2SupportDetected = true;
+};
+
+/**
+ * Shared loader configuration for performance.
+ *
+ * DRACO handles geometry, Meshopt handles geometry + animation
+ * (EXT_meshopt_compression), KTX2/BASIS handles GPU-compressed textures
+ * (KHR_texture_basisu). Attaching a loader is free — it is only invoked when the
+ * asset actually declares the matching extension. KTX2 additionally needs
+ * initKTX2(renderer) to have run.
  */
 export const configureLoader = (loader) => {
   loader.setDRACOLoader(dracoLoader);
