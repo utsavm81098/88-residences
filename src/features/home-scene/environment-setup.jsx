@@ -1,100 +1,118 @@
-import { useEffect, useMemo } from "react";
-import { useThree, useLoader } from "@react-three/fiber";
+import { useEffect } from "react";
+import { useLoader, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { getAssetPath } from "@/utils/constant";
-import { logger } from "@/utils/logger";
+import { HOME_ENV_PATH } from "@/utils/constant";
 
-const ENV_PATH = getAssetPath("/hdr/80m-nano-green.jpg");
-
-// 80m-nano-green.jpg is an 8-bit sRGB JPEG, not a true HDR — its brightest
-// pixel caps at ~1.0 linear, far below a real sun's radiance. This multiplier
-// compensates so IBL lighting reaches a comparable brightness to a true HDR
-// source, without swapping the (deliberately real, site-photo) asset itself.
-const ENVIRONMENT_INTENSITY = 1.0;
+// Strictly target actual glass/window materials (prevents concrete/metal parts from turning green)
+const GLASS_MATERIALS_RE =
+  /glass|win_glass|material__2558|material__2556|window/i;
 
 /**
- * EnvironmentSetup — manually loads the equirectangular JPEG via
- * Three.js TextureLoader (correct sRGB handling) and converts it
- * to a PMREM cubemap for IBL reflections.
- *
- * Why not Drei's <Environment>?
- * Drei v10.7 routes ALL .jpg files through HDRJPGLoader (gainmap decoder).
- * Our file is a standard sRGB JPEG — not a gainmap. The loader falls back
- * with dummy metadata and Drei then sets colorSpace = 'srgb-linear',
- * double-linearizing the sRGB data and washing out reflections.
+ * Applies the 80m-nano-green.jpg panorama texture directly as an equirectangular environment reflection map
+ * exclusively to target window/glass/balcony/railing nodes.
+ * Non-matching nodes have envMap set to null so they do not receive environment reflections.
  */
-const EnvironmentSetup = ({ environmentRotation = [0, 0, 0] }) => {
-  const gl = useThree((state) => state.gl);
+const EnvironmentSetup = ({ environmentRotation }) => {
   const scene = useThree((state) => state.scene);
+  const gl = useThree((state) => state.gl);
+  const invalidate = useThree((state) => state.invalidate);
+  const panorama = useLoader(THREE.TextureLoader, HOME_ENV_PATH);
 
-  // Load the equirectangular JPEG via standard TextureLoader (sRGB-correct)
-  const texture = useLoader(THREE.TextureLoader, ENV_PATH);
+  useEffect(() => {
+    if (!panorama) return undefined;
 
-  // Generate the PMREM cubemap once the texture is available
-  const envMap = useMemo(() => {
-    if (!texture) return null;
+    panorama.mapping = THREE.EquirectangularReflectionMapping;
+    panorama.colorSpace = THREE.SRGBColorSpace;
+    panorama.needsUpdate = true;
 
-    // Mark as equirectangular so PMREMGenerator processes it correctly
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-    // TextureLoader already defaults to SRGBColorSpace for images — ensure it
-    texture.colorSpace = THREE.SRGBColorSpace;
-
-    // Generate prefiltered PMREM from equirectangular source
     const pmremGenerator = new THREE.PMREMGenerator(gl);
     pmremGenerator.compileEquirectangularShader();
-    const pmremRT = pmremGenerator.fromEquirectangular(texture);
+    const envMap = pmremGenerator.fromEquirectangular(panorama).texture;
     pmremGenerator.dispose();
 
-    logger.info("[EnvironmentSetup] PMREM generated", {
-      width: pmremRT.texture.image?.width,
-      height: pmremRT.texture.image?.height,
-      colorSpace: pmremRT.texture.colorSpace,
+    // Do NOT set scene.environment or scene.background globally.
+    scene.environment = null;
+    scene.background = null;
+
+    console.log(
+      "[EnvironmentSetup] Starting traversal. GLASS_MATERIALS_RE:",
+      GLASS_MATERIALS_RE,
+    );
+    let matchedCount = 0;
+    scene.traverse((child) => {
+      if (!child.isMesh && !child.isInstancedMesh) return;
+      const childName = child.name || "";
+      const materials = Array.isArray(child.material)
+        ? child.material
+        : [child.material];
+
+      materials.forEach((material, index) => {
+        if (!material) return;
+
+        const materialName = material.name || "";
+        const isTarget =
+          GLASS_MATERIALS_RE.test(materialName) ||
+          GLASS_MATERIALS_RE.test(childName);
+
+        if (isTarget) {
+          matchedCount++;
+          const isPbr =
+            material.isMeshStandardMaterial || material.isMeshPhysicalMaterial;
+
+          if (isPbr) {
+            // Clone the material if it hasn't been cloned yet to prevent side-effects on shared meshes
+            let targetMaterial = material;
+            if (!material.name.includes("_cloned")) {
+              targetMaterial = material.clone();
+              targetMaterial.name = material.name + "_cloned";
+              if (Array.isArray(child.material)) {
+                child.material[index] = targetMaterial;
+              } else {
+                child.material = targetMaterial;
+              }
+            }
+
+            // Configure window glass as a reflective mirror to show the green reflection clearly
+            targetMaterial.envMap = envMap;
+            targetMaterial.envMapIntensity = 1.0; // Reduced intensity
+            targetMaterial.roughness = 0.05; // Softer reflection
+            targetMaterial.metalness = 0.95; // Highly reflective
+            targetMaterial.transparent = false; // Block the blue sky dome behind it
+            targetMaterial.opacity = 1.0;
+            targetMaterial.color.set("#ffffff"); // Neutral color so reflection colors are pure
+            targetMaterial.needsUpdate = true;
+          }
+        } else {
+          if (material.envMap) {
+            material.envMap = null;
+            material.envMapIntensity = 0;
+            material.needsUpdate = true;
+          }
+        }
+      });
     });
+    console.log(
+      `[EnvironmentSetup] Traversal finished. Matched targets: ${matchedCount}`,
+    );
 
-    return pmremRT.texture;
-  }, [texture, gl]);
+    invalidate();
 
-  // Apply environment map and background to the scene
-  useEffect(() => {
-    if (!envMap) return;
-
-    const prevEnv = scene.environment;
-    const prevBg = scene.background;
-    const prevBgBlurriness = scene.backgroundBlurriness;
-    const prevEnvIntensity = scene.environmentIntensity;
-    const prevEnvRotation = scene.environmentRotation?.clone();
-    const prevBgRotation = scene.backgroundRotation?.clone();
-
-    // Set environment (for IBL reflections on materials)
-    scene.environment = envMap;
-    scene.environmentIntensity = ENVIRONMENT_INTENSITY;
-    scene.environmentRotation = new THREE.Euler(...environmentRotation);
-
-    // Set background (visible panorama behind the scene)
-    // NOTE: backgroundRotation is a separate Euler from environmentRotation in
-    // three.js — background and environment are otherwise the same texture,
-    // so without this they render 90° out of sync with each other (the sky
-    // behind the model vs. what glass/metal reflects would not match).
-    scene.background = envMap;
-    scene.backgroundBlurriness = 0;
-    scene.backgroundRotation = new THREE.Euler(...environmentRotation);
-
-    logger.info("[EnvironmentSetup] Scene environment applied");
-
-    // Cleanup: restore previous state on unmount
     return () => {
-      scene.environment = prevEnv;
-      scene.background = prevBg;
-      scene.backgroundBlurriness = prevBgBlurriness;
-      scene.environmentIntensity = prevEnvIntensity;
-      if (prevEnvRotation) {
-        scene.environmentRotation = prevEnvRotation;
-      }
-      if (prevBgRotation) {
-        scene.backgroundRotation = prevBgRotation;
-      }
+      scene.traverse((child) => {
+        if (!child.isMesh && !child.isInstancedMesh) return;
+        const materials = Array.isArray(child.material)
+          ? child.material
+          : [child.material];
+        materials.forEach((m) => {
+          if (m?.envMap === envMap) {
+            m.envMap = null;
+            m.needsUpdate = true;
+          }
+        });
+      });
+      envMap.dispose();
     };
-  }, [envMap, scene, environmentRotation]);
+  }, [environmentRotation, gl, invalidate, panorama, scene]);
 
   return null;
 };

@@ -1,10 +1,11 @@
-import React from "react";
 import HomeContainer from "@/containers/home";
 
 /**
  * HomePage Component.
- * Acts as a pure entry point to render the HomeContainer.
+ * Pure entry point — renders the 3D masterplan container.
  */
-export default function HomePage() {
+const HomePage = () => {
   return <HomeContainer />;
-}
+};
+
+export default HomePage;

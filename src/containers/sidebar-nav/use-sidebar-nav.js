@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { setActivePanel } from "@/store/slices/sidebar-slice";
 import { logger } from "@/utils/logger";
 import { LANGUAGES } from "@/utils/languages";
-import { getDashboardRoute, getLanguageSwitchPath, getWebsiteRedirectUrl } from "@/utils/helper";
+import { getDashboardRoute, getLanguageSwitchPath } from "@/utils/helper";
 
 export function useSidebarNav() {
   const dispatch = useDispatch();
@@ -15,10 +15,16 @@ export function useSidebarNav() {
 
   const activePanel = useSelector((state) => state.sidebar.activePanel);
   const [isHovered, setIsHovered] = useState(false);
-  // Nav is collapsible only on the inventory page
   const normalizedPath = location.pathname.replace(/\/$/, "") || "/";
   const langPath = `/${i18n.language}`;
   const isInventoryPage = normalizedPath.endsWith("/inventory");
+
+  // Home: never collapses, always w-[225px].
+  // Inventory: w-[55px], expands to w-[225px] on hover, collapses on leave.
+  //
+  // The aside is position:absolute (sidebar-nav/index.jsx:31), so it does NOT
+  // reserve its own space — main-layout must reserve a matching width per route
+  // or the rail paints over the page. See SIDEBAR_WIDTH in utils/constant.js.
   const isCollapsible = isInventoryPage;
 
   // Sync Redux state with route - Automatically open inventory panel on inventory page
@@ -50,7 +56,9 @@ export function useSidebarNav() {
   const onNavItemClick = useCallback(
     (id) => {
       if (id === "home") {
-        window.location.href = getWebsiteRedirectUrl(i18n);
+        // Navigate to the internal home route (language-aware), not the external site.
+        navigate(getDashboardRoute(i18n));
+        dispatch(setActivePanel(null));
         return;
       }
       const targetPath = getDashboardRoute(i18n, id);
