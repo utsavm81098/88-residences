@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { setActivePanel } from "@/store/slices/sidebar-slice";
 import { logger } from "@/utils/logger";
 import { LANGUAGES } from "@/utils/languages";
-import { getDashboardRoute, getLanguageSwitchPath, getWebsiteRedirectUrl } from "@/utils/helper";
+import { getDashboardRoute, getLanguageSwitchPath } from "@/utils/helper";
 
 export function useSidebarNav() {
   const dispatch = useDispatch();
@@ -56,7 +56,9 @@ export function useSidebarNav() {
   const onNavItemClick = useCallback(
     (id) => {
       if (id === "home") {
-        window.location.href = getWebsiteRedirectUrl(i18n);
+        // Navigate to the internal home route (language-aware), not the external site.
+        navigate(getDashboardRoute(i18n));
+        dispatch(setActivePanel(null));
         return;
       }
       const targetPath = getDashboardRoute(i18n, id);

@@ -172,12 +172,16 @@ export const fitDistance = ({
  * they mean the same thing on a phone as on a desktop.
  */
 export const solveFraming = ({ camera, aspect }) => {
+  const isMobileOrTablet = aspect > 0 && aspect < 1.35;
+  
   const fov = fovForAspect({
     baseFov: camera.baseFov,
     baseAspect: camera.baseAspect,
-    maxFov: camera.maxFov,
+    maxFov: isMobileOrTablet && camera.mobileMaxFov ? camera.mobileMaxFov : camera.maxFov,
     aspect,
   });
+
+  const margin = isMobileOrTablet && camera.mobileMargin !== undefined ? camera.mobileMargin : camera.margin;
 
   const distance = fitDistance({
     bbox: camera.bbox,
@@ -185,7 +189,7 @@ export const solveFraming = ({ camera, aspect }) => {
     fovDeg: fov,
     aspect,
     elevationDeg: camera.elevationDeg,
-    margin: camera.margin,
+    margin,
   });
 
   return {

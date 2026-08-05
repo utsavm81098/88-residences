@@ -23,14 +23,45 @@ const ASPECT_REFRAME_THRESHOLD = 0.08;
  */
 const CameraRig = ({ controlsRef }) => {
   const camera = useThree((state) => state.camera);
+  const gl = useThree((state) => state.gl);
   const size = useThree((state) => state.size);
 
+  // Verified this is NOT set automatically: the canvas's computed touch-action
+  // is "auto" by default, so a one-finger drag meant to orbit the camera would
+  // also trigger the browser's native touch-scroll/pull-to-refresh at the same
+  // time. Set explicitly rather than assumed.
+  useEffect(() => {
+    gl.domElement.style.touchAction = "none";
+  }, [gl]);
+
   const aspect = size.height > 0 ? size.width / size.height : 0;
+
+  // Mobile and tablet viewports (aspect < 1.35) get a wider zoom range so users can
+  // pinch-zoom in to individual buildings or pull back to see the full site.
+  const isMobileOrTablet = aspect > 0 && aspect < 1.35;
 
   const framing = useMemo(
     () => (aspect > 0 ? solveFraming({ camera: HOME_CAMERA, aspect }) : null),
     [aspect],
   );
+
+  // Resolve zoom limits: mobile/tablet use looser bounds for richer zoom UX.
+  const zoomLimits = useMemo(() => {
+    if (!framing) return { minDistance: undefined, maxDistance: undefined };
+    if (isMobileOrTablet) {
+      return {
+        minDistance: framing.distance * HOME_CAMERA.mobileMinDistanceScale,
+        maxDistance: Math.min(
+          framing.distance * HOME_CAMERA.mobileMaxDistanceScale,
+          HOME_CAMERA.mobileMaxDistanceCap,
+        ),
+      };
+    }
+    return {
+      minDistance: framing.minDistance,
+      maxDistance: framing.maxDistance,
+    };
+  }, [framing, isMobileOrTablet]);
 
   // Aspect the camera position was last seeded from, so we can tell a genuine
   // layout change from incidental jitter.
@@ -46,8 +77,8 @@ const CameraRig = ({ controlsRef }) => {
 
     const controls = controlsRef.current;
     if (controls) {
-      controls.minDistance = framing.minDistance;
-      controls.maxDistance = framing.maxDistance;
+      controls.minDistance = zoomLimits.minDistance;
+      controls.maxDistance = zoomLimits.maxDistance;
     }
 
     const previous = seededAspect.current;
@@ -72,7 +103,7 @@ const CameraRig = ({ controlsRef }) => {
         distance: Math.round(framing.distance),
       });
     }
-  }, [framing, camera, aspect, controlsRef]);
+  }, [framing, zoomLimits, camera, aspect, controlsRef]);
 
   // Keep the camera's own aspect in sync if R3F ever lags a resize.
   useEffect(() => {
@@ -95,8 +126,13 @@ const CameraRig = ({ controlsRef }) => {
       // other directions.
       enablePan={false}
       enableZoom
-      minDistance={framing?.minDistance}
-      maxDistance={framing?.maxDistance}
+      // Explicit rather than relying on three.js's default: one finger orbits,
+      // two fingers dolly (the pan half of DOLLY_PAN is inert since panning is
+      // off above). Paired with the touch-action: none set above so this
+      // gesture never fights the page's own touch-scroll.
+      touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN }}
+      minDistance={zoomLimits.minDistance}
+      maxDistance={zoomLimits.maxDistance}
       minPolarAngle={THREE.MathUtils.degToRad(HOME_CAMERA.minPolarDeg)}
       maxPolarAngle={THREE.MathUtils.degToRad(HOME_CAMERA.maxPolarDeg)}
     />

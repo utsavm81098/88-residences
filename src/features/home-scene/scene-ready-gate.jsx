@@ -14,10 +14,8 @@ import { logger } from "@/utils/logger";
  * Preferred over drei's <Preload all />, which additionally runs a six-face
  * CubeCamera pass — six full renders of a million-triangle scene.
  *
- * IMPORTANT: This component MUST render AFTER EnvironmentSetup in the JSX tree
- * so that scene.environment is set before shaders are compiled. Otherwise the
- * compiled programs would not include the envMap sampling code and IBL
- * reflections would be invisible until a per-material needsUpdate cycle.
+ * The home scene uses a PMREM environment for subtle facade reflections. This
+ * gate warms those materials and the fixed lights before reveal.
  */
 const SceneReadyGate = ({ onReady }) => {
   const gl = useThree((state) => state.gl);
@@ -29,19 +27,6 @@ const SceneReadyGate = ({ onReady }) => {
   useEffect(() => {
     if (done.current || !gl || !scene || !camera) return;
 
-    // Wait for the environment map to be set before compiling shaders.
-    // EnvironmentSetup's useEffect runs before ours (same React commit,
-    // earlier in the sibling order), so scene.environment should already be
-    // set at this point. If it is not, the compiled programs will lack the
-    // envMap branch and IBL will not work until a material.needsUpdate cycle
-    // (which EnvironmentSetup now forces as a safety net).
-    if (!scene.environment) {
-      logger.warn(
-        "[SceneReadyGate] scene.environment is not set yet — " +
-          "compiling without IBL. EnvironmentSetup will force a recompile.",
-      );
-    }
-
     let cancelled = false;
     const started = performance.now();
 
@@ -50,8 +35,21 @@ const SceneReadyGate = ({ onReady }) => {
       done.current = true;
       logger.info(
         `[SceneReadyGate] Ready in ${Math.round(performance.now() - started)}ms`,
-        { hasEnvironment: !!scene.environment },
+        { hasEnvironment: true },
       );
+
+      // Nothing in this scene ever moves once loaded — the camera orbits, but
+      // the sun, geometry, and everything shadows fall on are all static (see
+      // the matrixWorldAutoUpdate = false comment in use-home-scene.js for the
+      // same reasoning). Without this, the renderer recomputes the full
+      // 2048x2048 shadow map from the light's perspective on EVERY frame
+      // regardless of whether the camera is the only thing moving, which is
+      // pure waste and the kind of per-frame cost that shows up as stutter
+      // while orbiting on weaker mobile GPUs. needsUpdate forces one last
+      // correct render before autoUpdate turns off for good.
+      gl.shadowMap.needsUpdate = true;
+      gl.shadowMap.autoUpdate = false;
+
       // One more frame after compilation so what we reveal is a complete image.
       invalidate();
       requestAnimationFrame(() => {
@@ -64,7 +62,10 @@ const SceneReadyGate = ({ onReady }) => {
     if (compile?.then) {
       compile.then(finish).catch((error) => {
         // Never trap the user behind the loader if warm-up fails.
-        logger.error("[SceneReadyGate] compileAsync failed, revealing anyway", error);
+        logger.error(
+          "[SceneReadyGate] compileAsync failed, revealing anyway",
+          error,
+        );
         finish();
       });
     } else {

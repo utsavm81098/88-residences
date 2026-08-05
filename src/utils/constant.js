@@ -117,7 +117,11 @@ export const CANVAS_GL_CONFIG = {
 // them; palette generation would merge materials and rename them, breaking the
 // name-based glazing lookup in use-home-scene.js). --simplify false keeps the
 // architectural edges crisp.
-export const HOME_MODEL_PATH = getAssetPath("/models/88RES-final-opt.glb");
+export const HOME_MODEL_PATH = getAssetPath(
+  "/models/88RES-06-final-production-v3.glb",
+);
+// This panorama is used for image-based lighting only. The model owns the
+// visible panorama sphere, so it is never used as a flat background.
 export const HOME_ENV_PATH = getAssetPath("/hdr/80m-nano-green.jpg");
 
 /**
@@ -166,11 +170,11 @@ export const HOME_CAMERA = {
   margin: 1.06,
 
   // The model's own PANO_Sphere dome has a radius of ~670 units, so the far
-  // plane must clear maxDistanceCap + 670 = 1290. A 1:1600 near/far ratio also
-  // keeps enough depth precision to avoid z-fighting on coplanar facades —
-  // unlike the 0.5/4000 (1:8000) used on the prototype branch.
-  near: 1,
-  far: 1600,
+  // The dome needs a 1290-unit view distance at the outer orbit limit. A 2/1400
+  // clip range is tight enough to preserve depth precision for the context
+  // layers while remaining comfortably clear of the nearest orbitable surface.
+  near: 2,
+  far: 1400,
 
   minDistanceScale: 0.6,
   maxDistanceScale: 1.6,
@@ -178,11 +182,26 @@ export const HOME_CAMERA = {
   // the sky would vanish. Binds on portrait, where the fitted distance is 484.
   maxDistanceCap: 620,
 
+  // Mobile (portrait) overrides — allow the user to zoom in close enough to
+  // inspect individual buildings and pull back far enough to see the whole site.
+  // minDistanceScale of 0.2 gives ~96 units on portrait (vs 290 default) so
+  // one pinch-zoom reaches near-building level. mobileMaxDistanceCap of 700
+  // keeps the camera just inside the PANO_Sphere dome on portrait screens.
+  mobileMinDistanceScale: 0.45,
+  mobileMaxDistanceScale: 1.1,
+  mobileMaxDistanceCap: 700,
+  mobileMargin: 0.75, // Tighter framing on mobile (crops sides to zoom closer to the center)
+  mobileMaxFov: 55, // Slightly wider FOV limit on mobile to allow getting closer without fish-eye
+
   // The site is 3.3:1 in plan, so a steep top-down angle lands its 183-unit long
   // axis on the narrower vertical screen axis and clips. 35° keeps the aerial
-  // high without becoming a map. 85° leaves 5° of headroom below the reference
-  // framing — the reference elevation of 10.03° sits at polar 79.97°, so a hard
-  // 80° limit would pin the camera to the boundary with nowhere to tilt down.
+  // high without becoming a map.
+  //
+  // maxPolar is 89, not 85. The reference opening elevation of 10.03° sits at
+  // polar 79.97°, so a limit of 85 left only 5.03° of downward travel against
+  // 44.97° upward — a 1:8.9 asymmetry that hits a hard clamp almost immediately,
+  // and with damping enabled that reads as stuck. At 89° the camera sits at
+  // y = 15.0: below the 20.4 rooflines, still clear of the ground.
   minPolarDeg: 35,
   maxPolarDeg: 85,
 };
@@ -196,26 +215,18 @@ export const HOME_CAMERA = {
  * ceiling with this model.
  */
 /**
- * Exposure for the home canvas only, in stops. 0.4 -> toneMappingExposure 1.32.
+ * Exposure for the home canvas only, in stops.
  *
  * Separate from the shared EXPOSURE so the inventory canvas is unaffected.
  *
- * Why it is not 0: 80m-nano-green.jpg is an 8-bit sRGB JPEG, not an HDR, and its
- * zenith is deep navy. The measured cosine-weighted mean radiance for an
- * upward-facing surface is only 0.262 linear — sRGB 128 decodes to 0.216, so the
- * panorama carries far less light than its pixel values suggest. No combination of
- * light intensities alone can lift the scene without over-driving the sun and
- * crushing everything else into a 6:1 contrast ratio. Exposure is the correct
- * global lever, and NeutralToneMapping then rolls off the highlights.
+ * The panorama also supplies a restrained image-based fill. A modest positive
+ * exposure keeps trees, lawn, and shaded building facades readable without
+ * flattening the sunlit architecture.
  */
-export const HOME_EXPOSURE = 0.4;
+export const HOME_EXPOSURE = 0.25;
 
 export const getHomeGlConfig = (isMobile) => ({
   antialias: !isMobile,
-  // Neutral rolls off highlights rather than clipping them, which keeps bright
-  // sky reflections from blowing out to flat white. It does compress the specular
-  // peak, so reflection strength is bought back through material roughness and
-  // envMapIntensity (see use-home-scene.js) rather than through tone mapping.
   toneMapping: THREE.NeutralToneMapping,
   toneMappingExposure: Math.pow(2, HOME_EXPOSURE),
   powerPreference: "high-performance",

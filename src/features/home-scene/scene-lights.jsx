@@ -1,70 +1,39 @@
-import { useMemo } from "react";
-import { Fragment } from "react";
+import { Fragment, useMemo, useEffect } from "react";
 import * as THREE from "three";
+import { useThree } from "@react-three/fiber";
+import { HOME_CAMERA } from "@/utils/constant";
 
-/**
- * SceneLights — a FIXED world-space sun, plus ambient fill.
- *
- * Deliberately NOT parented to the camera. A camera-parented light sits at a
- * local offset whose length (1 unit) is negligible against the orbit radius
- * (~225 units), so its direction collapses to "from the camera toward the
- * target" — a headlight. That makes the scene's lighting a function of camera
- * orientation: pitch up and the light arrives from overhead, pitch down and it
- * arrives sideways. Every vertical drag re-lights the whole scene, which is
- * exactly the wrong behaviour for an architectural view.
- *
- * A fixed sun is stable: moving the camera changes what you see, never how the
- * site is lit. It is also consistent with the baked panorama — the sun is placed
- * at the position measured off 80m-nano-green.jpg (~182° local azimuth, ~39°
- * elevation; the elevation is independently confirmed by the sun's bright spot
- * landing at v ≈ 0.285 of the image height), so the highlight direction agrees
- * with the sky in the PANO_Sphere dome and with the IBL reflections.
- *
- * Trade-off worth knowing: because the sun is fixed, orbiting to the far side
- * puts the roofs in shade, exactly as a real building at a real time of day.
- * Reflected environment light, not the sun, carries those faces.
- */
-
-// Sun position measured off the panorama. ENVIRONMENT_ROTATION_DEG is added so the
-// light tracks the environment if that rotation is ever tuned.
-const HDR_SUN_LOCAL_AZIMUTH_DEG = 182;
-const HDR_SUN_ELEVATION_DEG = 39;
-// Far enough out to sit clear of the buildings, well inside the ~670-unit dome.
+// Measured from the gITF Viewer screenshot of 88RES-06-final-trees.glb:
+// The PANO_Sphere dome's emissive sun disc sits at world-space
+//   Azimuth   ≈ 200 °  (SSW — south-southwest)
+//   Elevation ≈ 60 °   (high afternoon sun, clearly above 45 °)
+//
+// The initial home-scene camera faces NNW (azimuth ≈ -116 °).
+// At azimuth 200 ° the sun appears centre-to-slightly-left of the view,
+// which matches its position in the screenshot.
+// If shadows still look slightly off after a hot-reload, nudge AZIMUTH ± 10 °
+// and/or ELEVATION ± 5 ° in small steps.
+const PANORAMA_SUN_AZIMUTH_DEG = 200.0;
+const PANORAMA_SUN_ELEVATION_DEG = 60.0;
 const SUN_RADIUS = 400;
 
-// --- Exposure balance -------------------------------------------------------
-// FOUR numbers control the look of this scene and they are balanced against each
-// other. Never change one alone:
-//
-//   HOME_EXPOSURE          utils/constant.js         0.4  (-> 1.32x)
-//   SUN_INTENSITY          here                      1.0 * PI
-//   AMBIENT_INTENSITY      here                      0.30
-//   ENVIRONMENT_INTENSITY  environment-setup.jsx     1.2
-//
-// Calibrated against the panorama's MEASURED linear irradiance — cosine-weighted
-// mean radiance of 0.262 facing up, 0.434 facing sideways, 0.314 facing down. The
-// upward figure is the surprising one: the panorama's zenith is deep navy, so
-// roofs and lawns receive very little image-based light and depend on the sun.
-//
-// Two earlier attempts and why they failed, so this is not re-litigated:
-//   ambient 0.40 / sun 1.0PI / env 1.0 / exp 1.0
-//     -> sunlit facade 0.83, roofs blown out from above.
-//   ambient 0.12 / sun 0.75PI / env 1.3 / exp 1.0
-//     -> whole scene too dark (grass 0.29, trees 0.12). The mistake was expecting
-//        an 8-bit sRGB JPEG to carry the fill an HDR would; it physically cannot.
-//
-// The fix was global exposure, not light intensities. These values put the
-// modelled range at roughly 0.19..0.91 with a ~5:1 contrast ratio.
-const AMBIENT_INTENSITY = 0.3;
-const AMBIENT_COLOR = "#eef2f7";
-const SUN_INTENSITY = 1.0 * Math.PI;
-const SUN_COLOR = "#fff4e6";
-
+/**
+ * Outdoor architectural lighting with a single, stable sun. The prior strong
+ * sun, hemisphere, ambient, and second directional fill added together and
+ * were clipping the model's landscape and facade detail.
+ */
 const SceneLights = ({ environmentRotationDeg = 0 }) => {
+
+  const sunTarget = useMemo(() => {
+    const target = new THREE.Object3D();
+    target.position.set(...HOME_CAMERA.target);
+    return target;
+  }, []);
+
   const sunPosition = useMemo(() => {
-    const elevation = THREE.MathUtils.degToRad(HDR_SUN_ELEVATION_DEG);
+    const elevation = THREE.MathUtils.degToRad(PANORAMA_SUN_ELEVATION_DEG);
     const azimuth = THREE.MathUtils.degToRad(
-      HDR_SUN_LOCAL_AZIMUTH_DEG + environmentRotationDeg,
+      PANORAMA_SUN_AZIMUTH_DEG + environmentRotationDeg,
     );
 
     return [
@@ -76,20 +45,41 @@ const SceneLights = ({ environmentRotationDeg = 0 }) => {
 
   return (
     <Fragment>
-      {/* Fill light. Keeps shaded facades readable without flattening them, now
-          that IBL and the sun do the directional work. */}
-      <ambientLight intensity={AMBIENT_INTENSITY} color={AMBIENT_COLOR} />
+      <primitive object={sunTarget} />
 
-      {/* Shadows are off — no shadow map is configured on this Canvas — so this
-          light exists for diffuse shaping and the specular glint on glazing and
-          the rooftop solar panels. Its default target is the world origin, which
-          is within a few units of the site centre, so the direction is correct
-          without an explicit target object. */}
+      {/* Daylight bounce opens up shaded elevations without flattening the
+          sunlit facades or bleaching vegetation. */}
+      <hemisphereLight
+        skyColor="#dbe9f8"
+        groundColor="#596653"
+        intensity={0.65}
+      />
+      <ambientLight color="#edf3f8" intensity={0.33} />
+
       <directionalLight
         position={sunPosition}
-        intensity={SUN_INTENSITY}
-        color={SUN_COLOR}
-        castShadow={false}
+        target={sunTarget}
+        color="#fff3e2"
+        intensity={2.6}
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-left={-230}
+        shadow-camera-right={230}
+        shadow-camera-top={230}
+        shadow-camera-bottom={-230}
+        shadow-camera-near={10}
+        shadow-camera-far={700}
+        shadow-bias={-0.00015}
+        shadow-normalBias={0.03}
+      />
+
+      {/* Cool, shadowless bounce light: it gently reveals the side of each
+          building that faces away from the sun, with no second shadow system. */}
+      <directionalLight
+        position={[-sunPosition[0], SUN_RADIUS * 0.55, -sunPosition[2]]}
+        target={sunTarget}
+        color="#dce9f5"
+        intensity={0.4}
       />
     </Fragment>
   );

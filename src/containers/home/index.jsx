@@ -5,11 +5,7 @@ import HomeLoader from "./home-loader";
 import HomeScene from "@/features/home-scene";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
 import { solveFraming } from "@/features/home-scene/fit-camera";
-import {
-  HOME_CAMERA,
-  getHomeDpr,
-  getHomeGlConfig,
-} from "@/utils/constant";
+import { HOME_CAMERA, getHomeDpr, getHomeGlConfig } from "@/utils/constant";
 import useWebGLRecovery from "@/hooks/use-webgl-recovery";
 import { initKTX2 } from "@/utils/preloader";
 import { logger } from "@/utils/logger";
@@ -92,7 +88,7 @@ export const HomeContainer = () => {
           name="Home 3D Canvas"
           onReset={handleResetCache}
         >
-          <Canvas dpr={dpr} gl={glConfig} camera={initialCamera}>
+          <Canvas shadows dpr={dpr} gl={glConfig} camera={initialCamera}>
             <KTX2Init />
             <WebGLRecoveryGuard onFatalLoss={handleResetCache} />
             <Suspense fallback={null}>
