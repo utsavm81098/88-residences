@@ -88,6 +88,11 @@ export const HomeContainer = () => {
           name="Home 3D Canvas"
           onReset={handleResetCache}
         >
+          {/* shadows (PCF single-sample): SceneReadyGate already sets
+              gl.shadowMap.autoUpdate = false after load so the shadow texture
+              never changes. PCFSoftShadowMap ("soft") would run 9+ shadow-map
+              lookups per shadowed fragment every frame — identical baked-shadow
+              quality at 9× the per-fragment cost. Plain PCF is correct here. */}
           <Canvas shadows dpr={dpr} gl={glConfig} camera={initialCamera}>
             <KTX2Init />
             <WebGLRecoveryGuard onFatalLoss={handleResetCache} />

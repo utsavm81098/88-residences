@@ -94,8 +94,8 @@ export const GROUND_CONFIG = {
   cellThickness: 0,
   sectionThickness: 1.25,
   fadeDistance: 250,
-  lodStart: 0.12,
-  lodEnd: 0.35,
+  lodStart: 0.05,
+  lodEnd: 0.45,
 };
 
 export const EXPOSURE = 0.0;
@@ -117,9 +117,7 @@ export const CANVAS_GL_CONFIG = {
 // them; palette generation would merge materials and rename them, breaking the
 // name-based glazing lookup in use-home-scene.js). --simplify false keeps the
 // architectural edges crisp.
-export const HOME_MODEL_PATH = getAssetPath(
-  "/models/88RES-06-final-production-v3.glb",
-);
+export const HOME_MODEL_PATH = getAssetPath("/models/88RES-04.glb");
 // This panorama is used for image-based lighting only. The model owns the
 // visible panorama sphere, so it is never used as a flat background.
 export const HOME_ENV_PATH = getAssetPath("/hdr/80m-nano-green.jpg");
@@ -159,7 +157,9 @@ export const BUILDING_BBOX = {
 export const HOME_CAMERA = {
   target: [-8.5, 11.1, -11.3],
   azimuthDeg: -115.73,
-  elevationDeg: 10.03,
+  // 22° elevation matches the reference screenshot — camera is near-horizon,
+  // building facades dominate (not rooftops), sea visible at top of frame.
+  elevationDeg: 10,
   bbox: BUILDING_BBOX,
 
   baseFov: 35,
@@ -177,53 +177,78 @@ export const HOME_CAMERA = {
   far: 1400,
 
   minDistanceScale: 0.6,
-  maxDistanceScale: 1.6,
-  // Hard ceiling: beyond this the camera would exit the PANO_Sphere dome and
-  // the sky would vanish. Binds on portrait, where the fitted distance is 484.
-  maxDistanceCap: 620,
+  maxDistanceScale: 1.1,
+  // Hard ceiling: keeps the camera well inside the PANO_Sphere dome radius.
+  // Same scale factors and cap are used on every device — mobile/tablet
+  // pinch-zoom range now matches desktop exactly.
+  maxDistanceCap: 400,
 
-  // Mobile (portrait) overrides — allow the user to zoom in close enough to
-  // inspect individual buildings and pull back far enough to see the whole site.
-  // minDistanceScale of 0.2 gives ~96 units on portrait (vs 290 default) so
-  // one pinch-zoom reaches near-building level. mobileMaxDistanceCap of 700
-  // keeps the camera just inside the PANO_Sphere dome on portrait screens.
-  mobileMinDistanceScale: 0.45,
-  mobileMaxDistanceScale: 1.1,
-  mobileMaxDistanceCap: 700,
   mobileMargin: 0.75, // Tighter framing on mobile (crops sides to zoom closer to the center)
   mobileMaxFov: 55, // Slightly wider FOV limit on mobile to allow getting closer without fish-eye
 
-  // The site is 3.3:1 in plan, so a steep top-down angle lands its 183-unit long
-  // axis on the narrower vertical screen axis and clips. 35° keeps the aerial
-  // high without becoming a map.
-  //
-  // maxPolar is 89, not 85. The reference opening elevation of 10.03° sits at
-  // polar 79.97°, so a limit of 85 left only 5.03° of downward travel against
-  // 44.97° upward — a 1:8.9 asymmetry that hits a hard clamp almost immediately,
-  // and with damping enabled that reads as stuck. At 89° the camera sits at
-  // y = 15.0: below the 20.4 rooflines, still clear of the ground.
+  // Opening at 30° elevation (polar 60°) — moderate aerial view matching the reference
+  // image. Shows rooftops + facades with a gentle diagonal (not steep top-down).
+  // The building cluster's 180-unit Z span creates less vertical screen displacement
+  // at 30° than at 45° (tan 30° = 0.577 vs tan 45° = 1.0), giving a balanced frame.
+  // Orbit range: minPolar 35° (55° elevation max) ↔ maxPolar 72° (18° min elevation).
+  // maxPolarDeg reduced from 85° → 72° to prevent the camera from dropping close
+  // enough to ground level that the surface plane dominates the view.
   minPolarDeg: 35,
-  maxPolarDeg: 85,
+  maxPolarDeg: 82,
+};
+
+/**
+ * Property/plot-boundary rectangle the orbit target is clamped to during
+ * desktop pan — matches the 4-sided red rectangle drawn around the 7
+ * buildings in the reference render. Pan is free anywhere inside this box,
+ * including close on a single building with the others partly or fully
+ * off-screen; only crossing the line itself is disallowed.
+ *
+ * minX/maxX and minY/maxY are hand-tuned from live testing — left as-is.
+ *
+ * maxZ was 92 (103.3 units from the [-8.5, 11.1, -11.3] target/centroid),
+ * visibly too far live: swiping toward building A revealed open field well
+ * past the plot line before hitting the limit (see reference screenshot with
+ * the hand-drawn red line ~2.5 building-gaps beyond A). minZ's -55 (43.7
+ * units from centroid) was NOT flagged as a problem, so maxZ is mirrored to
+ * that same 43.7-unit distance instead of picking an unrelated number —
+ * keeps Z symmetric around the centroid using the side that's already
+ * confirmed to look right. Re-verify live and adjust if still off.
+ */
+export const HOME_PAN_BOUNDARY = {
+  minX: -10,
+  maxX: -5,
+  minZ: -55,
+  maxZ: 32,
+  // Y: keeps the orbit target within the building height band (bbox
+  // 1.8..20.4), inset slightly so a tilted pan can't drag the pivot through
+  // the roofline or below grade.
+  minY: 5,
+  maxY: 16,
+
+  // Mobile/tablet overrides — the desktop box above felt too tight around the
+  // 7-building cluster on a two-finger touch pan (X in particular is only 5
+  // units wide), so every axis gets a moderate ~50-60% wider box on small
+  // viewports, centered on the same midpoints as the desktop box. X gets the
+  // biggest relative increase since it was the tightest and the one flagged
+  // live; Z/Y are widened proportionally less since they already had more
+  // room. Re-verify live and adjust if still off.
+  mobileMinX: -11.5,
+  mobileMaxX: -3.5,
+  mobileMinZ: -65,
+  mobileMaxZ: 42,
+  mobileMinY: 3,
+  mobileMaxY: 18,
 };
 
 /**
  * Renderer config for the home canvas.
  *
- * MSAA is safe here: unlike the inventory canvas there is no EffectComposer, so
- * there is no MSAA/SMAA buffer conflict. It is disabled on small screens because
- * a multisampled backbuffer is pure cost on a device already near its memory
- * ceiling with this model.
+ * Hardware MSAA (antialias: !isMobile) provides crisp native anti-aliasing for architectural
+ * geometry and works with Alpha-to-Coverage to anti-alias foliage cutout edges natively without
+ * any post-processing blur.
  */
-/**
- * Exposure for the home canvas only, in stops.
- *
- * Separate from the shared EXPOSURE so the inventory canvas is unaffected.
- *
- * The panorama also supplies a restrained image-based fill. A modest positive
- * exposure keeps trees, lawn, and shaded building facades readable without
- * flattening the sunlit architecture.
- */
-export const HOME_EXPOSURE = 0.25;
+export const HOME_EXPOSURE = 0.0;
 
 export const getHomeGlConfig = (isMobile) => ({
   antialias: !isMobile,

@@ -5,28 +5,20 @@ import * as THREE from "three";
 import useBuildingMarkers from "./use-building-markers";
 
 // Extra pixels a blocked marker must clear before it is allowed to reappear.
-// This dead-band prevents markers sitting exactly at the collision edge from
-// oscillating blocked↔visible on consecutive frames (the blink/flicker bug).
-const HYSTERESIS_PX = 12;
+const HYSTERESIS_PX = 8;
 
-// Matches the tri-tier breakpoints already used by the inventory scene's
-// useResponsiveConfig (768/1024), so "mobile"/"tablet"/"desktop" mean the same
-// thing everywhere in the app. Below `lg` (1024) the sidebar rail also gives
-// way to the bottom nav, so the canvas itself is narrower here too — a 96px
-// icon that reads fine on desktop is oversized and crowds 7 markers together
-// on a 375px phone. Sizes stay well above the 44px touch-target minimum.
 const MARKER_TIERS = {
   mobile: {
     iconClass: "h-12 w-12 min-h-[48px] min-w-[48px]",
-    collisionDistance: 12,
+    collisionDistance: 10,
   },
   tablet: {
-    iconClass: "h-16 w-16 min-h-[64px] min-w-[64px]",
-    collisionDistance: 16,
+    iconClass: "h-14 w-14 min-h-[56px] min-w-[56px]",
+    collisionDistance: 12,
   },
   desktop: {
-    iconClass: "h-24 w-24 min-h-[96px] min-w-[96px]",
-    collisionDistance: 72,
+    iconClass: "h-20 w-20 min-h-[80px] min-w-[80px]",
+    collisionDistance: 15,
   },
 };
 
@@ -37,27 +29,43 @@ const getMarkerTier = (width) => {
 };
 
 const markerWorldPosition = new THREE.Vector3();
+const _candidatesPool = Array.from({ length: 16 }, () => ({
+  name: "",
+  x: 0,
+  y: 0,
+  distance: 0,
+}));
 
 /**
  * Hides the farther marker when two marker icons overlap in screen space.
- * This resolves the DOM-to-DOM case, where a farther HTML marker would
- * otherwise draw on top of the nearer one.
+ * Also calculates 3D camera distance zIndex so nearer markers ALWAYS render
+ * in front of farther markers.
  */
 const useMarkerOverlapVisibility = (markers, collisionDistance) => {
   const [blockedMarkerNames, setBlockedMarkerNames] = useState(() => new Set());
-  const blockedMarkerKeyRef = useRef("");
-  // Mirrors the current blocked set so useFrame can read it without causing
-  // re-renders — the ref is always in sync with the state value.
+  const [zIndexMap, setZIndexMap] = useState(() => ({}));
   const blockedSetRef = useRef(new Set());
+  const lastBlockedListRef = useRef([]);
 
   useFrame(({ camera, size }) => {
-    const candidates = [];
+    let candidateCount = 0;
+    let zIndexChanged = false;
+    const newZIndexMap = {};
 
-    for (const { name, position } of markers) {
+    for (let i = 0; i < markers.length; i++) {
+      const { name, position } = markers[i];
       const [x, y, z] = position;
       const dx = x - camera.position.x;
       const dy = y - camera.position.y;
       const dz = z - camera.position.z;
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+      // Nearer markers get a higher zIndex so they render on top of farther ones.
+      const zIndex = Math.max(1, 10000 - Math.round(dist * 10));
+      if (zIndexMap[name] !== zIndex) {
+        zIndexChanged = true;
+      }
+      newZIndexMap[name] = zIndex;
 
       markerWorldPosition.set(x, y, z).project(camera);
 
@@ -67,50 +75,68 @@ const useMarkerOverlapVisibility = (markers, collisionDistance) => {
         continue;
       }
 
-      candidates.push({
-        name,
-        x: (markerWorldPosition.x * size.width) / 2 + size.width / 2,
-        y: (-markerWorldPosition.y * size.height) / 2 + size.height / 2,
-        // The nearest marker owns an overlapping screen position.
-        distance: dx * dx + dy * dy + dz * dz,
-      });
+      if (candidateCount < _candidatesPool.length) {
+        const item = _candidatesPool[candidateCount++];
+        item.name = name;
+        item.x = (markerWorldPosition.x * size.width) / 2 + size.width / 2;
+        item.y = (-markerWorldPosition.y * size.height) / 2 + size.height / 2;
+        item.distance = dist;
+      }
     }
 
-    candidates.sort((a, b) => a.distance - b.distance);
+    if (zIndexChanged) {
+      setZIndexMap(newZIndexMap);
+    }
+
+    const activeCandidates = _candidatesPool.slice(0, candidateCount);
+    activeCandidates.sort((a, b) => a.distance - b.distance);
 
     const visibleCandidates = [];
     const blockedNames = [];
 
-    for (const candidate of candidates) {
-      // Hysteresis: a currently-blocked marker uses a larger exit threshold so
-      // it cannot toggle back to visible while sitting exactly at the boundary.
-      // This is the core fix for the blink: a marker that is already hidden
-      // must move HYSTERESIS_PX further away before it reappears.
+    for (let i = 0; i < activeCandidates.length; i++) {
+      const candidate = activeCandidates[i];
       const isCurrentlyBlocked = blockedSetRef.current.has(candidate.name);
       const threshold = isCurrentlyBlocked
-        ? collisionDistance + HYSTERESIS_PX // harder to exit blocked state
-        : collisionDistance;                // normal entry threshold
+        ? collisionDistance + HYSTERESIS_PX
+        : collisionDistance;
 
-      const isBlocked = visibleCandidates.some(
-        (visible) =>
-          Math.hypot(candidate.x - visible.x, candidate.y - visible.y) <
-          threshold,
-      );
+      // Anisotropic metric: vertical distance is weighted (0.75) because pin icons extend upward.
+      let isBlocked = false;
+      for (let j = 0; j < visibleCandidates.length; j++) {
+        const visible = visibleCandidates[j];
+        const dx = candidate.x - visible.x;
+        const dy = (candidate.y - visible.y) * 0.75;
+        if (Math.hypot(dx, dy) < threshold) {
+          isBlocked = true;
+          break;
+        }
+      }
 
       if (isBlocked) blockedNames.push(candidate.name);
       else visibleCandidates.push(candidate);
     }
 
-    const nextKey = blockedNames.join("|");
-    if (nextKey === blockedMarkerKeyRef.current) return;
+    const prevBlocked = lastBlockedListRef.current;
+    let blockedChanged = prevBlocked.length !== blockedNames.length;
+    if (!blockedChanged) {
+      for (let i = 0; i < blockedNames.length; i++) {
+        if (prevBlocked[i] !== blockedNames[i]) {
+          blockedChanged = true;
+          break;
+        }
+      }
+    }
 
-    blockedMarkerKeyRef.current = nextKey;
-    const nextSet = new Set(blockedNames);
-    blockedSetRef.current = nextSet;
-    setBlockedMarkerNames(nextSet);
+    if (blockedChanged) {
+      lastBlockedListRef.current = blockedNames;
+      const nextSet = new Set(blockedNames);
+      blockedSetRef.current = nextSet;
+      setBlockedMarkerNames(nextSet);
+    }
   });
 
-  return blockedMarkerNames;
+  return { blockedMarkerNames, zIndexMap };
 };
 
 const STATUS_COLORS = {
@@ -178,41 +204,30 @@ const MarkerIcon = memo(function MarkerIcon({ status, letter, className }) {
 const MarkerItem = memo(function MarkerItem({
   marker,
   isBlocked,
+  zIndex,
   iconClass,
   onSelect,
 }) {
   const { name, index, position, status } = marker;
 
-  // Keep the Html node permanently mounted — toggling between return null and
-  // a full node causes a hard DOM unmount/remount on every visibility change,
-  // which is exactly what produces the pop/blink on slow camera pans.
-  // Instead we drive visibility via CSS opacity + pointer-events so the
-  // transition is always smooth and no Three.js portal teardown occurs.
   return (
     <Html
       position={position}
       occlude={false}
       style={{
-        // Fade out smoothly rather than snapping to invisible.
         opacity: isBlocked ? 0 : 1,
         transition: "opacity 0.15s ease",
-        // Disable interaction while invisible so clicks/taps can't land on a
-        // hidden marker that is still technically in the DOM.
         pointerEvents: isBlocked ? "none" : "auto",
         userSelect: "none",
-        zIndex: isBlocked ? -1 : 1000,
+        zIndex: isBlocked ? -1 : zIndex,
       }}
-      className="z-50 [@media(hover:hover)]:hover:!z-[9999]"
+      className="[@media(hover:hover)]:hover:!z-[9999]"
     >
       <div
         onClick={() => onSelect(index, name)}
         className="group relative flex cursor-pointer flex-col items-center"
-        // The SVG's pin point is 90% down its viewBox.  Html's default origin
-        // is the supplied 3D coordinate, so moving this element up by 90%
-        // locks the pin point—not its box centre—to the measured roof centre.
         style={{ transform: "translate(-50%, -90%)" }}
       >
-        {/* SVG Ring Icon — Clean scaling, no drop shadow */}
         <div
           className="relative flex origin-bottom items-center justify-center transition-transform duration-300 scale-100 [@media(hover:hover)]:group-hover:scale-125 group-active:scale-90 group-active:duration-75 z-10"
           style={{ transformOrigin: "50% 90%" }}
@@ -232,7 +247,7 @@ export const BuildingMarkers = () => {
   const { markers, handlers } = useBuildingMarkers();
   const viewportWidth = useThree((state) => state.size.width);
   const tier = getMarkerTier(viewportWidth);
-  const blockedMarkerNames = useMarkerOverlapVisibility(
+  const { blockedMarkerNames, zIndexMap } = useMarkerOverlapVisibility(
     markers,
     tier.collisionDistance,
   );
@@ -244,6 +259,7 @@ export const BuildingMarkers = () => {
           key={marker.name}
           marker={marker}
           isBlocked={blockedMarkerNames.has(marker.name)}
+          zIndex={zIndexMap[marker.name] || 1000}
           iconClass={tier.iconClass}
           onSelect={handlers.handleSelectBuilding}
         />
