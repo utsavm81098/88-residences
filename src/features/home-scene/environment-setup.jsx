@@ -8,6 +8,13 @@ import { HOME_ENV_PATH } from "@/utils/constant";
 const GLASS_MATERIALS_RE =
   /glass|win_glass|material__2558|material__2556|window/i;
 
+// Nodes whose names contain "GLASS" (or whose materials match the regex) but
+// are NOT building window panes — they must NOT receive the HDR mirror treatment.
+// • GLASS_Line*   → pool/water-edge geometry
+// • Obj_RAILING*  → balcony glass railing panels (get their own transparent treatment
+//                   in use-home-scene.js instead)
+const GLASS_NODE_EXCLUSION_RE = /^GLASS_Line|^Obj_RAILING/i;
+
 /**
  * Applies neutral RoomEnvironment IBL for overall scene lighting (so shadows and foliage
  * stay bright and natural), while specifically applying the 80m-nano-green.jpg HDR panorama
@@ -54,9 +61,14 @@ const EnvironmentSetup = () => {
         if (!material) return;
 
         const materialName = material.name || "";
+        // Exclude GLASS_Line* nodes (pool/water edge geometry) — they match the
+        // broad child-name regex but must NOT receive the HDR panorama treatment.
+        const isExcludedGlassNode = GLASS_NODE_EXCLUSION_RE.test(childName);
+
         const isGlass =
-          GLASS_MATERIALS_RE.test(materialName) ||
-          GLASS_MATERIALS_RE.test(childName);
+          !isExcludedGlassNode &&
+          (GLASS_MATERIALS_RE.test(materialName) ||
+            GLASS_MATERIALS_RE.test(childName));
 
         if (isGlass) {
           const isPbr =

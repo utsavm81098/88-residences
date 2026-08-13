@@ -117,7 +117,7 @@ export const CANVAS_GL_CONFIG = {
 // them; palette generation would merge materials and rename them, breaking the
 // name-based glazing lookup in use-home-scene.js). --simplify false keeps the
 // architectural edges crisp.
-export const HOME_MODEL_PATH = getAssetPath("/models/88RES-04.glb");
+export const HOME_MODEL_PATH = getAssetPath("/models/88RES-06_05-2.glb");
 // This panorama is used for image-based lighting only. The model owns the
 // visible panorama sphere, so it is never used as a flat background.
 export const HOME_ENV_PATH = getAssetPath("/hdr/80m-nano-green.jpg");
@@ -258,9 +258,27 @@ export const getHomeGlConfig = (isMobile) => ({
   outputColorSpace: THREE.SRGBColorSpace,
 });
 
+// Desktop supersampling floor. Clamping dpr to the display's OWN
+// devicePixelRatio (the previous behavior — Math.min(dpr, 2)) means a 1x
+// display gets ZERO supersampling: the canvas renders at native resolution
+// with nothing to downscale, so alpha-cutout foliage edges get no benefit
+// from rendering at higher-than-native resolution. Forcing a floor of 2
+// (verified live: a WebGLRenderer.setPixelRatio(3) test measurably smoothed
+// leaf-cutout silhouettes, independent of the mip-level/MSAA work already in
+// place) means the GPU always renders 4x the pixels of a 1x display and the
+// browser downscales to native — real supersampling, not just relying on
+// whatever DPR the display happens to report. Capped at 2 rather than higher:
+// this doubles-to-quadruples GPU cost over native-DPR rendering depending on
+// the display, and desktop GPUs running this scene are assumed capable of
+// that; going further (the 3x tested live) is a much bigger jump for
+// marginal extra benefit.
+const DESKTOP_DPR_FLOOR = 2;
+
 /** Device-tiered device-pixel-ratio clamp for the home canvas. */
 export const getHomeDpr = (isMobile) =>
-  isMobile ? [1, 1.5] : [1, Math.min(window.devicePixelRatio, 2)];
+  isMobile
+    ? [1, 1.5]
+    : [DESKTOP_DPR_FLOOR, Math.max(DESKTOP_DPR_FLOOR, window.devicePixelRatio)];
 
 const typeAConfig = {
   model: getAssetPath("/models/type-a-1024.glb"),
@@ -317,6 +335,17 @@ export const BUILDING_CONFIG = [
     name: "F",
     ...typeAConfig,
     model: getAssetPath("/models/type-f-1024.glb"),
+    hitbox: getAssetPath("/models/f-hitbox.glb"),
+  },
+  {
+    name: "G",
+    ...typeAConfig,
+    model: getAssetPath("/models/type-g.glb"),
+    hitbox: getAssetPath("/models/g-hitbox.glb"),
+  },
+];
+
+export const DEFAULT_STALE_TIME = 1000 * 60 * 5;
     hitbox: getAssetPath("/models/f-hitbox.glb"),
   },
   {

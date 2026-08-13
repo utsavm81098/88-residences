@@ -1,8 +1,16 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { solveFraming } from "./fit-camera";
+import { AUTO_ROTATE_SPEED, useAutoRotateHint } from "./use-auto-rotate-hint";
 import { HOME_CAMERA, HOME_PAN_BOUNDARY } from "@/utils/constant";
 import { logger } from "@/utils/logger";
 
@@ -38,7 +46,7 @@ const BASE_PAN_SPEED = 1.5;
  * (useMemo(() => new OrbitControls(camera), [camera])), so the very first frames
  * show a different view. Creating the camera up front removes that entirely.
  */
-const CameraRig = ({ controlsRef }) => {
+const CameraRigImpl = ({ controlsRef, onHintVisibleChange }) => {
   const camera = useThree((state) => state.camera);
   const gl = useThree((state) => state.gl);
   const size = useThree((state) => state.size);
@@ -302,12 +310,26 @@ const CameraRig = ({ controlsRef }) => {
     return () => controls.removeEventListener("change", handleChange);
   }, [controlsRef, updatePanSpeed]);
 
+  // Idle auto-rotate + the one-time drag hint that precedes it — see
+  // ./use-auto-rotate-hint.js for the full timing sequence and the
+  // memory-leak audit notes. Pure side effect: talks to controlsRef
+  // imperatively and reports hint visibility via onHintVisibleChange, same
+  // as CameraRig's own onReady/isReady wiring elsewhere in this feature.
+  useAutoRotateHint({ controlsRef, onHintVisibleChange });
+
   return (
     <OrbitControls
       ref={controlsRef}
       makeDefault
       enableDamping
       dampingFactor={0.05}
+      // Ambient idle rotation — see AUTO_ROTATE_SPEED and the idle-timer
+      // effects above, which flip controls.autoRotate on/off imperatively
+      // via controlsRef (not through this prop, past mount) so the toggle
+      // is synchronous with the invalidate() call that wakes the demand
+      // render loop. Initial value only.
+      autoRotate={false}
+      autoRotateSpeed={AUTO_ROTATE_SPEED}
       target={HOME_CAMERA.target}
       // Pan is on for every device, clamped to panBoundary (the plot line —
       // wider on mobile/tablet, see panBoundary above) by clampPanTarget
@@ -335,5 +357,15 @@ const CameraRig = ({ controlsRef }) => {
     />
   );
 };
+
+// Memoized: controlsRef/onHintVisibleChange are stable references from
+// useHome (a plain useRef + useCallback([]) respectively), so this bails out
+// of re-rendering on every HomeContainer re-render its parents don't cause
+// directly (e.g. isReady/showAutoRotateHint state living alongside it) —
+// otherwise every hint show/hide would re-run this and the whole scene
+// subtree's render functions for no visual reason (autoRotate itself is set
+// imperatively via controlsRef, not a prop, so it never needed a re-render
+// in the first place).
+const CameraRig = memo(CameraRigImpl);
 
 export default CameraRig;

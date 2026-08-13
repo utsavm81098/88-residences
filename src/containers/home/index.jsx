@@ -2,6 +2,7 @@ import { Suspense, useMemo } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import useHome from "./use-home";
 import HomeLoader from "./home-loader";
+import DragHint from "./drag-hint";
 import HomeScene from "@/features/home-scene";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
 import { solveFraming } from "@/features/home-scene/fit-camera";
@@ -51,6 +52,8 @@ export const HomeContainer = () => {
     isReady,
     handleReady,
     handleResetCache,
+    showAutoRotateHint,
+    handleHintVisibleChange,
   } = useHome();
 
   const glConfig = useMemo(() => getHomeGlConfig(isMobile), [isMobile]);
@@ -97,13 +100,18 @@ export const HomeContainer = () => {
             <KTX2Init />
             <WebGLRecoveryGuard onFatalLoss={handleResetCache} />
             <Suspense fallback={null}>
-              <HomeScene controlsRef={controlsRef} onReady={handleReady} />
+              <HomeScene
+                controlsRef={controlsRef}
+                onReady={handleReady}
+                onHintVisibleChange={handleHintVisibleChange}
+              />
             </Suspense>
           </Canvas>
         </ComponentErrorBoundary>
       </div>
 
       <HomeLoader isReady={isReady} />
+      {/* <DragHint visible={showAutoRotateHint} /> */}
     </div>
   );
 };

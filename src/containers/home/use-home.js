@@ -9,6 +9,7 @@ export const useHome = () => {
   const controlsRef = useRef();
   const isMobile = useIsMobile();
   const [isReady, setIsReady] = useState(false);
+  const [showAutoRotateHint, setShowAutoRotateHint] = useState(false);
 
   // Below lg the bottom nav is `fixed bottom-0 ... z-[120]` (main-layout), so it
   // would sit on top of the canvas. Same approach the inventory container uses.
@@ -17,6 +18,16 @@ export const useHome = () => {
   const canvasHeight = isMobile ? `calc(100% - ${bottomMenuHeight}px)` : "100%";
 
   const handleReady = useCallback(() => setIsReady(true), []);
+
+  // Threaded down to CameraRig's onHintVisibleChange, exactly like onReady/
+  // handleReady above — the one-time drag hint's timers live in CameraRig
+  // (it already owns controlsRef and the auto-rotate idle timers), but the
+  // hint itself renders as a plain DOM overlay outside the Canvas, so its
+  // visibility has to bubble up to here.
+  const handleHintVisibleChange = useCallback(
+    (visible) => setShowAutoRotateHint(visible),
+    [],
+  );
 
   // Drei's useGLTF.clear() requires the path — called bare it clears nothing.
   const handleResetCache = useCallback(() => {
@@ -39,6 +50,8 @@ export const useHome = () => {
     isReady,
     handleReady,
     handleResetCache,
+    showAutoRotateHint,
+    handleHintVisibleChange,
   };
 };
 
