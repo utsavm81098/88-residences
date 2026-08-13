@@ -108,3 +108,38 @@ export const preloadBackgroundModels = () => {
   );
   otherEnvs.forEach((env) => useEnvironment.preload(env));
 };
+
+/**
+ * Recursively disposes geometries, materials, and textures for a Three.js Object3D.
+ * Useful for freeing GPU memory when clearing model caches or unmounting scenes.
+ *
+ * @param {import("three").Object3D} object
+ */
+export const disposeThreeScene = (object) => {
+  if (!object) return;
+
+  object.traverse((child) => {
+    if (child.geometry) {
+      child.geometry.dispose();
+    }
+
+    if (child.material) {
+      const materials = Array.isArray(child.material)
+        ? child.material
+        : [child.material];
+
+      materials.forEach((mat) => {
+        if (!mat) return;
+
+        // Dispose textures
+        Object.keys(mat).forEach((key) => {
+          if (mat[key] && mat[key].isTexture) {
+            mat[key].dispose();
+          }
+        });
+
+        mat.dispose();
+      });
+    }
+  });
+};

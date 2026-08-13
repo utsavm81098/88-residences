@@ -2,6 +2,7 @@ import { Suspense, useMemo } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import useHome from "./use-home";
 import HomeLoader from "./home-loader";
+import DragHint from "./drag-hint";
 import HomeScene from "@/features/home-scene";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
 import { solveFraming } from "@/features/home-scene/fit-camera";
@@ -51,6 +52,8 @@ export const HomeContainer = () => {
     isReady,
     handleReady,
     handleResetCache,
+    showAutoRotateHint,
+    handleHintVisibleChange,
   } = useHome();
 
   const glConfig = useMemo(() => getHomeGlConfig(isMobile), [isMobile]);
@@ -88,17 +91,27 @@ export const HomeContainer = () => {
           name="Home 3D Canvas"
           onReset={handleResetCache}
         >
+          {/* shadows (PCF single-sample): SceneReadyGate already sets
+              gl.shadowMap.autoUpdate = false after load so the shadow texture
+              never changes. PCFSoftShadowMap ("soft") would run 9+ shadow-map
+              lookups per shadowed fragment every frame — identical baked-shadow
+              quality at 9× the per-fragment cost. Plain PCF is correct here. */}
           <Canvas shadows dpr={dpr} gl={glConfig} camera={initialCamera}>
             <KTX2Init />
             <WebGLRecoveryGuard onFatalLoss={handleResetCache} />
             <Suspense fallback={null}>
-              <HomeScene controlsRef={controlsRef} onReady={handleReady} />
+              <HomeScene
+                controlsRef={controlsRef}
+                onReady={handleReady}
+                onHintVisibleChange={handleHintVisibleChange}
+              />
             </Suspense>
           </Canvas>
         </ComponentErrorBoundary>
       </div>
 
       <HomeLoader isReady={isReady} />
+      {/* <DragHint visible={showAutoRotateHint} /> */}
     </div>
   );
 };

@@ -42,18 +42,28 @@ export const GradientSkyMaterial = shaderMaterial(
 
 extend({ GradientSkyMaterial });
 
+// Module-level Color constants — created once at module load time.
+// Avoids allocating new THREE.Color() on every React render of GradientSky.
+const _TOP_COLOR = new THREE.Color("#2f7fca");
+const _BOTTOM_COLOR = new THREE.Color("#bcdcf2");
+
 export const GradientSky = ({
   topColor = "#2f7fca",
   bottomColor = "#bcdcf2",
   exponent = 0.6,
 }) => {
+  // Reuse the module-level Color instances; only update their RGB values if
+  // the incoming hex string changes (avoids a new allocation every render).
+  _TOP_COLOR.set(topColor);
+  _BOTTOM_COLOR.set(bottomColor);
+
   return (
     <mesh>
       <sphereGeometry args={[900, 32, 16]} />
       <gradientSkyMaterial
         key={GradientSkyMaterial.key}
-        topColor={new THREE.Color(topColor)}
-        bottomColor={new THREE.Color(bottomColor)}
+        topColor={_TOP_COLOR}
+        bottomColor={_BOTTOM_COLOR}
         exponent={exponent}
         side={THREE.BackSide}
         depthWrite={false}

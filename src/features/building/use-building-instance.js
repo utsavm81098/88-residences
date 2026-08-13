@@ -126,6 +126,24 @@ const getCachedEdges = (geometry) => {
 };
 
 /**
+ * Removes and disposes all EdgesGeometry entries that were created for meshes
+ * in this scene. Called alongside material disposal so EDGES_CACHE never
+ * accumulates stale GPU geometry across building switches or unmounts.
+ */
+const disposeCachedEdgesForScene = (scene) => {
+  if (!scene) return;
+  scene.traverse((child) => {
+    if (!child.isMesh || !child.geometry) return;
+    const uuid = child.geometry.uuid;
+    const cached = EDGES_CACHE.get(uuid);
+    if (cached) {
+      cached.dispose();
+      EDGES_CACHE.delete(uuid);
+    }
+  });
+};
+
+/**
  * Safely disposes all materials and textures in a cloned building scene.
  * Three.js materials/textures hold GPU-side data that persists beyond JS GC.
  */
@@ -152,9 +170,13 @@ const disposeBuildingScene = (scene) => {
 /**
  * Safely disposes all materials in a given glassScene.
  * Kills active GSAP tweens on materials to prevent memory leak references.
+ * Also removes cached EdgesGeometry from EDGES_CACHE and disposes them.
  */
 const disposeSceneMaterials = (scene) => {
   if (!scene) return;
+  // Dispose cached edge geometries first so the EDGES_CACHE Map does not
+  // accumulate stale GPU geometry across building switches or unmounts.
+  disposeCachedEdgesForScene(scene);
   scene.traverse((child) => {
     if (child.isMesh) {
       if (child.material) {
