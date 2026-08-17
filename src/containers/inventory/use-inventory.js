@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "react-router";
 import { resetBuilding, setBuilding } from "@/store/slices/building-slice";
@@ -12,14 +12,14 @@ import { BUILDING_CONFIG } from "@/utils/constant";
  */
 export const useInventory = () => {
   const dispatch = useDispatch();
-  const { snapHeight } = useSelector((state) => state.building);
+  const snapHeight = useSelector((state) => state.building.snapHeight);
   const isMobile = useIsMobile();
   const controlsRef = useRef();
   const modelRef = useRef();
   const [searchParams] = useSearchParams();
 
   const { bottomMenuHeight: combinedBottomHeight } = useBottomMenuHeight(
-    52,
+    0,
     "bottomMenu",
   );
 
@@ -45,20 +45,22 @@ export const useInventory = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleResetCamera = () => {
+  const handleResetCamera = useCallback(() => {
     dispatch(resetBuilding());
     if (controlsRef.current) {
       controlsRef.current.reset();
     }
-  };
+  }, [dispatch]);
 
-  const handleResetCache = () => {
+  const handleResetCache = useCallback(() => {
     useGLTF.clear();
-  };
+  }, []);
 
-  const canvasHeight = isMobile
-    ? `calc(100% - ${snapHeight + combinedBottomHeight}px)`
-    : "100%";
+  const totalBottomOffset = snapHeight + combinedBottomHeight;
+  const canvasHeight =
+    isMobile && totalBottomOffset > 0
+      ? `calc(100% - ${totalBottomOffset}px)`
+      : "100%";
 
   return {
     controlsRef,

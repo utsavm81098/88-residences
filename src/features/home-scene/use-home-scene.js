@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import { configureLoader } from "@/utils/preloader";
@@ -85,7 +85,7 @@ const WOOD_RAILING_MAT_NAME = "adskMatG__WOOD_RAILING";
 // Roughness, metalness, and color are NOT touched — they come from the GLB.
 const RAILING_NODE_RE = /^Obj_RAILING/i;
 
-export const useHomeScene = ({ onProgress } = {}) => {
+export const useHomeScene = () => {
   // Byte-level streamed fetch + manual GLTFLoader.parse(), NOT drei's
   // useGLTF/useLoader. useLoader is hardwired to THREE.DefaultLoadingManager
   // — a single instance shared by every loader in the app — whose progress
@@ -94,23 +94,19 @@ export const useHomeScene = ({ onProgress } = {}) => {
   // the download ourselves gives progress that is continuous, proportional
   // to real bytes transferred, and immune to anything else happening in the
   // app. See use-glb-loader.js for the full rationale.
-  const { scene, progress, error } = useGLBLoader(
-    HOME_MODEL_PATH,
-    configureLoader,
-  );
+  //
+  // `progress` (0-100, byte-level) is deliberately NOT consumed. The home loader is
+  // a full-screen day/night carousel with no percentage readout (see
+  // containers/home/home-loader.jsx), and bubbling the value up re-rendered
+  // HomeContainer and <Canvas> once per streamed chunk for no visual effect. The
+  // value is still returned here if a readout is ever wanted again.
+  const { scene, error } = useGLBLoader(HOME_MODEL_PATH, configureLoader);
   const gl = useThree((state) => state.gl);
   const maxAnisotropy = useMemo(
     () =>
       gl?.capabilities ? Math.min(gl.capabilities.getMaxAnisotropy(), 16) : 16,
     [gl],
   );
-
-  // Bubble byte-level progress up to the container (HomeLoader lives outside
-  // <Canvas>, so it cannot call useGLBLoader itself) — same callback-prop
-  // pattern already used for onReady/onHintVisibleChange.
-  useEffect(() => {
-    onProgress?.(progress);
-  }, [progress, onProgress]);
 
   // Rethrown during render so the existing ComponentErrorBoundary (in
   // containers/home/index.jsx) catches it exactly as it would have caught a

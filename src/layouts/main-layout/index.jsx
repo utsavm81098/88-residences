@@ -37,12 +37,12 @@ export default function MainLayout() {
           Navigation Rail Wrapper
           Occupies fixed space in the layout flow to prevent shifting
       */}
-      <div
+      {/* <div
         className="hidden lg:block h-full shrink-0 relative z-[110]"
         style={{ width: `${railWidth}px` }}
       >
         <SidebarNavContainer />
-      </div>
+      </div> */}
 
       {/* Main viewport area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
@@ -58,9 +58,9 @@ export default function MainLayout() {
       </div>
 
       {/* Mobile Bottom Navigation - Fixed to viewport to avoid layout interference */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[120] pointer-events-auto">
+      {/* <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[120] pointer-events-auto">
         <MobileNavContainer />
-      </div>
+      </div> */}
     </div>
   );
 }

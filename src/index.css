@@ -113,11 +113,116 @@
   animation-delay: calc(min(var(--row-i, 0), 8) * 25ms);
 }
 
+/* ── Hero loader crossfade ─────────────────────────────────────────────────────
+   Drives the day/night crossfade in components/ui/hero-carousel. Raw @keyframes
+   rather than a tailwind.config entry because the animation-duration and -delay are
+   computed at runtime from the slide count, and Tailwind tree-shakes any keyframes
+   no `animate-*` class references — so this could not be reached from an inline
+   `animation` shorthand if it lived in the config.
+
+   This reproduces Swiper's `effect: "fade"` with `fadeEffect.crossFade: true`, which
+   is what the reference hero runs. Verified against the live site by driving a
+   transition and reading what Swiper writes:
+
+     outgoing slide -> style.opacity "0", style.transitionDuration "500ms"
+     incoming slide -> style.opacity "1", style.transitionDuration "500ms"
+     transition-timing-function: ease
+
+   So EVERY slide animates, simultaneously and in opposite directions — outgoing
+   1->0 while incoming 0->1. That is a symmetric cross-dissolve, and it means both
+   layers pass through ~0.5 at the midpoint, letting the dark background behind them
+   show through as a brief dip. That dip is CORRECT: it is exactly what the reference
+   site does, and an earlier version that kept one layer permanently opaque (a
+   one-sided dissolve, no dip) was visibly not the same effect.
+
+   Timing is `ease`, NOT `ease-in-out` — `ease` is the browser default that Swiper
+   leaves in place, and it is measurably what the reference computes.
+
+   Settings: 500ms fade, 5000ms hold, infinite. One slide owns 5500ms, so a two-slide
+   loop is 11000ms. Percentages are derived from that loop, not hand-tuned. Given
+   FADE=500, HOLD=5000, SLIDES=2, LOOP = SLIDES * (FADE + HOLD) = 11000:
+
+     fade-out starts at  HOLD / LOOP              =  5000 / 11000 = 45.455%
+     fade-out ends at   (HOLD + FADE) / LOOP      =  5500 / 11000 = 50%
+     fade-in  starts at (2*HOLD + FADE) / LOOP    = 10500 / 11000 = 95.455%
+     fade-in  ends at                                             = 100%
+
+   Giving, for one slide:
+
+     0%       -> opacity 1    t = 0         held visible...
+     45.455%  -> opacity 1    t = 5000ms    ...for the full 5000ms hold
+     50%      -> opacity 0    t = 5500ms    500ms fade out
+     95.455%  -> opacity 0    t = 10500ms   held hidden while the other shows
+     100%     -> opacity 1    t = 11000ms   500ms fade back in, loop
+
+   Slide N is offset by a NEGATIVE animation-delay of N * 5500ms, which starts it
+   half a loop in — so while slide 0 fades out, slide 1 is fading in over the same
+   500ms. See components/ui/hero-carousel/index.jsx.
+
+   Re-run the formula above if FADE, HOLD or the slide count changes —
+   hero-carousel logs a warning when handed anything other than 2 slides. */
+/* ── Hero loader crossfade ─────────────────────────────────────────────────────
+   True 100% luminance crossfade: Day still sits solid (opacity: 1) as the base layer,
+   while Night still smoothly dissolves in and out on top with a silky-smooth
+   cubic-bezier(0.45, 0.05, 0.55, 0.95) easing curve over 1800ms.
+
+   Because the base layer is permanently solid beneath, (Night * α + Day * (1 - α))
+   always equals 1.0 at every millisecond — zero dark gap, zero dip, zero blinking. */
+@keyframes hero-night-crossfade {
+  0%,
+  32% {
+    opacity: 0;
+  }
+  50%,
+  82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+[data-slot="hero-slide"] {
+  transition: background var(--background-transition, 0.3s), border-radius var(--border-transition, 0.3s), opacity var(--overlay-transition, 0.3s);
+}
+
+/* ── Hero loader: portrait framing ─────────────────────────────────────────────
+   The day/night stills are 2500x1375 (1.818:1). object-cover on a ~0.46:1 phone
+   viewport leaves only ~25% of the image width visible, and the reference site's
+   `center` lands that band on the perimeter road. 45% holds the diagonal building
+   run and the pool instead.
+
+   Keyed on aspect ratio rather than a width breakpoint because the cause is the
+   viewport's shape: this correctly covers portrait phones, portrait tablets and a
+   narrow desktop window, and correctly excludes landscape phones. Plain CSS
+   because Tailwind has no max-aspect-ratio screen configured.
+
+   If a scale transform is ever added back to these images, transform-origin must
+   be set to the same 45% here — scale() zooms about the transform origin (default
+   50% 50% of the element box), which is independent of object-position, so a
+   centred origin would drift the zoom off the subject this framing chose.
+
+   This is the one deliberate departure from the reference site, which uses
+   `center center` at every one of its breakpoints. */
+@media (max-aspect-ratio: 1/1) {
+  [data-slot="hero-slide-image"] {
+    object-position: 45% center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-slot="accordion-content"],
   [data-slot="accordion-content"] [data-slot="table-row"],
   [data-slot="accordion-trigger-icon"] {
     animation: none !important;
     transition: none !important;
+  }
+
+  /* Hero loader: stop both infinite loops — the logo spin and the slide crossfade.
+     Freezing the crossfade leaves the base (day) still on screen, which is a
+     complete, correct loading visual rather than a degraded one. */
+  [data-slot="hero-logo"],
+  [data-slot="hero-slide"] {
+    animation: none !important;
   }
 }

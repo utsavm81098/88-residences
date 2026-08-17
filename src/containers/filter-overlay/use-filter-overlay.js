@@ -1,5 +1,6 @@
 import { useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useSearchParams } from "react-router";
 import { BUILDING_CONFIG } from "@/utils/constant";
 import {
   setBuilding,
@@ -11,6 +12,7 @@ import {
 
 export const useFilterOverlay = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { filters } = useSelector((state) => state.building);
   const allFilteredUnits = useSelector(selectFilteredInventory);
 
@@ -31,10 +33,18 @@ export const useFilterOverlay = ({ isOpen, onClose }) => {
       if (configIndex !== -1) {
         dispatch(setBuilding(configIndex));
         dispatch(clearSelectedUnit());
+        setSearchParams(
+          (prev) => {
+            const next = new URLSearchParams(prev);
+            next.set("building", buildingName);
+            return next;
+          },
+          { replace: true },
+        );
       }
     }
     onClose();
-  }, [dispatch, filters.buildings, onClose]);
+  }, [dispatch, filters.buildings, onClose, setSearchParams]);
 
   const handleClearAll = useCallback(() => {
     dispatch(clearFilters());

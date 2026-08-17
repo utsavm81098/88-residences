@@ -67,8 +67,8 @@ const MobileMenuContainer = memo(
           Children elements use pointer-events-auto.
         */}
         <div
-          className="fixed left-0 right-0 z-[1000] pointer-events-none flex flex-col justify-end items-center bg-[#859d5b]"
-          style={{ bottom: `${bottomMenuHeight}px` }}
+          className="fixed left-0 right-0 bottom-0 z-[1000] pointer-events-none flex flex-col justify-end items-center bg-[#859d5b]"
+          // style={{ bottom: `${bottomMenuHeight}px` }}
         >
           {/* ── MOBILE TOP BAR (Floating Search Bar + Back Button) ── */}
 

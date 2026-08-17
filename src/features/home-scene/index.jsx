@@ -11,8 +11,8 @@ import EnvironmentSetup from "./environment-setup";
 // baked into the supplied GLB. The dome remains the visible background.
 const ENVIRONMENT_ROTATION_DEG = 1;
 
-const HomeSceneImpl = ({ controlsRef, onReady, onProgress }) => {
-  const { scene } = useHomeScene({ onProgress });
+const HomeSceneImpl = ({ controlsRef, onReady }) => {
+  const { scene } = useHomeScene();
   const environmentRotation = useMemo(
     () => [0, THREE.MathUtils.degToRad(ENVIRONMENT_ROTATION_DEG), 0],
     [],

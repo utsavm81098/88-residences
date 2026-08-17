@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { FilterGroup } from "@/components/ui/filter-group";
 import { FilterTabs } from "@/components/ui/filter-tabs";
@@ -7,7 +7,7 @@ import { FILTER_OPTIONS } from "@/utils/constant";
 import { ICONS } from "@/assets/icons";
 import { cn } from "@/lib/utils";
 
-const InventoryFilters = ({ filters, onFilterChange, className }) => {
+const InventoryFilters = memo(({ filters, onFilterChange, className }) => {
   const { t, i18n } = useTranslation();
 
   return (
@@ -62,6 +62,6 @@ const InventoryFilters = ({ filters, onFilterChange, className }) => {
       />
     </div>
   );
-};
+});
 
 export default InventoryFilters;

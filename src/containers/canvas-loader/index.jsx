@@ -1,50 +1,95 @@
-import React from "react";
-import { Html, useProgress } from "@react-three/drei";
+import React, { useState, useEffect } from "react";
+import { useProgress } from "@react-three/drei";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 
 /**
  * CanvasLoader Container.
- * Renders a premium, dynamic loading overlay inside the 3D Canvas
- * powered by the useProgress hook from react-three/drei.
+ * DOM-level loading overlay for the 3D inventory building canvas.
+ * Perfectly matches HomeLoader aesthetics and behavior with smooth fade-out and radial glow.
  */
 export const CanvasLoader = () => {
-  const { progress } = useProgress();
   const { t, i18n } = useTranslation();
+  const [progress, setProgress] = useState(0);
+  const [isReady, setIsReady] = useState(false);
+  const [mounted, setMounted] = useState(true);
 
-  // Ensure visual indication starts at least at 8% and caps at 100%
-  const displayProgress = Math.max(8, Math.min(100, Math.round(progress)));
-  const dir = i18n.dir();
+  useEffect(() => {
+    let rafId = null;
+    const unsubscribe = useProgress.subscribe((state) => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        const p = state.progress;
+        setProgress(p);
+        if (p >= 100 && !state.active) {
+          setIsReady(true);
+        }
+      });
+    });
+
+    // Check initial state
+    try {
+      const initial = useProgress.getState();
+      if (initial?.progress >= 100 && !initial?.active) {
+        setIsReady(true);
+      }
+    } catch {
+      // Ignore
+    }
+
+    return () => {
+      unsubscribe();
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isReady) {
+      const timer = setTimeout(() => setMounted(false), 750);
+      return () => clearTimeout(timer);
+    }
+  }, [isReady]);
+
+  if (!mounted) return null;
+
+  const raw = Math.round(progress);
+  const displayProgress = isReady ? 100 : Math.max(8, Math.min(99, raw));
 
   return (
-    <Html fullscreen className="model-loader z-50">
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div
-          dir={dir}
-          className="flex flex-col items-center justify-center p-6 bg-background/95 border border-border/50 rounded-2xl min-w-[220px] text-center shadow-2xl pointer-events-auto"
+    <div
+      aria-hidden={isReady}
+      className={cn(
+        "absolute inset-0 z-50 flex items-center justify-center bg-background transition-opacity duration-700",
+        isReady ? "opacity-0 pointer-events-none" : "opacity-100",
+      )}
+    >
+      <div className="absolute top-1/2 left-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-yellow/5 blur-[120px]" />
+
+      <div
+        dir={i18n.dir()}
+        className="relative z-10 flex min-w-[240px] flex-col items-center justify-center rounded-2xl border border-border/50 bg-background/95 p-6 text-center shadow-2xl"
+      >
+        <span className="mb-3 font-open-sans text-[10px] uppercase tracking-widest text-white/40">
+          {t("loading_model", "Loading Model")}
+        </span>
+        {/* dir="ltr" so the bar always fills left-to-right, including in Hebrew */}
+        <i
+          dir="ltr"
+          className="mb-2 flex h-[3px] w-full justify-start overflow-hidden rounded-full bg-white/15"
         >
-          <span className="text-[10px] text-white/40 font-open-sans uppercase tracking-widest mb-3">
-            {t("loading_model", "Loading Model")}
-          </span>
-          <i
-            dir="ltr"
-            className="w-full bg-white/15 h-[3px] rounded-full overflow-hidden flex mb-2 justify-start"
-          >
-            <b
-              className="h-full block transition-all duration-300 ease-out bg-accent-yellow"
-              style={{
-                width: `${displayProgress}%`,
-              }}
-            />
-          </i>
-          <em
-            className="text-xs font-semibold text-accent-yellow font-open-sans not-italic"
-            dir="ltr"
-          >
-            {displayProgress}%
-          </em>
-        </div>
+          <b
+            className="block h-full bg-accent-yellow transition-all duration-300 ease-out"
+            style={{ width: `${displayProgress}%` }}
+          />
+        </i>
+        <em
+          dir="ltr"
+          className="font-open-sans text-xs font-semibold not-italic text-accent-yellow"
+        >
+          {displayProgress}%
+        </em>
       </div>
-    </Html>
+    </div>
   );
 };
 

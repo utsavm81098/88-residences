@@ -1,60 +1,75 @@
-import { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import HeroCarousel from "@/components/ui/hero-carousel";
+import { HOME_LOADER_SLIDES } from "@/utils/constant";
 import { cn } from "@/lib/utils";
 
 /**
- * DOM-level loading overlay for the home scene.
+ * HomeLoader - Full-screen background carousel loader for the Home Page.
+ * Displays day and night aerial imagery while the 3D GLB model downloads, parses
+ * and its shaders compile, then fades out to reveal the 3D Masterplan scene the
+ * moment isReady is true.
+ *
+ * `isReady` is the right signal to reveal on: it comes from
+ * features/home-scene/scene-ready-gate.jsx, which fires only after the bytes have
+ * downloaded, the GLB has parsed, gl.compile() has finished and one frame has
+ * elapsed. There is no byte-progress readout by design — the imagery is the feedback.
+ *
+ * There are deliberately NO timers in this component. It never delays the reveal by
+ * even a frame: the fade starts the instant isReady flips, and the overlay unmounts
+ * on the fade's own `transitionend` rather than on a setTimeout guessed to match
+ * duration-700. A timer here would (a) hold the 3D scene behind an already-finished
+ * loader and (b) silently desync the moment anyone edited the duration class.
+ *
+ * Trade-off worth knowing: the carousel's first crossfade happens 2s in (see
+ * components/ui/hero-carousel). When the GLB resolves faster than that — a repeat
+ * navigation, HMR, or a warm HTTP cache, where it can resolve in well under a second
+ * from the module-scope cache in hooks/use-glb-loader.js — the loader is gone before
+ * the crossfade starts, so only the day still is seen. That is the intended
+ * behaviour: never make the user wait on the loader.
  */
-export const HomeLoader = ({ isReady = false, progress = 0 }) => {
-  const { t, i18n } = useTranslation();
-  const [mounted, setMounted] = useState(true);
+export const HomeLoader = ({ isReady = false }) => {
+  const { t } = useTranslation();
+  const [unmounted, setUnmounted] = useState(false);
 
-  useEffect(() => {
-    if (isReady) {
-      const timer = setTimeout(() => setMounted(false), 750);
-      return () => clearTimeout(timer);
-    }
-  }, [isReady]);
+  const handleTransitionEnd = useCallback(
+    (event) => {
+      // React's onTransitionEnd is delegated, so it also catches events bubbling up
+      // from descendants. Only this element's own opacity fade should unmount it.
+      if (event.target !== event.currentTarget) return;
+      if (event.propertyName !== "opacity") return;
+      if (isReady) setUnmounted(true);
+    },
+    [isReady],
+  );
 
-  if (!mounted) return null;
-
-  const raw = Math.round(progress);
-  const displayProgress = isReady ? 100 : Math.max(4, Math.min(99, raw));
+  if (unmounted) return null;
 
   return (
     <div
+      // role/aria-label rather than descriptive alt text on the images: while
+      // loading, the two renders are decorative, so a screen reader should hear
+      // "Loading" once instead of narrating both. The `loading` key already exists
+      // in the en and he bundles.
+      role="status"
+      aria-label={t("loading", "Loading")}
       aria-hidden={isReady}
+      onTransitionEnd={handleTransitionEnd}
       className={cn(
-        "absolute inset-0 z-50 flex items-center justify-center bg-background transition-opacity duration-700",
-        isReady ? "opacity-0 pointer-events-none" : "opacity-100",
+        // `fixed inset-0` deliberately, with no h-full/w-full and no 100vh:
+        // inset-0 already pins all four edges, and it sidesteps the iOS
+        // address-bar 100vh bug that the reference site actually has.
+        //
+        // z-[150] clears the nav rails in layouts/main-layout (z-[110] desktop,
+        // z-[120] mobile — currently commented out, but they will return) while
+        // staying well below the dialog/sheet/tooltip band at z-[1000]+.
+        "fixed inset-0 z-[150] transition-opacity duration-700 ease-in-out",
+        isReady
+          ? "pointer-events-none opacity-0"
+          : "pointer-events-auto opacity-100",
       )}
     >
-      <div className="absolute top-1/2 left-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-yellow/5 blur-[120px]" />
-
-      <div
-        dir={i18n.dir()}
-        className="relative z-10 flex min-w-[240px] flex-col items-center justify-center rounded-2xl border border-border/50 bg-background/95 p-6 text-center shadow-2xl"
-      >
-        <span className="mb-3 font-open-sans text-[10px] uppercase tracking-widest text-white/40">
-          {t("loading_model", "Loading Model")}
-        </span>
-        {/* dir="ltr" so the bar always fills left-to-right, including in Hebrew */}
-        <i
-          dir="ltr"
-          className="mb-2 flex h-[3px] w-full justify-start overflow-hidden rounded-full bg-white/15"
-        >
-          <b
-            className="block h-full bg-accent-yellow transition-all duration-300 ease-out"
-            style={{ width: `${displayProgress}%` }}
-          />
-        </i>
-        <em
-          dir="ltr"
-          className="font-open-sans text-xs font-semibold not-italic text-accent-yellow"
-        >
-          {displayProgress}%
-        </em>
-      </div>
+      <HeroCarousel slides={HOME_LOADER_SLIDES} />
     </div>
   );
 };

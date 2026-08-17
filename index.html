@@ -45,6 +45,17 @@
   <!-- Preload the HDR panorama used for window glass reflections (EnvironmentSetup).
        TextureLoader uses a plain XHR/fetch — same-origin, no CORS header needed. -->
   <link rel="preload" as="fetch" href="./hdr/80m-nano-green.jpg" crossorigin />
+  <!-- Hero loader still, shown full-screen while the masterplan GLB above streams in
+       (see containers/home/home-loader.jsx). The day slide is the first pixel the
+       user sees, so fetchpriority="high" puts it ahead of the GLB.
+       The NIGHT slide is deliberately NOT preloaded: it isn't needed for 5.5s, and
+       adding another ~0.95MB to the critical path would only delay the GLB. Its
+       <img> is in the DOM from mount and fetches on its own at fetchpriority="low",
+       which is exactly the runway it needs.
+       Deliberately NO crossorigin: this is consumed by a plain <img> (same-origin,
+       no CORS mode), so adding it would mismatch the preload-cache entry and fetch
+       the file twice — the inverse of why the GLB preload above DOES need it. -->
+  <link rel="preload" as="image" href="./images/hero/PLOT88-birdeye-day.jpg" fetchpriority="high" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="index, follow" />
   <meta property="og:image" content="https://www.88residences.com/wp-content/uploads/2026/04/PLOT88-birdeye-night.jpg" />
@@ -97,7 +108,8 @@
   <!-- PDF viewer modal — must be placed in public/res88-pdf-modal.js
        Vite serves the public/ folder at the site root, so the script is
        available at /res88-pdf-modal.js in all environments. -->
-  <script src="./res88-pdf-modal.js"></script>
+  <!-- @vite-ignore -->
+  <script src="./res88-pdf-modal.js" defer></script>
 </body>
 
 </html>

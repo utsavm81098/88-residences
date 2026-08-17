@@ -67,7 +67,7 @@ export default function InventoryContainer() {
               gl={CANVAS_GL_CONFIG}
             >
               <WebGLRecoveryGuard onFatalLoss={handleResetCache} />
-              <Suspense fallback={<CanvasLoader />}>
+              <Suspense fallback={null}>
                 <SceneEnvironment>
                   <Building
                     {...{
@@ -84,6 +84,7 @@ export default function InventoryContainer() {
           </ComponentErrorBoundary>
         </div>
         <BuildingTooltip />
+        <CanvasLoader />
       </div>
     </div>
   );

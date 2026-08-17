@@ -59,9 +59,7 @@ export const HomeContainer = () => {
     isMobile,
     canvasHeight,
     isReady,
-    progress,
     handleReady,
-    handleProgress,
     handleResetCache,
   } = useHome();
 
@@ -104,17 +102,13 @@ export const HomeContainer = () => {
             <KTX2Init />
             <WebGLRecoveryGuard onFatalLoss={handleResetCache} />
             <Suspense fallback={null}>
-              <HomeScene
-                controlsRef={controlsRef}
-                onReady={handleReady}
-                onProgress={handleProgress}
-              />
+              <HomeScene controlsRef={controlsRef} onReady={handleReady} />
             </Suspense>
           </Canvas>
         </ComponentErrorBoundary>
       </div>
 
-      <HomeLoader isReady={isReady} progress={progress} />
+      <HomeLoader isReady={isReady} />
     </div>
   );
 };

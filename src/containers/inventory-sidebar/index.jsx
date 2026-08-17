@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
 import InventoryFilters from "./components/inventory-filters";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import InventoryList from "./components/inventory-list";
 import { useInventorySidebar } from "@/containers/inventory-sidebar/use-inventory-sidebar";
 import { ICONS } from "@/assets/icons";
 
-const InventorySidebarContainer = () => {
+const InventorySidebarContainer = memo(() => {
   const {
     filters,
     handleClearFilters,
@@ -16,7 +16,6 @@ const InventorySidebarContainer = () => {
     finalData,
     activeAccordion,
     setActiveAccordion,
-    currentBuilding,
     scrollRef,
     itemRefs,
     totalApartments,
@@ -57,23 +56,20 @@ const InventorySidebarContainer = () => {
       {/* Scrollable Building & Inventory List Only */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden px-3.5 pb-4">
         <InventoryList
-          {...{
-            finalData,
-            activeAccordion,
-            setActiveAccordion,
-            onUnitSelect,
-            selectedUnit,
-            handleClearFilters,
-            currentBuilding,
-            scrollRef,
-            itemRefs,
-            totalApartments,
-            loading,
-          }}
+          finalData={finalData}
+          activeAccordion={activeAccordion}
+          setActiveAccordion={setActiveAccordion}
+          onUnitSelect={onUnitSelect}
+          selectedUnit={selectedUnit}
+          handleClearFilters={handleClearFilters}
+          scrollRef={scrollRef}
+          itemRefs={itemRefs}
+          totalApartments={totalApartments}
+          loading={loading}
         />
       </div>
     </div>
   );
-};
+});
 
 export default InventorySidebarContainer;

@@ -24,7 +24,7 @@ const getVerticalMargins = (el) => {
  * @returns {{ bottomMenuHeight: number }} Object containing the combined height
  */
 export default function useBottomMenuHeight(
-  defaultHeight = 52,
+  defaultHeight = 0,
   elementIds = "bottomMenu",
 ) {
   const [combinedHeight, setCombinedHeight] = useState(defaultHeight);
@@ -40,9 +40,7 @@ export default function useBottomMenuHeight(
 
     const updateCombinedHeight = () => {
       const total = ids.reduce((sum, id) => sum + (heights[id] || 0), 0);
-      if (total > 0) {
-        setCombinedHeight((prev) => (prev !== total ? total : prev));
-      }
+      setCombinedHeight((prev) => (prev !== total ? total : prev));
     };
 
     const setupObserver = (id, el) => {
@@ -72,7 +70,7 @@ export default function useBottomMenuHeight(
         setupObserver(id, targetEl);
       } else {
         // Fallback default value for this specific ID if not mounted yet
-        heights[id] = id === "bottomMenu" ? 52 : id === "mobileTopBar" ? 68 : 0;
+        heights[id] = defaultHeight || 0;
         updateCombinedHeight();
 
         // Use a highly efficient polling mechanism instead of a heavy MutationObserver on document.body

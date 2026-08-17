@@ -162,6 +162,18 @@ export const HOME_MODEL_PATH = getAssetPath("/models/88RES-06_05-2.glb");
 // visible panorama sphere, so it is never used as a flat background.
 export const HOME_ENV_PATH = getAssetPath("/hdr/80m-nano-green.jpg");
 
+// Full-screen stills the HomeLoader crossfades while the masterplan GLB above
+// streams in (see containers/home/home-loader.jsx).
+//
+// 2500x1375 = 1.818:1. Do NOT shrink these: hero-slide.jsx zooms to scale(1.3),
+// which needs ~2500px to stay at or above native resolution on a 1920 viewport
+// (1920 x 1.3 = 2496). One file per slide at every device width, matching the
+// reference site — it serves a single CSS background-image with no srcset.
+export const HOME_LOADER_SLIDES = [
+  { id: "day", image: getAssetPath("/images/hero/PLOT88-birdeye-day.jpg") },
+  { id: "night", image: getAssetPath("/images/hero/PLOT88-birdeye-night.jpg") },
+];
+
 /**
  * Bounding box of all 436 meshes using a glass material. Windows exist only on
  * the seven buildings, so this IS the building envelope — measured by parsing

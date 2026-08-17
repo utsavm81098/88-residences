@@ -86,12 +86,21 @@ export default {
           "0%, 100%": { transform: "translateX(-10px)" },
           "50%": { transform: "translateX(10px)" },
         },
+        // Spinning 88 mark on the home-page loading carousel (see
+        // components/ui/hero-carousel). Lives here rather than as raw CSS in
+        // index.css for the same reason drag-hint does — index.css reserves plain
+        // @keyframes for the one case that needs calc() on a custom property.
+        rotating: {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
+        },
       },
       animation: {
         // Fast start, long soft settle — reads as weighty rather than snappy.
         "accordion-down": "accordion-down 260ms cubic-bezier(0.32, 0.72, 0, 1)",
         "accordion-up": "accordion-up 200ms cubic-bezier(0.32, 0.72, 0, 1)",
         "drag-hint": "drag-hint 1.6s ease-in-out infinite",
+        rotating: "rotating 3s linear infinite",
       },
     },
   },

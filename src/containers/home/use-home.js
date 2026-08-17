@@ -9,19 +9,17 @@ export const useHome = () => {
   const controlsRef = useRef();
   const isMobile = useIsMobile();
   const [isReady, setIsReady] = useState(false);
-  const [progress, setProgress] = useState(0);
 
   // Below lg the bottom nav is `fixed bottom-0 ... z-[120]` (main-layout), so it
   // would sit on top of the canvas. Same approach the inventory container uses.
-  const { bottomMenuHeight } = useBottomMenuHeight(52, "bottomMenu");
+  const { bottomMenuHeight } = useBottomMenuHeight(0, "bottomMenu");
 
-  const canvasHeight = isMobile ? `calc(100% - ${bottomMenuHeight}px)` : "100%";
+  const canvasHeight =
+    isMobile && bottomMenuHeight > 0
+      ? `calc(100% - ${bottomMenuHeight}px)`
+      : "100%";
 
   const handleReady = useCallback(() => setIsReady(true), []);
-
-  // Byte-level download/parse progress for the home GLB, bubbled up from
-  // useHomeScene (inside <Canvas>) — see use-glb-loader.js.
-  const handleProgress = useCallback((value) => setProgress(value), []);
 
   const handleResetCache = useCallback(() => {
     try {
@@ -34,7 +32,6 @@ export const useHome = () => {
     }
     clearGLBCache(HOME_MODEL_PATH);
     setIsReady(false);
-    setProgress(0);
   }, []);
 
   return {
@@ -42,9 +39,7 @@ export const useHome = () => {
     isMobile,
     canvasHeight,
     isReady,
-    progress,
     handleReady,
-    handleProgress,
     handleResetCache,
   };
 };
