@@ -9,6 +9,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
+import { getDashboardRoute } from "@/utils/helper";
 import { useTopNavigation } from "./use-top-navigation";
 import { BUILDING_CONFIG } from "@/utils/constant";
 
@@ -23,14 +26,35 @@ const TopNavigationContainer = memo(({ onReset }) => {
     onToggleMenu,
   } = useTopNavigation();
 
+  const { i18n } = useTranslation();
+  const navigate = useNavigate();
+
+  const handleHomeClick = React.useCallback(() => {
+    navigate(getDashboardRoute(i18n));
+  }, [navigate, i18n]);
+
   const buildings = BUILDING_CONFIG;
 
   return (
     <>
       {/* Desktop Top Navigation Bar */}
       <div className="hidden lg:flex absolute top-10 left-0 right-0 px-6 items-center z-10 pointer-events-none select-none">
-        {/* Left Spacer to keep navigation centered */}
-        <div className="flex-1" />
+        {/* Left: Home Icon Button */}
+        <div className="flex-1 flex justify-start pointer-events-auto ml-4">
+          <Button
+            variant="ghost"
+            size="icon-xl"
+            className="bg-white border border-border-light rounded-full text-accent-yellow shadow-xl pointer-events-auto hover:!bg-gray-100 hover:text-accent-yellow active:!bg-gray-200 transition-all cursor-pointer size-[70px]"
+            onClick={handleHomeClick}
+            aria-label="Home"
+          >
+            <ICONS.Home
+              size={32}
+              strokeWidth={2}
+              className="size-[30px] text-accent-yellow"
+            />
+          </Button>
+        </div>
 
         {/* Center: Building Navigation Pill */}
         <div className="relative pointer-events-auto">
@@ -108,7 +132,9 @@ const TopNavigationContainer = memo(({ onReset }) => {
                       )}
                       onClick={() => handleSelect(idx)}
                     >
-                      <span className="text-accent-yellow font-bold">{b.name}</span>
+                      <span className="text-accent-yellow font-bold">
+                        {b.name}
+                      </span>
                       <span className="text-gray-800"> Building</span>
                     </DropdownMenuItem>
                   ))}
