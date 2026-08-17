@@ -235,8 +235,15 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
     return isMobile ? mobileSelectedUnit : selectedUnit;
   }, [selectedUnit, mobileSelectedUnit, isMobile]);
 
-  const building = useGLTF(config.model, true, true, configureLoader);
-  const glassHitbox = useGLTF(config.hitbox, true, true, configureLoader);
+  // useDraco/useMeshopt passed as `false`, NOT `true`: drei's useGLTF wrapper
+  // (extensions() in @react-three/drei/core/Gltf.js) runs configureLoader
+  // FIRST, then — only when these flags are truthy — re-assigns its OWN
+  // three-stdlib DRACOLoader pointed at the remote gstatic.com CDN, silently
+  // overwriting configureLoader's self-hosted DRACOLoader (public/draco/).
+  // `false` skips drei's block entirely so only configureLoader's wiring
+  // (self-hosted Draco + KTX2 + Meshopt) ever reaches the loader.
+  const building = useGLTF(config.model, false, false, configureLoader);
+  const glassHitbox = useGLTF(config.hitbox, false, false, configureLoader);
 
   const buildingUnits = useMemo(() => {
     const buildingData = inventory?.[config.name];

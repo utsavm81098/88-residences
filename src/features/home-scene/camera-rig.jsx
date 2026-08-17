@@ -46,7 +46,7 @@ const BASE_PAN_SPEED = 1.5;
  * (useMemo(() => new OrbitControls(camera), [camera])), so the very first frames
  * show a different view. Creating the camera up front removes that entirely.
  */
-const CameraRigImpl = ({ controlsRef, onHintVisibleChange }) => {
+const CameraRigImpl = ({ controlsRef }) => {
   const camera = useThree((state) => state.camera);
   const gl = useThree((state) => state.gl);
   const size = useThree((state) => state.size);
@@ -112,11 +112,6 @@ const CameraRigImpl = ({ controlsRef, onHintVisibleChange }) => {
   // Aspect the camera position was last seeded from, so we can tell a genuine
   // layout change from incidental jitter.
   const seededAspect = useRef(0);
-  // Dirty flag: set to true by the OrbitControls 'change' event and cleared
-  // after the useFrame clamp runs. Prevents clampPanTarget from calling
-  // controls.update() every frame when the camera is idle — that was causing
-  // a double-update per frame during orbit and subtle jitter on damping tail.
-  const controlsChangedRef = useRef(false);
 
   useLayoutEffect(() => {
     if (!framing || !camera) return;
@@ -167,10 +162,8 @@ const CameraRigImpl = ({ controlsRef, onHintVisibleChange }) => {
 
   // Clamps controls.target in place to HOME_PAN_BOUNDARY and, if it moved,
   // shifts camera.position by the same correction vector so the camera-target
-  // offset (distance/angles) is preserved exactly. Shared by both correction
-  // paths below so they can never disagree. useCallback keeps this
-  // referentially stable across renders so the pointer-listener effect below
-  // doesn't re-bind on every frame.
+  // offset (distance/angles) is preserved exactly. useCallback keeps this
+  // referentially stable across renders.
   //
   // controls.update() runs FIRST, unconditionally — not only when a
   // correction is needed. OrbitControls queues each pointermove's pan delta
@@ -193,11 +186,18 @@ const CameraRigImpl = ({ controlsRef, onHintVisibleChange }) => {
   // This kills the damping tail at the wall so no residual delta remains to
   // re-apply. The orbit and zoom damping (_sphericalDelta) are left intact so
   // rotation/zoom still feel smooth.
+  // Clamps controls.target in place to HOME_PAN_BOUNDARY and, if it moved,
+  // shifts camera.position by the same correction vector so the camera-target
+  // offset (distance/angles) is preserved exactly.
+  //
+  // NOTE: controls.update() is NOT called here. Drei's <OrbitControls> already runs
+  // controls.update() once per frame in its own useFrame. Calling update() here
+  // applied OrbitControls' internal damping decay multiple times per frame,
+  // causing jerky stepping and micro-stuttering during camera rotation and panning.
   const clampPanTarget = useCallback(() => {
     const controls = controlsRef.current;
     if (!controls) return;
 
-    controls.update();
     const t = controls.target;
     const cx = THREE.MathUtils.clamp(t.x, panBoundary.minX, panBoundary.maxX);
     const cy = THREE.MathUtils.clamp(t.y, panBoundary.minY, panBoundary.maxY);
@@ -215,47 +215,25 @@ const CameraRigImpl = ({ controlsRef, onHintVisibleChange }) => {
       controls.object.position.z += dz;
 
       // Zero the internal pan accumulator so damping decay cannot re-apply
-      // the residual delta and push the target back past the boundary on the
-      // following frames. This is the fix for the asymmetric restriction bug.
+      // the residual delta past the boundary on following frames.
       if (controls._panOffset) {
         controls._panOffset.set(0, 0, 0);
       }
     }
   }, [controlsRef, panBoundary]);
 
-  // Per-frame safety net. useFrame (not onChange) is intentional: OrbitControls
-  // damping drifts the target across ~20 frames after the user releases —
-  // clamping only on the change event would allow brief overshoot during that
-  // deceleration tail.
-  //
-  // Y is clamped alongside X/Z: at 45° elevation, panning "down" on screen
-  // moves target.z AND target.y simultaneously (tilted pan plane), so without
-  // a Y clamp the view escapes below the building bases / ground level.
-  //
-  // controlsChangedRef guards the update: we only call clampPanTarget (which
-  // calls controls.update() internally) when OrbitControls has actually emitted
-  // a 'change' event since the last frame. Without this guard the double-update
-  // per idle frame caused subtle damping jitter.
+  // Per-frame boundary clamp — runs after OrbitControls updates target position
+  // to ensure target remains strictly within the plot bounds without stutter.
   useFrame(() => {
-    if (!controlsChangedRef.current) return;
-    controlsChangedRef.current = false;
     clampPanTarget();
   });
 
   // Counter-scales panSpeed by the current zoom distance so world-units-per-
   // pixel stays constant regardless of zoom — see BASE_PAN_SPEED comment.
-  //
-  // This does NOT live in the useFrame above. Verified live: R3F's render
-  // loop is not continuous here — it ticks while something is actively
-  // animating (damping, an in-progress gesture) and goes idle in between,
-  // confirmed by a frame counter that stopped incrementing entirely a couple
-  // seconds after the scene settled. A useFrame-based update only refreshes
-  // panSpeed while the loop happens to be ticking, so it could go stale
-  // between "zoom settles" and "next pan begins" — exactly the zoom-in vs
-  // zoom-out inconsistency reported. Driving it off OrbitControls' own
-  // 'change' event instead fires synchronously inside the real wheel/pointer
-  // event handler, independent of whether R3F is currently rendering, so
-  // panSpeed is always current the instant a gesture starts.
+  // Driven off OrbitControls' own 'change' event (fires synchronously inside
+  // the real wheel/pointer event handler) rather than the useFrame above, so
+  // panSpeed is current from the very first frame of a new gesture instead
+  // of lagging by up to one frame.
   const updatePanSpeed = useCallback(() => {
     const controls = controlsRef.current;
     if (!controls || !framing?.distance) return;
@@ -265,27 +243,6 @@ const CameraRigImpl = ({ controlsRef, onHintVisibleChange }) => {
       controls.panSpeed = BASE_PAN_SPEED * (framing.distance / distance);
     }
   }, [controlsRef, framing]);
-
-  // Per-event hardening: a single rendered frame can arrive after many
-  // pointermove events (a fast flick, or a high-poll-rate mouse), and
-  // OrbitControls accumulates all of them into `target` before the useFrame
-  // clamp above ever runs — letting a quick drag briefly reveal terrain past
-  // the plot boundary before it snaps back. Registering this listener after
-  // OrbitControls' own (it mounts as CameraRig's child, so its listener binds
-  // first) means it fires after OrbitControls has applied each individual
-  // pointermove, clamping at input-event granularity instead of once per
-  // frame — the boundary can never be exceeded by more than one event's delta.
-  useEffect(() => {
-    const canvas = gl?.domElement;
-    if (!canvas) return;
-
-    canvas.addEventListener("pointermove", clampPanTarget);
-    canvas.addEventListener("pointerup", clampPanTarget);
-    return () => {
-      canvas.removeEventListener("pointermove", clampPanTarget);
-      canvas.removeEventListener("pointerup", clampPanTarget);
-    };
-  }, [gl, clampPanTarget]);
 
   // controls.addEventListener (three.js EventDispatcher), not the DOM
   // listener above: OrbitControls dispatches 'change' from inside its own
@@ -301,7 +258,6 @@ const CameraRigImpl = ({ controlsRef, onHintVisibleChange }) => {
     if (!controls) return;
 
     const handleChange = () => {
-      controlsChangedRef.current = true;
       updatePanSpeed();
     };
 
@@ -310,12 +266,11 @@ const CameraRigImpl = ({ controlsRef, onHintVisibleChange }) => {
     return () => controls.removeEventListener("change", handleChange);
   }, [controlsRef, updatePanSpeed]);
 
-  // Idle auto-rotate + the one-time drag hint that precedes it — see
-  // ./use-auto-rotate-hint.js for the full timing sequence and the
-  // memory-leak audit notes. Pure side effect: talks to controlsRef
-  // imperatively and reports hint visibility via onHintVisibleChange, same
-  // as CameraRig's own onReady/isReady wiring elsewhere in this feature.
-  useAutoRotateHint({ controlsRef, onHintVisibleChange });
+  // Idle auto-rotate — see ./use-auto-rotate-hint.js for the full timing
+  // sequence and the memory-leak audit notes. Pure side effect: talks to
+  // controlsRef imperatively, same as CameraRig's own onReady/isReady wiring
+  // elsewhere in this feature.
+  useAutoRotateHint({ controlsRef });
 
   return (
     <OrbitControls
@@ -325,17 +280,16 @@ const CameraRigImpl = ({ controlsRef, onHintVisibleChange }) => {
       dampingFactor={0.05}
       // Ambient idle rotation — see AUTO_ROTATE_SPEED and the idle-timer
       // effects above, which flip controls.autoRotate on/off imperatively
-      // via controlsRef (not through this prop, past mount) so the toggle
-      // is synchronous with the invalidate() call that wakes the demand
-      // render loop. Initial value only.
+      // via controlsRef (not through this prop, past mount) rather than
+      // through React state, so toggling it never re-renders this component
+      // or its subtree. Initial value only.
       autoRotate={false}
       autoRotateSpeed={AUTO_ROTATE_SPEED}
       target={HOME_CAMERA.target}
       // Pan is on for every device, clamped to panBoundary (the plot line —
       // wider on mobile/tablet, see panBoundary above) by clampPanTarget
-      // above — once per pointer event and once per rendered frame as a
-      // safety net — so pan can range freely inside the property but never
-      // past it. One finger orbits; two-finger drag pans (the pan half of
+      // above, once per rendered frame — so pan can range freely inside the
+      // property but never past it. One finger orbits; two-finger drag pans (the pan half of
       // the TWO: DOLLY_PAN touch mapping below, inert until enablePan is on)
       // while pinch still dollies — mirrors the desktop split of
       // left-drag-to-rotate / right-drag-to-pan.
@@ -358,14 +312,10 @@ const CameraRigImpl = ({ controlsRef, onHintVisibleChange }) => {
   );
 };
 
-// Memoized: controlsRef/onHintVisibleChange are stable references from
-// useHome (a plain useRef + useCallback([]) respectively), so this bails out
-// of re-rendering on every HomeContainer re-render its parents don't cause
-// directly (e.g. isReady/showAutoRotateHint state living alongside it) —
-// otherwise every hint show/hide would re-run this and the whole scene
-// subtree's render functions for no visual reason (autoRotate itself is set
-// imperatively via controlsRef, not a prop, so it never needed a re-render
-// in the first place).
+// Memoized: controlsRef is a stable ref from useHome, so this bails out of
+// re-rendering on every HomeContainer re-render its parents don't cause
+// directly (autoRotate itself is set imperatively via controlsRef, not a
+// prop, so it never needed a re-render in the first place).
 const CameraRig = memo(CameraRigImpl);
 
 export default CameraRig;

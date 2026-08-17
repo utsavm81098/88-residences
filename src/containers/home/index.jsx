@@ -1,8 +1,7 @@
-import { Suspense, useMemo } from "react";
+import { Suspense, useLayoutEffect, useMemo } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import useHome from "./use-home";
 import HomeLoader from "./home-loader";
-import DragHint from "./drag-hint";
 import HomeScene from "@/features/home-scene";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
 import { solveFraming } from "@/features/home-scene/fit-camera";
@@ -29,10 +28,20 @@ function WebGLRecoveryGuard({ onFatalLoss }) {
 /**
  * KTX2Loader needs a live renderer to know which compressed formats the GPU
  * supports. Rendered outside <Suspense> so it runs before the GLB is requested.
+ *
+ * useLayoutEffect, not a render-phase call: calling initKTX2 directly in the
+ * component body was a side effect during render (harmless in practice since
+ * it's idempotent, but against the rules of pure render). useLayoutEffect
+ * still fires before any *passive* useEffect in the same commit — including
+ * useHomeScene's effect that kicks off the GLB fetch — so KTX2 support
+ * detection is still guaranteed to complete before anything tries to
+ * transcode a KHR_texture_basisu texture.
  */
 function KTX2Init() {
   const gl = useThree((state) => state.gl);
-  initKTX2(gl);
+  useLayoutEffect(() => {
+    initKTX2(gl);
+  }, [gl]);
   return null;
 }
 
@@ -50,10 +59,10 @@ export const HomeContainer = () => {
     isMobile,
     canvasHeight,
     isReady,
+    progress,
     handleReady,
+    handleProgress,
     handleResetCache,
-    showAutoRotateHint,
-    handleHintVisibleChange,
   } = useHome();
 
   const glConfig = useMemo(() => getHomeGlConfig(isMobile), [isMobile]);
@@ -91,27 +100,21 @@ export const HomeContainer = () => {
           name="Home 3D Canvas"
           onReset={handleResetCache}
         >
-          {/* shadows (PCF single-sample): SceneReadyGate already sets
-              gl.shadowMap.autoUpdate = false after load so the shadow texture
-              never changes. PCFSoftShadowMap ("soft") would run 9+ shadow-map
-              lookups per shadowed fragment every frame — identical baked-shadow
-              quality at 9× the per-fragment cost. Plain PCF is correct here. */}
-          <Canvas shadows dpr={dpr} gl={glConfig} camera={initialCamera}>
+          <Canvas dpr={dpr} gl={glConfig} camera={initialCamera}>
             <KTX2Init />
             <WebGLRecoveryGuard onFatalLoss={handleResetCache} />
             <Suspense fallback={null}>
               <HomeScene
                 controlsRef={controlsRef}
                 onReady={handleReady}
-                onHintVisibleChange={handleHintVisibleChange}
+                onProgress={handleProgress}
               />
             </Suspense>
           </Canvas>
         </ComponentErrorBoundary>
       </div>
 
-      <HomeLoader isReady={isReady} />
-      {/* <DragHint visible={showAutoRotateHint} /> */}
+      <HomeLoader isReady={isReady} progress={progress} />
     </div>
   );
 };

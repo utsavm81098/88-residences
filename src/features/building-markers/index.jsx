@@ -38,19 +38,27 @@ const _candidatesPool = Array.from({ length: 16 }, () => ({
 
 /**
  * Hides the farther marker when two marker icons overlap in screen space.
- * Also calculates 3D camera distance zIndex so nearer markers ALWAYS render
- * in front of farther markers.
+ *
+ * Does NOT track a per-marker zIndex: drei's <Html> already computes and
+ * applies distance-based z-index automatically every frame (see
+ * node_modules/@react-three/drei/web/Html.js — its own internal useFrame
+ * calls `el.style.zIndex = objectZIndex(...)` on the portal wrapper it
+ * manages). A previous version of this hook duplicated that computation into
+ * React state (`zIndexMap`) and applied it via a `style` prop — but that
+ * style prop lands on Html's INNER content div, not the outer wrapper Html
+ * itself z-indexes, so it never affected actual cross-marker stacking order.
+ * It was a no-op that nonetheless forced a React re-render (and full
+ * MarkerItem reconciliation) on nearly every frame the camera moved,
+ * including indefinitely once idle auto-rotate starts. Removed with zero
+ * visual change — the real stacking was always Html's, not this hook's.
  */
 const useMarkerOverlapVisibility = (markers, collisionDistance) => {
   const [blockedMarkerNames, setBlockedMarkerNames] = useState(() => new Set());
-  const [zIndexMap, setZIndexMap] = useState(() => ({}));
   const blockedSetRef = useRef(new Set());
   const lastBlockedListRef = useRef([]);
 
   useFrame(({ camera, size }) => {
     let candidateCount = 0;
-    let zIndexChanged = false;
-    const newZIndexMap = {};
 
     for (let i = 0; i < markers.length; i++) {
       const { name, position } = markers[i];
@@ -59,13 +67,6 @@ const useMarkerOverlapVisibility = (markers, collisionDistance) => {
       const dy = y - camera.position.y;
       const dz = z - camera.position.z;
       const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-      // Nearer markers get a higher zIndex so they render on top of farther ones.
-      const zIndex = Math.max(1, 10000 - Math.round(dist * 10));
-      if (zIndexMap[name] !== zIndex) {
-        zIndexChanged = true;
-      }
-      newZIndexMap[name] = zIndex;
 
       markerWorldPosition.set(x, y, z).project(camera);
 
@@ -82,10 +83,6 @@ const useMarkerOverlapVisibility = (markers, collisionDistance) => {
         item.y = (-markerWorldPosition.y * size.height) / 2 + size.height / 2;
         item.distance = dist;
       }
-    }
-
-    if (zIndexChanged) {
-      setZIndexMap(newZIndexMap);
     }
 
     const activeCandidates = _candidatesPool.slice(0, candidateCount);
@@ -136,7 +133,7 @@ const useMarkerOverlapVisibility = (markers, collisionDistance) => {
     }
   });
 
-  return { blockedMarkerNames, zIndexMap };
+  return { blockedMarkerNames };
 };
 
 const STATUS_COLORS = {
@@ -204,7 +201,6 @@ const MarkerIcon = memo(function MarkerIcon({ status, letter, className }) {
 const MarkerItem = memo(function MarkerItem({
   marker,
   isBlocked,
-  zIndex,
   iconClass,
   onSelect,
 }) {
@@ -219,7 +215,6 @@ const MarkerItem = memo(function MarkerItem({
         transition: "opacity 0.15s ease",
         pointerEvents: isBlocked ? "none" : "auto",
         userSelect: "none",
-        zIndex: isBlocked ? -1 : zIndex,
       }}
       className="[@media(hover:hover)]:hover:!z-[9999]"
     >
@@ -247,7 +242,7 @@ export const BuildingMarkers = () => {
   const { markers, handlers } = useBuildingMarkers();
   const viewportWidth = useThree((state) => state.size.width);
   const tier = getMarkerTier(viewportWidth);
-  const { blockedMarkerNames, zIndexMap } = useMarkerOverlapVisibility(
+  const { blockedMarkerNames } = useMarkerOverlapVisibility(
     markers,
     tier.collisionDistance,
   );
@@ -259,7 +254,6 @@ export const BuildingMarkers = () => {
           key={marker.name}
           marker={marker}
           isBlocked={blockedMarkerNames.has(marker.name)}
-          zIndex={zIndexMap[marker.name] || 1000}
           iconClass={tier.iconClass}
           onSelect={handlers.handleSelectBuilding}
         />

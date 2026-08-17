@@ -1,9 +1,9 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
-import { useGLTF } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { configureLoader } from "@/utils/preloader";
 import { HOME_MODEL_PATH } from "@/utils/constant";
+import { useGLBLoader } from "@/hooks/use-glb-loader";
 
 // Ground overlay/decal materials that lie co-planar on top of base terrain
 const DECAL_MAT_RE =
@@ -13,44 +13,66 @@ const DECAL_MAT_RE =
 const ROAD_LINE_MAT_RE =
   /roads?_line|line_mesh|loine_mesh|roads?_mesh|park_line|whitye|material__3472|material__3048|adskmatwhite|white.*line/i;
 
-// Rooftop solar-panel nodes ("Solar_402", "SOL-D_147"). Their two materials
-// ("M_11___Default", "Material__3218" — verified via the GLB JSON chunk to be
-// used exclusively by these nodes) are authored at roughnessFactor 0.1 /
-// metallicFactor 0.8, i.e. near-mirror. That, combined with scene.environment's
-// RoomEnvironment IBL (whose "neutral" PMREM is literally a lit room containing
-// several bright box-shaped area-light meshes — see three's RoomEnvironment.js)
-// and the single hardcoded sun directionalLight in scene-lights.jsx, produced two
-// glaring hotspots on every roof: a sharp circular highlight (the sun's punctual
-// specular reflecting off a near-zero-roughness surface) and a sharp square
-// highlight (one of RoomEnvironment's box lights reflecting via the IBL). Real
-// anti-reflective solar glass is not a mirror, so roughness is raised and
-// envMapIntensity capped here — same by-name material tuning pattern as
-// Gray_BUILD/leaf-cutout above — to spread both hotspots into a soft sheen
-// instead of two sharp geometric glare shapes.
-const SOLAR_PANEL_NODE_RE = /^solar_|^sol-d/i;
+// Rooftop solar-panel materials. Originally matched by NODE name
+// (/^solar_|^sol-d/i on "Solar_402", "SOL-D_147", etc.) — switched to exact
+// MATERIAL names after verifying against the GLB's JSON chunk that all three
+// ("Material__2965", "M_11___Default", "Material__3218") are each used
+// EXCLUSIVELY by solar-panel nodes (0 other nodes reference them). Material
+// identity survives geometry-level optimization passes (GPU instancing,
+// joining) that node names don't: instancing this GLB with
+// @gltf-transform/functions' instance({min:5}) collapsed 507 of these 507
+// solar-panel nodes into 103 unnamed instanced batches, silently breaking
+// the node-name match entirely — matching on material name instead is
+// robust to that (and to any future geometry optimization) since it doesn't
+// depend on any particular node surviving with its name intact.
+//
+// These are authored at roughnessFactor 0.1 / metallicFactor 0.8, i.e.
+// near-mirror. That, combined with scene.environment's RoomEnvironment IBL
+// (whose "neutral" PMREM is literally a lit room containing several bright
+// box-shaped area-light meshes — see three's RoomEnvironment.js) and the
+// single hardcoded sun directionalLight in scene-lights.jsx, produced two
+// glaring hotspots on every roof: a sharp circular highlight (the sun's
+// punctual specular reflecting off a near-zero-roughness surface) and a
+// sharp square highlight (one of RoomEnvironment's box lights reflecting via
+// the IBL). Real anti-reflective solar glass is not a mirror, so roughness
+// is raised and envMapIntensity capped here — same by-name material tuning
+// pattern as Gray_BUILD/leaf-cutout above — to spread both hotspots into a
+// soft sheen instead of two sharp geometric glare shapes.
+const SOLAR_PANEL_MATERIAL_NAMES = new Set([
+  "Material__2965",
+  "M_11___Default",
+  "Material__3218",
+]);
 
-// Volumetric round-crown mango trees ("MANGO_tree_03", etc.).
+// Volumetric round-crown mango tree materials ("Mango_BARK", "Mango_Tree").
+// Originally matched by NODE name (/^MANGO_tree/i) — switched to exact
+// MATERIAL names for the same reason as SOLAR_PANEL_MATERIAL_NAMES above:
+// verified both are used exclusively by mango-tree nodes, and material
+// identity survives geometry optimization passes that node names don't.
 // Unlike flat billboard leaf cards, these are multi-directional meshes whose
 // canopy relies on IBL bounce to fill self-shadowed leaf clusters. They are
 // exempted from the leaf-cutout roughness floor below, so their GLB-authored
 // material is preserved untouched.
-const MANGO_TREE_NODE_RE = /^MANGO_tree/i;
+const MANGO_TREE_MATERIAL_NAMES = new Set(["Mango_BARK", "Mango_Tree"]);
 
 // Floor applied to leaf-cutout materials' roughness (see isLeafCutout below).
-// Below this, scene.environment's IBL produces a narrow, sharp specular lobe
-// on flat double-sided leaf cards that visibly shifts as the camera orbits —
-// verified against the GLB: 18 of 22 leaf materials already carry an authored
-// roughness of 0.6-0.98, safely wide/soft, and are left untouched by this
-// floor; only 3 (authored at 0.2) actually get raised.
-const LEAF_SPECULAR_ROUGHNESS_FLOOR = 0.5;
+// Enforces a minimum roughness of 0.6 so IBL specular highlights are broad
+// and soft on flat billboard cards, avoiding specular shimmer during camera orbit.
+const LEAF_SPECULAR_ROUGHNESS_FLOOR = 0.6;
 
-// Cap on how many embedded KTX2 mip levels leaf-cutout materials are allowed
-// to use (see the compressed-mip-chain fix in the texture-tuning loop below).
-// Deeper levels bleed dark fringing from non-premultiplied alpha; levels 0-1
-// (a single 2x2-texel box-filter step) were verified clean at the exact
-// node/pixel a live regression appeared on, with the full chain reproducing
-// it and this cap eliminating it.
-const LEAF_CUTOUT_MAX_MIP_LEVELS = 2;
+// The single "G- WOOD_RAILING" node (material "adskMatG__WOOD_RAILING") —
+// unlike the repeated Obj_RAILING_* glass balcony panels below, this is a
+// unique, one-off opaque wood railing that flickers/z-fights during camera
+// orbit. Root cause (verified against the actual GLB): this is a 12,182-
+// vertex, doubleSided mesh with no prior name-based tuning at all, viewed at
+// roughly 75-200x the camera's near plane (near=2, far=1400 — see
+// HOME_CAMERA in utils/constant.js), well into the range where a standard
+// 24-bit depth buffer's precision is already degraded — the same class of
+// issue Gray_BUILD/DECAL_MAT_RE/ROAD_LINE_MAT_RE below already fix by name
+// for other materials, just never extended to this one. polygonOffset (not
+// disabling doubleSided) is the safe fix here: it cannot make any geometry
+// disappear, it only breaks the depth-test tie.
+const WOOD_RAILING_MAT_NAME = "adskMatG__WOOD_RAILING";
 
 // Balcony glass railing panels ("Obj_RAILING - 017_60", etc.).
 // The GLB authors used KHR_materials_transmission (physical glass, transmission=1)
@@ -63,8 +85,19 @@ const LEAF_CUTOUT_MAX_MIP_LEVELS = 2;
 // Roughness, metalness, and color are NOT touched — they come from the GLB.
 const RAILING_NODE_RE = /^Obj_RAILING/i;
 
-export const useHomeScene = () => {
-  const { scene } = useGLTF(HOME_MODEL_PATH, true, true, configureLoader);
+export const useHomeScene = ({ onProgress } = {}) => {
+  // Byte-level streamed fetch + manual GLTFLoader.parse(), NOT drei's
+  // useGLTF/useLoader. useLoader is hardwired to THREE.DefaultLoadingManager
+  // — a single instance shared by every loader in the app — whose progress
+  // math resets toward 0 every time an unrelated load elsewhere (another
+  // page's preload, a texture fetch) starts a new request batch. Streaming
+  // the download ourselves gives progress that is continuous, proportional
+  // to real bytes transferred, and immune to anything else happening in the
+  // app. See use-glb-loader.js for the full rationale.
+  const { scene, progress, error } = useGLBLoader(
+    HOME_MODEL_PATH,
+    configureLoader,
+  );
   const gl = useThree((state) => state.gl);
   const maxAnisotropy = useMemo(
     () =>
@@ -72,7 +105,21 @@ export const useHomeScene = () => {
     [gl],
   );
 
+  // Bubble byte-level progress up to the container (HomeLoader lives outside
+  // <Canvas>, so it cannot call useGLBLoader itself) — same callback-prop
+  // pattern already used for onReady/onHintVisibleChange.
+  useEffect(() => {
+    onProgress?.(progress);
+  }, [progress, onProgress]);
+
+  // Rethrown during render so the existing ComponentErrorBoundary (in
+  // containers/home/index.jsx) catches it exactly as it would have caught a
+  // rejected Suspense promise from useGLTF.
+  if (error) throw error;
+
   const tunedScene = useMemo(() => {
+    if (!scene) return null;
+
     scene.traverse((child) => {
       // Freeze per-object matrix updates — scene geometry never moves.
       child.matrixAutoUpdate = false;
@@ -112,6 +159,14 @@ export const useHomeScene = () => {
           material.needsUpdate = true;
         }
 
+        // G- WOOD_RAILING flicker fix — see WOOD_RAILING_MAT_NAME's comment.
+        if (material.name === WOOD_RAILING_MAT_NAME) {
+          material.polygonOffset = true;
+          material.polygonOffsetFactor = 1;
+          material.polygonOffsetUnits = 1;
+          material.needsUpdate = true;
+        }
+
         // Road lines & white markings: painted directly on top of asphalt/ground decals.
         // Apply stronger negative polygonOffset (-2.5) and renderOrder (2) so WebGL depth
         // testing deterministically places them above asphalt without Z-fighting or clipping.
@@ -147,7 +202,7 @@ export const useHomeScene = () => {
         // 0.1 / metalness 0.8) so the sun's specular highlight and the
         // RoomEnvironment IBL's box-light reflections spread into a soft sheen
         // instead of rendering as a sharp circle + square glare on every roof.
-        const isSolarPanel = SOLAR_PANEL_NODE_RE.test(child.name || "");
+        const isSolarPanel = SOLAR_PANEL_MATERIAL_NAMES.has(material.name);
 
         if (isSolarPanel) {
           material.roughness = Math.max(material.roughness ?? 0, 0.45);
@@ -207,9 +262,14 @@ export const useHomeScene = () => {
           // preventing binary on/off fragment discard flickering during camera rotation
           material.alphaToCoverage = true;
 
-          // Disable shadow casting on foliage leaf meshes to eliminate temporal shadow crawling noise
-          // (flickering dark specks on trees) during camera movement/rotation
+          // Setting alphaTest to 0.35 cleanly clips dark transparent border bleed from KTX2 mipchains
+          // while alphaToCoverage provides smooth sub-pixel geometric anti-aliasing via MSAA
+          material.alphaTest = 0.35;
+
+          // Disable shadow casting and receiving on foliage leaf meshes to eliminate temporal shadow
+          // crawling noise (flickering dark specks on trees) during camera movement/rotation
           child.castShadow = false;
+          child.receiveShadow = false;
 
           // Tree bases sit at the same Y as the grass/ground they're planted in, so their
           // card geometry is coplanar with the landscape at the trunk. Push leaf cards
@@ -220,21 +280,10 @@ export const useHomeScene = () => {
           material.polygonOffsetFactor = -1.2;
           material.polygonOffsetUnits = -1.2;
 
-          // Leaf materials are lit (not KHR_materials_unlit), so scene.environment's IBL
-          // puts a specular highlight on flat, double-sided leaf cards. On a LOW-roughness
-          // material that highlight is a narrow, sharp lobe that visibly shifts/pops as the
-          // camera orbits — that's the foliage "flickering" this used to fix by zeroing
-          // envMapIntensity on every leaf material outright. Verified against the GLB
-          // (22 leaf-cutout materials, parsed from the glTF JSON): 18 of them already carry
-          // an authored roughness of 0.6-0.98 (or the glTF default of 1), where the specular
-          // lobe is already wide/soft and doesn't shimmer — zeroing envMapIntensity on those
-          // was an overcorrection that just made most trees read flat/matte instead of lit.
-          // Only 3 materials (M_02___Default, Mangrove_leafs, adskMat04) are authored at a
-          // shimmer-risk 0.2. Fix targets those specifically, the same by-roughness lever
-          // already used on solar panels above, instead of killing lighting response scene-wide.
-          // Exception: volumetric mango trees need IBL bounce to fill their dense
-          // multi-directional canopy — without it they collapse to a dark silhouette.
-          const isMango = MANGO_TREE_NODE_RE.test(child.name || "");
+          // Leaf materials are lit, so scene.environment's IBL puts a specular highlight on flat,
+          // double-sided leaf cards. Enforce a minimum roughness floor so the specular highlight
+          // is broad and soft without high-frequency glints/shimmer during camera rotation.
+          const isMango = MANGO_TREE_MATERIAL_NAMES.has(material.name);
           if (!isMango && material.roughness !== undefined) {
             material.roughness = Math.max(
               material.roughness,
@@ -245,8 +294,8 @@ export const useHomeScene = () => {
           material.needsUpdate = true;
         }
 
-        // Apply anisotropy for crisp texture sampling across all slots, and restore
-        // mipmapping wherever it's safe to do so.
+        // Apply anisotropy for crisp texture sampling across all slots, and enable
+        // mipmapping on all textures to eliminate minification aliasing (shimmering).
         const TEXTURE_SLOTS = [
           "map",
           "alphaMap",
@@ -258,6 +307,18 @@ export const useHomeScene = () => {
           "emissiveMap",
         ];
 
+        const isPano =
+          /pano|dome|sky|background|m1|dji/i.test(material.name || "") ||
+          /pano|dome|sky|background|m1|dji/i.test(child.name || "");
+
+        if (isPano) {
+          material.side = THREE.DoubleSide;
+          material.transparent = false;
+          material.opacity = 1;
+          material.depthWrite = false;
+          material.needsUpdate = true;
+        }
+
         TEXTURE_SLOTS.forEach((slot) => {
           const texture = material[slot];
           if (!texture || texture.userData.__optimized) return;
@@ -265,79 +326,20 @@ export const useHomeScene = () => {
           texture.anisotropy = maxAnisotropy;
           texture.magFilter = THREE.LinearFilter;
 
-          // ROOT CAUSE OF THE SCENE-WIDE SHIMMER/FLICKER WHILE ORBITING (fixed
-          // here): every texture in this GLB (all 340 — trees, all 7 building
-          // facades, wood railings like "D -RAILING -WOOD") is KTX2/Basis-
-          // compressed and DOES ship a full embedded mip chain (verified by
-          // parsing the KTX2 containers: 10-12 levels each, matching
-          // log2(size)+1 for their 512-2048px textures). But every one of them
-          // is also assigned the model's single shared glTF sampler, exported
-          // with minFilter=LINEAR (no mip). GLTFLoader.loadTextureImage
-          // unconditionally re-applies that sampler's minFilter on top of
-          // whatever KTX2Loader set, clobbering KTX2Loader's own correct
-          // LinearMipmapLinearFilter default back down to LinearFilter. The
-          // net effect: every surface in the scene sampled mip level 0 (full
-          // resolution) only, at every distance and every grazing angle —
-          // textbook minification aliasing, which reads as per-frame noise
-          // ("shimmer") as the camera orbits and the sampled texel shifts.
-          //
-          // The non-compressed branch below already fixes this by asking
-          // three/WebGL to GENERATE mips — which is correct there, but is not
-          // a valid operation for GPU-compressed formats and is why compressed
-          // textures were excluded entirely. They don't need generating,
-          // though: three.js already uploads every level in a KTX2 texture's
-          // `.mipmaps` array to the GPU regardless of minFilter (see
-          // WebGLTextures.js uploadTexture) — the chain sits there unused. All
-          // that's missing is telling the sampler to actually read it.
-          // EXCEPTION — alpha-cutout foliage sprites (isLeafCutout, computed
-          // above) get a CAPPED version of the fix below, not the full chain.
-          // Verified live by raycasting the exact screen pixel of a regression
-          // a production review caught (a dark diagonal streak cutting across
-          // a shrub card near building B): the hit resolved to node
-          // "058_029_28", material "pngaaa_com_2004453" — an isLeafCutout
-          // material. Its embedded KTX2 mip chain bleeds dark fringing along
-          // the leaf silhouette at deep levels (the classic non-premultiplied-
-          // alpha mip-generation artifact: transparent pixels are usually
-          // stored with black RGB, and box-filtering RGB+alpha together at
-          // each mip level blends that black into the visible edge — the
-          // deeper the level, the larger the averaged neighborhood, the more
-          // background bleeds in). Levels 0-1 only average a 2x2 texel
-          // neighborhood — the smallest possible step — and were verified
-          // clean at the exact node/pixel the streak appeared on, at the
-          // exact same camera framing, with the full chain re-enabled
-          // reproducing the streak and this 2-level cap eliminating it.
-          // Capping (not excluding outright) still measurably narrows the
-          // minification-aliasing window meant to be re-verified live before
-          // trusting these level-0-only textures: distant leaf cards up to
-          // ~2x further away than the untruncated fix's safe range now get at
-          // least one round of mip blending instead of raw mip-0 aliasing.
-          const hasEmbeddedMipChain =
-            texture.isCompressedTexture && texture.mipmaps?.length > 1;
-
-          if (
-            !texture.isCompressedTexture &&
-            (texture.minFilter === THREE.LinearFilter ||
-              texture.minFilter === THREE.NearestFilter)
-          ) {
+          if (isPano) {
+            // The 4K background panorama dome must sample at crisp native resolution without mipmaps
+            texture.minFilter = THREE.LinearFilter;
+            texture.generateMipmaps = false;
+          } else if (texture.isCompressedTexture) {
+            if (texture.mipmaps && texture.mipmaps.length > 1) {
+              texture.minFilter = THREE.LinearMipmapLinearFilter;
+              texture.generateMipmaps = false;
+            } else {
+              texture.minFilter = THREE.LinearFilter;
+            }
+          } else {
             texture.minFilter = THREE.LinearMipmapLinearFilter;
             texture.generateMipmaps = true;
-          } else if (
-            hasEmbeddedMipChain &&
-            texture.minFilter !== THREE.LinearMipmapLinearFilter
-          ) {
-            if (
-              isLeafCutout &&
-              texture.mipmaps.length > LEAF_CUTOUT_MAX_MIP_LEVELS
-            ) {
-              texture.mipmaps = texture.mipmaps.slice(
-                0,
-                LEAF_CUTOUT_MAX_MIP_LEVELS,
-              );
-            }
-            // Do NOT set generateMipmaps here — the chain is already
-            // embedded/uploaded; asking three to generate one for a
-            // compressed format is unsupported and unnecessary.
-            texture.minFilter = THREE.LinearMipmapLinearFilter;
           }
 
           texture.needsUpdate = true;
@@ -347,7 +349,6 @@ export const useHomeScene = () => {
     });
 
     scene.updateMatrixWorld(true);
-    scene.matrixWorldAutoUpdate = false;
 
     return scene;
   }, [scene, maxAnisotropy]);

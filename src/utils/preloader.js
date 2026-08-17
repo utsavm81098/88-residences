@@ -17,6 +17,25 @@ const BASIS_PATH = `${BASE_URL}/basis/`;
 const dracoLoader = new DRACOLoader().setDecoderPath(DRACO_PATH);
 const ktx2Loader = new KTX2Loader().setTranscoderPath(BASIS_PATH);
 
+// NOT calling MeshoptDecoder.useWorkers() here (tried once, reverted).
+// It offloads EXT_meshopt_compression decoding to a Web Worker, but
+// meshopt_decoder.module.js builds that worker's source by string-
+// concatenating `decode.toString() + workerProcess.toString()` plus a
+// hardcoded literal `"self.onmessage = workerProcess;"` — production
+// minification renames the actual `workerProcess` function (an unexported
+// module-scope binding) but can't touch that hardcoded string, so the
+// built worker throws `ReferenceError: workerProcess is not defined` the
+// moment it's used. This only reproduces in a minified build; dev mode
+// keeps the real names, so it looked fine there. Verified directly against
+// the vendored module (node_modules/three/examples/jsm/libs/
+// meshopt_decoder.module.js) before reverting — this is a real fragility
+// in that file, not a one-off fluke. Without useWorkers(), decodeGltfBufferAsync
+// falls back to its default main-thread path, which is slower per the
+// comment that used to be here, but is correct in every build mode.
+// Re-attempting the worker offload would need `mangle.reserved: ['decode',
+// 'workerProcess']` (or equivalent) in the build's minifier config, verified
+// against an actual production build, before it's safe to re-enable.
+
 let ktx2SupportDetected = false;
 
 /**
@@ -65,9 +84,14 @@ export const preloadModels = () => {
   const landingEnv = landingBuilding.environment;
 
   // 1. High Priority: Landing building
-  if (landingModel) useGLTF.preload(landingModel, true, true, configureLoader);
+  // useDraco/useMeshopt passed as `false`: drei's useGLTF/preload wrapper
+  // only overrides configureLoader's self-hosted DRACOLoader with its own
+  // gstatic.com-CDN-backed one when these flags are truthy — see the
+  // matching comment in use-building-instance.js.
+  if (landingModel)
+    useGLTF.preload(landingModel, false, false, configureLoader);
   if (landingHitbox)
-    useGLTF.preload(landingHitbox, true, true, configureLoader);
+    useGLTF.preload(landingHitbox, false, false, configureLoader);
   if (landingEnv) useEnvironment.preload(landingEnv);
 };
 
@@ -101,10 +125,10 @@ export const preloadBackgroundModels = () => {
   ];
 
   otherModels.forEach((path) =>
-    useGLTF.preload(path, true, true, configureLoader),
+    useGLTF.preload(path, false, false, configureLoader),
   );
   otherHitboxes.forEach((path) =>
-    useGLTF.preload(path, true, true, configureLoader),
+    useGLTF.preload(path, false, false, configureLoader),
   );
   otherEnvs.forEach((env) => useEnvironment.preload(env));
 };

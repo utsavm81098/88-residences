@@ -1,37 +1,33 @@
-import { useProgress } from "@react-three/drei";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 
 /**
  * DOM-level loading overlay for the home scene.
- *
- * Deliberately NOT the shared CanvasLoader: that one renders inside drei's
- * <Html>, so it only appears once WebGL has initialised and the canvas would
- * show as opaque black until then. The model is tens of megabytes, so that gap
- * is long enough to look broken. useProgress reads a global store fed by
- * THREE.DefaultLoadingManager and works fine outside the Canvas.
- *
- * Dismissal is driven by `isReady` from SceneReadyGate, NOT by progress hitting
- * 100%. Bytes arriving is not the same as being able to draw: shaders still have
- * to compile and 321 textures still have to reach the GPU. Hiding at 100% is
- * what let the user watch the scene assemble.
  */
-export const HomeLoader = ({ isReady = false }) => {
-  const { progress } = useProgress();
+export const HomeLoader = ({ isReady = false, progress = 0 }) => {
   const { t, i18n } = useTranslation();
-  const isComplete = isReady;
+  const [mounted, setMounted] = useState(true);
 
-  // Once bytes are in we are compiling shaders and uploading textures, which
-  // useProgress cannot see — hold at 99% rather than sitting at a finished-
-  // looking 100% while there is still work to do.
+  useEffect(() => {
+    if (isReady) {
+      const timer = setTimeout(() => setMounted(false), 750);
+      return () => clearTimeout(timer);
+    }
+  }, [isReady]);
+
+  if (!mounted) return null;
+
   const raw = Math.round(progress);
   const displayProgress = isReady ? 100 : Math.max(4, Math.min(99, raw));
 
   return (
     <div
-      aria-hidden={isComplete}
-      className={`absolute inset-0 z-50 flex items-center justify-center bg-background transition-opacity duration-700 ${
-        isComplete ? "opacity-0 pointer-events-none" : "opacity-100"
-      }`}
+      aria-hidden={isReady}
+      className={cn(
+        "absolute inset-0 z-50 flex items-center justify-center bg-background transition-opacity duration-700",
+        isReady ? "opacity-0 pointer-events-none" : "opacity-100",
+      )}
     >
       <div className="absolute top-1/2 left-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-yellow/5 blur-[120px]" />
 

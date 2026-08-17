@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { memo, useEffect } from "react";
 import { useThree } from "@react-three/fiber";
 import { logger } from "@/utils/logger";
 
@@ -22,64 +22,47 @@ const SceneReadyGate = ({ onReady }) => {
   const scene = useThree((state) => state.scene);
   const camera = useThree((state) => state.camera);
   const invalidate = useThree((state) => state.invalidate);
-  const done = useRef(false);
 
   useEffect(() => {
-    if (done.current || !gl || !scene || !camera) return;
+    if (!gl || !scene || !camera) return;
 
     let cancelled = false;
     const started = performance.now();
 
-    const finish = () => {
-      if (cancelled || done.current) return;
-      done.current = true;
-      logger.info(
-        `[SceneReadyGate] Ready in ${Math.round(performance.now() - started)}ms`,
-        { hasEnvironment: true },
-      );
+    try {
+      gl.compile?.(scene, camera);
+    } catch (err) {
+      logger.error("[SceneReadyGate] compile threw error, revealing anyway", err);
+    }
 
-      // Nothing in this scene ever moves once loaded — the camera orbits, but
-      // the sun, geometry, and everything shadows fall on are all static (see
-      // the matrixWorldAutoUpdate = false comment in use-home-scene.js for the
-      // same reasoning). Without this, the renderer recomputes the full
-      // 2048x2048 shadow map from the light's perspective on EVERY frame
-      // regardless of whether the camera is the only thing moving, which is
-      // pure waste and the kind of per-frame cost that shows up as stutter
-      // while orbiting on weaker mobile GPUs. needsUpdate forces one last
-      // correct render before autoUpdate turns off for good.
+    if (gl.shadowMap) {
       gl.shadowMap.needsUpdate = true;
       gl.shadowMap.autoUpdate = false;
-
-      // One more frame after compilation so what we reveal is a complete image.
-      invalidate();
-      requestAnimationFrame(() => {
-        if (!cancelled) onReady?.();
-      });
-    };
-
-    const compile = gl.compileAsync?.(scene, camera);
-
-    if (compile?.then) {
-      compile.then(finish).catch((error) => {
-        // Never trap the user behind the loader if warm-up fails.
-        logger.error(
-          "[SceneReadyGate] compileAsync failed, revealing anyway",
-          error,
-        );
-        finish();
-      });
-    } else {
-      // three < 0.167 has no compileAsync; the synchronous path still warms up.
-      gl.compile?.(scene, camera);
-      finish();
     }
+
+    logger.info(
+      `[SceneReadyGate] Ready in ${Math.round(performance.now() - started)}ms`,
+      { hasEnvironment: true },
+    );
+
+    invalidate();
+    const rafId = requestAnimationFrame(() => {
+      if (!cancelled) {
+        onReady?.();
+      }
+    });
 
     return () => {
       cancelled = true;
+      cancelAnimationFrame(rafId);
     };
   }, [gl, scene, camera, invalidate, onReady]);
 
   return null;
 };
 
-export default SceneReadyGate;
+// Memoized: onReady is a stable useCallback([]) from useHome, so this bails
+// out of re-rendering whenever HomeSceneImpl does for a reason unrelated to
+// this component — same pattern already used for
+// HomeScene/CameraRig/BuildingMarkers/EnvironmentSetup/SceneLights.
+export default memo(SceneReadyGate);

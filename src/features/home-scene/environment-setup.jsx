@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { memo, useEffect } from "react";
 import { useLoader, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
@@ -20,7 +20,7 @@ const GLASS_NODE_EXCLUSION_RE = /^GLASS_Line|^Obj_RAILING/i;
  * stay bright and natural), while specifically applying the 80m-nano-green.jpg HDR panorama
  * reflection to building window glass materials.
  */
-const EnvironmentSetup = () => {
+const EnvironmentSetup = ({ environmentRotation }) => {
   const scene = useThree((state) => state.scene);
   const gl = useThree((state) => state.gl);
   const invalidate = useThree((state) => state.invalidate);
@@ -35,6 +35,19 @@ const EnvironmentSetup = () => {
     if (panorama) {
       panorama.mapping = THREE.EquirectangularReflectionMapping;
       panorama.colorSpace = THREE.SRGBColorSpace;
+
+      // Align this reflection panorama's horizontal orientation with the
+      // panoramic dome baked into the GLB (see environmentRotation's own
+      // comment in home-scene/index.jsx). An equirectangular texture's
+      // horizontal rotation is a wrap-around horizontal offset, not a
+      // rotation matrix — RepeatWrapping is required for that offset to
+      // wrap instead of clamping/stretching at the seam.
+      const rotationY = environmentRotation?.[1] ?? 0;
+      if (rotationY) {
+        panorama.wrapS = THREE.RepeatWrapping;
+        panorama.offset.x = rotationY / (2 * Math.PI);
+      }
+
       panorama.needsUpdate = true;
       greenEnvMap = pmremGenerator.fromEquirectangular(panorama).texture;
     }
@@ -49,7 +62,9 @@ const EnvironmentSetup = () => {
     scene.environment = neutralEnvMap;
     scene.background = null;
 
-    // Apply greenEnvMap specifically to window glass, and boost envMapIntensity for foliage
+    // Apply greenEnvMap specifically to window glass
+    const clonedMaterialsCache = new Map();
+
     scene.traverse((child) => {
       if (!child.isMesh && !child.isInstancedMesh) return;
       const childName = child.name || "";
@@ -76,27 +91,49 @@ const EnvironmentSetup = () => {
 
           if (isPbr) {
             let targetMaterial = material;
-            if (!material.name.includes("_cloned")) {
-              targetMaterial = material.clone();
-              targetMaterial.name = material.name + "_cloned";
-              targetMaterial.userData.__originalMaterial = material;
-              targetMaterial.userData.__isClonedByEnvSetup = true;
+            if (material.userData?.__isClonedByEnvSetup) {
+              material.envMap = greenEnvMap || neutralEnvMap;
+              material.envMapIntensity = 1.5;
+              if (material.isMeshPhysicalMaterial) {
+                material.transmission = 0;
+                material.thickness = 0;
+              }
+              material.needsUpdate = true;
+            } else {
+              if (clonedMaterialsCache.has(material)) {
+                targetMaterial = clonedMaterialsCache.get(material);
+              } else {
+                targetMaterial = material.clone();
+                targetMaterial.name = (material.name || "glass") + "_cloned";
+                targetMaterial.userData.__originalMaterial = material;
+                targetMaterial.userData.__isClonedByEnvSetup = true;
+
+                // Disable physical transmission so Three.js renders crisp PBR reflections
+                // instead of an unpopulated refraction buffer (which renders pitch black).
+                if (targetMaterial.isMeshPhysicalMaterial) {
+                  targetMaterial.transmission = 0;
+                  targetMaterial.thickness = 0;
+                }
+
+                // Window glass receives the 80m-nano-green panorama environment reflection
+                targetMaterial.envMap = greenEnvMap || neutralEnvMap;
+                targetMaterial.envMapIntensity = 1.5;
+                targetMaterial.roughness = 0.05;
+                targetMaterial.metalness = 0.9;
+                targetMaterial.transparent = false;
+                targetMaterial.opacity = 1.0;
+                targetMaterial.color.set("#ffffff");
+                targetMaterial.needsUpdate = true;
+
+                clonedMaterialsCache.set(material, targetMaterial);
+              }
+
               if (Array.isArray(child.material)) {
                 child.material[index] = targetMaterial;
               } else {
                 child.material = targetMaterial;
               }
             }
-
-            // Window glass receives the 80m-nano-green panorama environment reflection
-            targetMaterial.envMap = greenEnvMap || neutralEnvMap;
-            targetMaterial.envMapIntensity = 1.0;
-            targetMaterial.roughness = 0.05;
-            targetMaterial.metalness = 0.95;
-            targetMaterial.transparent = false;
-            targetMaterial.opacity = 1.0;
-            targetMaterial.color.set("#ffffff");
-            targetMaterial.needsUpdate = true;
           }
         }
       });
@@ -139,9 +176,13 @@ const EnvironmentSetup = () => {
       if (greenEnvMap) greenEnvMap.dispose();
       neutralEnvMap.dispose();
     };
-  }, [gl, invalidate, panorama, scene]);
+  }, [gl, invalidate, panorama, scene, environmentRotation]);
 
   return null;
 };
 
-export default EnvironmentSetup;
+// Memoized: environmentRotation is a stable, empty-deps useMemo array from
+// HomeScene, so this bails out of re-rendering whenever HomeSceneImpl does
+// for a reason unrelated to this component (e.g. the isMobile breakpoint
+// crossing) — same pattern already used for HomeScene/CameraRig/BuildingMarkers.
+export default memo(EnvironmentSetup);

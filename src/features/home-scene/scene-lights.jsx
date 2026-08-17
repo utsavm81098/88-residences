@@ -1,6 +1,6 @@
-import { Fragment, useMemo } from "react";
+import { Fragment, memo, useMemo } from "react";
 import * as THREE from "three";
-import { HOME_CAMERA } from "@/utils/constant";
+import { HOME_CAMERA, getDeviceTier } from "@/utils/constant";
 
 // Measured sun position matching the PANO_Sphere dome emissive sun disc
 const PANORAMA_SUN_AZIMUTH_DEG = 200.0;
@@ -13,6 +13,11 @@ const SUN_RADIUS = 400;
  * - Ambient Light: pure white (#ffffff), intensity 0.3
  */
 const SceneLights = ({ environmentRotationDeg = 0 }) => {
+  // Dynamic shadow mapping across this 2,431-mesh model causes temporal shadow crawling/shimmer
+  // during camera movement and roughly doubles draw calls. Disabling dynamic shadows matches
+  // the glTF editor baseline and delivers rock-solid 60 FPS performance.
+  const castShadow = false;
+
   const sunTarget = useMemo(() => {
     const target = new THREE.Object3D();
     target.position.set(...HOME_CAMERA.target);
@@ -45,7 +50,7 @@ const SceneLights = ({ environmentRotationDeg = 0 }) => {
         target={sunTarget}
         color="#ffffff"
         intensity={1.6}
-        castShadow
+        castShadow={castShadow}
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-110}
         shadow-camera-right={110}
@@ -60,4 +65,9 @@ const SceneLights = ({ environmentRotationDeg = 0 }) => {
   );
 };
 
-export default SceneLights;
+// Memoized: environmentRotationDeg is passed as the module-level
+// ENVIRONMENT_ROTATION_DEG constant from HomeScene (a primitive, stable by
+// value), so this bails out of re-rendering whenever HomeSceneImpl does for
+// a reason unrelated to this component — same pattern already used for
+// HomeScene/CameraRig/BuildingMarkers/EnvironmentSetup.
+export default memo(SceneLights);

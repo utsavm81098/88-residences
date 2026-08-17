@@ -35,9 +35,12 @@ export const BUILDING_ROOF_ANCHORS = {
 export const useBuildingMarkers = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isTransitioning, inventory } = useSelector(
-    (state) => state.building,
-  );
+  // Scoped to `inventory` specifically (not the whole `building` slice):
+  // that slice changes reference on ~9 unrelated actions (selectedUnit,
+  // filters, transitions, ...), which would otherwise re-render every
+  // marker on every one of those, even though `markers` below only ever
+  // depends on `inventory`.
+  const inventory = useSelector((state) => state.building.inventory);
 
   const markers = useMemo(() => {
     return BUILDING_CONFIG.map((config, index) => {
@@ -88,7 +91,6 @@ export const useBuildingMarkers = () => {
 
   return {
     markers,
-    isTransitioning,
     handlers: {
       handleSelectBuilding,
     },
