@@ -333,7 +333,10 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
   const prevBuildingSceneRef = useRef(null);
   useEffect(() => {
     // If the scene reference changed, dispose the previous one
-    if (prevBuildingSceneRef.current && prevBuildingSceneRef.current !== buildingScene) {
+    if (
+      prevBuildingSceneRef.current &&
+      prevBuildingSceneRef.current !== buildingScene
+    ) {
       disposeBuildingScene(prevBuildingSceneRef.current);
     }
     prevBuildingSceneRef.current = buildingScene;

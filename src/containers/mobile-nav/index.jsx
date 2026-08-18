@@ -1,10 +1,11 @@
 import React from "react";
+import { useNavigate } from "react-router";
 import { useMobileNav } from "./use-mobile-nav";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS_MOBILE } from "@/utils/constant";
-import { getWebsiteRedirectUrl } from "@/utils/helper";
+import { getDashboardRoute } from "@/utils/helper";
 import logo from "@/assets/logo.png";
 import { SvgIcon } from "@/components/ui/svg-icon";
 
@@ -70,6 +71,8 @@ export default function MobileNavContainer() {
   } = useMobileNav();
   const { t, i18n } = useTranslation();
 
+  const navigate = useNavigate();
+
   const targetLang =
     languages.find((l) => l.code !== activeLanguage) || languages[0];
 
@@ -91,13 +94,13 @@ export default function MobileNavContainer() {
             {/* ── Logo ── */}
             <div className="flex justify-start pb-2">
               <a
-                href={getWebsiteRedirectUrl(i18n)}
+                href={getDashboardRoute(i18n)}
                 onClick={(e) => {
                   e.preventDefault();
                   setIsMoreOpen(false);
-                  window.location.href = getWebsiteRedirectUrl(i18n);
+                  navigate(getDashboardRoute(i18n));
                 }}
-                className="outline-none active:scale-95 transition-transform"
+                className="outline-none active:scale-95 transition-transform cursor-pointer"
               >
                 <img
                   src={logo}

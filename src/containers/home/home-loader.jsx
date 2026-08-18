@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import HeroCarousel from "@/components/ui/hero-carousel";
 import { HOME_LOADER_SLIDES } from "@/utils/constant";
@@ -30,7 +30,15 @@ import { cn } from "@/lib/utils";
  */
 export const HomeLoader = ({ isReady = false }) => {
   const { t } = useTranslation();
-  const [unmounted, setUnmounted] = useState(false);
+  const [unmounted, setUnmounted] = useState(() => isReady);
+
+  // If isReady becomes false (initial load or WebGL context loss / recovery),
+  // immediately un-hide the loader so the infinite autoplay carousel displays while recovering.
+  useEffect(() => {
+    if (!isReady) {
+      setUnmounted(false);
+    }
+  }, [isReady]);
 
   const handleTransitionEnd = useCallback(
     (event) => {
@@ -43,7 +51,7 @@ export const HomeLoader = ({ isReady = false }) => {
     [isReady],
   );
 
-  if (unmounted) return null;
+  if (unmounted && isReady) return null;
 
   return (
     <div

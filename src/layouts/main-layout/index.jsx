@@ -24,9 +24,9 @@ export default function MainLayout() {
   // (containers/sidebar-nav/use-sidebar-nav.js: isCollapsible = isInventoryPage)
   // or the opaque rail overhangs onto the page — which is what covered 170px of
   // the home 3D canvas.
-  const isInventoryPage = (location.pathname.replace(/\/$/, "") || "/").endsWith(
-    "/inventory",
-  );
+  const isInventoryPage = (
+    location.pathname.replace(/\/$/, "") || "/"
+  ).endsWith("/inventory");
   const railWidth = isInventoryPage
     ? SIDEBAR_WIDTH.collapsed
     : SIDEBAR_WIDTH.expanded;

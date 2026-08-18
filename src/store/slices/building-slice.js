@@ -38,9 +38,25 @@ export const fetchInventory = createAsyncThunk(
   },
 );
 
+const getInitialBuildingIndex = () => {
+  if (typeof window !== "undefined") {
+    const params = new URLSearchParams(window.location.search);
+    const buildingParam = params.get("building");
+    if (buildingParam) {
+      const idx = BUILDING_CONFIG.findIndex(
+        (c) => c.name.toUpperCase() === buildingParam.toUpperCase(),
+      );
+      if (idx !== -1) return idx;
+    }
+  }
+  return 0;
+};
+
+const initialBuildingIndex = getInitialBuildingIndex();
+
 const initialState = {
-  currentBuildingIndex: 0,
-  currentBuilding: BUILDING_CONFIG[0],
+  currentBuildingIndex: initialBuildingIndex,
+  currentBuilding: BUILDING_CONFIG[initialBuildingIndex],
   selectedUnit: null,
   mobileSelectedUnit: null,
   snapHeight: 0,
@@ -80,13 +96,53 @@ export const buildingSlice = createSlice({
       state.currentBuilding = BUILDING_CONFIG[state.currentBuildingIndex];
     },
     setBuilding: (state, action) => {
-      const newIndex = action.payload;
-      if (newIndex === state.currentBuildingIndex) return;
+      const newIndex =
+        typeof action.payload === "object"
+          ? action.payload.index
+          : action.payload;
+      const immediate =
+        typeof action.payload === "object"
+          ? action.payload.immediate
+          : false;
+
+      if (newIndex === state.currentBuildingIndex) {
+        if (immediate) {
+          state.isTransitioning = false;
+          state.previousBuildingIndex = null;
+          state.transitionDirection = null;
+        }
+        return;
+      }
+
+      if (immediate) {
+        state.previousBuildingIndex = null;
+        state.transitionDirection = null;
+        state.isTransitioning = false;
+        state.currentBuildingIndex = newIndex;
+        state.currentBuilding = BUILDING_CONFIG[newIndex];
+        state.selectedUnit = null;
+        state.mobileSelectedUnit = null;
+        return;
+      }
+
       state.previousBuildingIndex = state.currentBuildingIndex;
       const total = BUILDING_CONFIG.length;
       const diff = (newIndex - state.currentBuildingIndex + total) % total;
       state.transitionDirection = diff <= total / 2 ? "next" : "prev";
       state.isTransitioning = true;
+      state.currentBuildingIndex = newIndex;
+      state.currentBuilding = BUILDING_CONFIG[newIndex];
+      state.selectedUnit = null;
+      state.mobileSelectedUnit = null;
+    },
+    setBuildingImmediate: (state, action) => {
+      const newIndex =
+        typeof action.payload === "object"
+          ? action.payload.index
+          : action.payload;
+      state.previousBuildingIndex = null;
+      state.transitionDirection = null;
+      state.isTransitioning = false;
       state.currentBuildingIndex = newIndex;
       state.currentBuilding = BUILDING_CONFIG[newIndex];
       state.selectedUnit = null;
@@ -173,6 +229,7 @@ export const {
   nextBuilding,
   prevBuilding,
   setBuilding,
+  setBuildingImmediate,
   resetBuilding,
   endTransition,
   setSelectedUnit,

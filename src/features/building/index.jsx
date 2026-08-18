@@ -98,7 +98,11 @@ const BuildingInstance = memo(function BuildingInstance({
 
   // During transitions, we let GSAP completely control the position by passing undefined.
   // Otherwise, active building is at [0, 0, 0] and inactive ones are warmed underground.
-  const position = isTransitioning ? undefined : (active ? ACTIVE_POSITION : INACTIVE_POSITION);
+  const position = isTransitioning
+    ? undefined
+    : active
+      ? ACTIVE_POSITION
+      : INACTIVE_POSITION;
 
   return (
     <group ref={groupRef} visible={true} position={position}>

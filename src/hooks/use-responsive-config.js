@@ -18,8 +18,8 @@ const RESPONSIVE_CONFIG = {
     label: { distanceX: 28, distanceZ: 20, fontSize: 1.2 },
   },
   desktop: {
-    cameraZ: 44, // Reference distance (used by building transitions)
-    orbit: { min: 39, max: 50 }, // Tighter zoom limits on desktop
+    cameraZ: 55, // Reference distance (used by building transitions)
+    orbit: { min: 39, max: 60 }, // Tighter zoom limits on desktop
     label: { distanceX: 30, distanceZ: 20, fontSize: 1.5 },
   },
 };

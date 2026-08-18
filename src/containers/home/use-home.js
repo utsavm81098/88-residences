@@ -3,7 +3,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import useBottomMenuHeight from "@/hooks/use-bottom-menu-height";
 import { clearGLBCache, getCachedGLBScene } from "@/hooks/use-glb-loader";
 import { HOME_MODEL_PATH } from "@/utils/constant";
-import { disposeThreeScene } from "@/utils/preloader";
+import {
+  disposeThreeScene,
+  startSequentialBuildingPreload,
+  cancelSequentialBuildingPreload,
+} from "@/utils/preloader";
 
 export const useHome = () => {
   const controlsRef = useRef();
@@ -19,7 +23,17 @@ export const useHome = () => {
       ? `calc(100% - ${bottomMenuHeight}px)`
       : "100%";
 
-  const handleReady = useCallback(() => setIsReady(true), []);
+  const handleReady = useCallback(() => {
+    setIsReady(true);
+    // Start sequential background loading of inventory buildings only after home scene is fully ready
+    if (typeof window !== "undefined" && window.requestIdleCallback) {
+      window.requestIdleCallback(() => startSequentialBuildingPreload(), {
+        timeout: 2000,
+      });
+    } else {
+      setTimeout(() => startSequentialBuildingPreload(), 400);
+    }
+  }, []);
 
   const handleResetCache = useCallback(() => {
     try {

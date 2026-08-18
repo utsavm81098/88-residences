@@ -1,10 +1,11 @@
 import { useMemo, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router";
-import { setBuilding } from "@/store/slices/building-slice";
+import { setBuildingImmediate } from "@/store/slices/building-slice";
 import { BUILDING_CONFIG } from "@/utils/constant";
 import { logger } from "@/utils/logger";
 import { getDashboardRoute } from "@/utils/helper";
+import { preloadBuilding } from "@/utils/preloader";
 import i18n from "@/i18n";
 
 /**
@@ -75,12 +76,16 @@ export const useBuildingMarkers = () => {
     });
   }, [inventory]);
 
+  const handleHoverBuilding = useCallback((buildingIndex, buildingName) => {
+    preloadBuilding(buildingIndex ?? buildingName);
+  }, []);
+
   const handleSelectBuilding = useCallback(
     (buildingIndex, buildingName) => {
       logger.info(
         `[useBuildingMarkers] Marker clicked: Building ${buildingName} (index ${buildingIndex})`,
       );
-      dispatch(setBuilding(buildingIndex));
+      dispatch(setBuildingImmediate(buildingIndex));
       // Use the language-aware route so the /dashboard-en prefix is preserved.
       // buildingName is already uppercase ("A"…"G").
       const inventoryPath = getDashboardRoute(i18n, `inventory?building=${buildingName}`);
@@ -93,6 +98,7 @@ export const useBuildingMarkers = () => {
     markers,
     handlers: {
       handleSelectBuilding,
+      handleHoverBuilding,
     },
   };
 };

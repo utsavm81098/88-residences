@@ -203,6 +203,7 @@ const MarkerItem = memo(function MarkerItem({
   isBlocked,
   iconClass,
   onSelect,
+  onHover,
 }) {
   const { name, index, position, status } = marker;
 
@@ -220,6 +221,8 @@ const MarkerItem = memo(function MarkerItem({
     >
       <div
         onClick={() => onSelect(index, name)}
+        onPointerEnter={() => onHover(index, name)}
+        onTouchStart={() => onHover(index, name)}
         className="group relative flex cursor-pointer flex-col items-center"
         style={{ transform: "translate(-50%, -90%)" }}
       >
@@ -256,6 +259,7 @@ export const BuildingMarkers = () => {
           isBlocked={blockedMarkerNames.has(marker.name)}
           iconClass={tier.iconClass}
           onSelect={handlers.handleSelectBuilding}
+          onHover={handlers.handleHoverBuilding}
         />
       ))}
     </group>

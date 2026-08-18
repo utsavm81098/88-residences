@@ -3,39 +3,53 @@ import { useProgress } from "@react-three/drei";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
-/**
- * CanvasLoader Container.
- * DOM-level loading overlay for the 3D inventory building canvas.
- * Perfectly matches HomeLoader aesthetics and behavior with smooth fade-out and radial glow.
- */
 export const CanvasLoader = () => {
   const { t, i18n } = useTranslation();
-  const [progress, setProgress] = useState(0);
-  const [isReady, setIsReady] = useState(false);
-  const [mounted, setMounted] = useState(true);
+  const [progress, setProgress] = useState(() => {
+    try {
+      return useProgress.getState()?.progress ?? 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const [isReady, setIsReady] = useState(() => {
+    try {
+      const state = useProgress.getState();
+      return !state?.active || (state?.progress ?? 0) >= 100;
+    } catch {
+      return false;
+    }
+  });
+
+  const [mounted, setMounted] = useState(() => {
+    try {
+      const state = useProgress.getState();
+      return Boolean(state?.active && (state?.progress ?? 0) < 100);
+    } catch {
+      return true;
+    }
+  });
 
   useEffect(() => {
+    try {
+      const currentState = useProgress.getState();
+      if (!currentState?.active || (currentState?.progress ?? 0) >= 100) {
+        setIsReady(true);
+      }
+    } catch {}
+
     let rafId = null;
     const unsubscribe = useProgress.subscribe((state) => {
       cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(() => {
         const p = state.progress;
         setProgress(p);
-        if (p >= 100 && !state.active) {
+        if (p >= 100 || !state.active) {
           setIsReady(true);
         }
       });
     });
-
-    // Check initial state
-    try {
-      const initial = useProgress.getState();
-      if (initial?.progress >= 100 && !initial?.active) {
-        setIsReady(true);
-      }
-    } catch {
-      // Ignore
-    }
 
     return () => {
       unsubscribe();
@@ -45,7 +59,7 @@ export const CanvasLoader = () => {
 
   useEffect(() => {
     if (isReady) {
-      const timer = setTimeout(() => setMounted(false), 750);
+      const timer = setTimeout(() => setMounted(false), 300);
       return () => clearTimeout(timer);
     }
   }, [isReady]);
@@ -59,7 +73,7 @@ export const CanvasLoader = () => {
     <div
       aria-hidden={isReady}
       className={cn(
-        "absolute inset-0 z-50 flex items-center justify-center bg-background transition-opacity duration-700",
+        "absolute inset-0 z-50 flex items-center justify-center bg-background transition-opacity duration-300",
         isReady ? "opacity-0 pointer-events-none" : "opacity-100",
       )}
     >

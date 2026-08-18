@@ -11,6 +11,14 @@ import { initKTX2 } from "@/utils/preloader";
 import { logger } from "@/utils/logger";
 
 /**
+ * Graceful fallback when WebGL context is lost or fails: renders the full-screen
+ * autoplay HeroCarousel loader instead of a crash card.
+ */
+function HomeCanvasFallback() {
+  return <HomeLoader isReady={false} />;
+}
+
+/**
  * Safety net inside the Canvas: intercepts WebGL context loss to prevent a tab
  * crash. Must be a separate component because R3F hooks require Canvas context,
  * and must sit outside <Suspense> so it stays mounted while the scene loads.
@@ -96,6 +104,7 @@ export const HomeContainer = () => {
       <div className="flex h-full w-full items-center justify-center" dir="ltr">
         <ComponentErrorBoundary
           name="Home 3D Canvas"
+          FallbackComponent={HomeCanvasFallback}
           onReset={handleResetCache}
         >
           <Canvas dpr={dpr} gl={glConfig} camera={initialCamera}>

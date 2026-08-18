@@ -41,45 +41,94 @@ const cache = new Map();
  *   when to consider the resource fully "ready" (e.g. after GPU upload).
  * @returns {Promise<import('three').Group>}
  */
+const MAX_RETRIES = 3;
+const REQUEST_TIMEOUT_MS = 45000;
+
+/**
+ * Robust fetch with exponential backoff retries and timeout protection for slow/flaky internet.
+ */
+const fetchWithRetry = async (url, onProgress) => {
+  let lastError;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timer);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} fetching ${url}`);
+      }
+
+      const total = Number(response.headers.get("content-length")) || 0;
+      const reader = response.body?.getReader();
+
+      if (!reader || !total) {
+        onProgress?.(50);
+        const buffer = await response.arrayBuffer();
+        return buffer;
+      }
+
+      const chunks = [];
+      let loaded = 0;
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        loaded += value.length;
+        onProgress?.(Math.min(90, Math.round((loaded / total) * 90)));
+      }
+
+      const merged = new Uint8Array(loaded);
+      let offset = 0;
+      for (const chunk of chunks) {
+        merged.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return merged.buffer;
+    } catch (err) {
+      clearTimeout(timer);
+      lastError = err;
+      const isAbort = err.name === "AbortError";
+      const errorMsg = isAbort
+        ? "Network request timed out"
+        : err.message || "Network error";
+
+      logger.warn(
+        `[useGLBLoader] Attempt ${attempt}/${MAX_RETRIES} failed for ${url} (${errorMsg}). Retrying...`,
+      );
+
+      if (attempt < MAX_RETRIES) {
+        // Exponential backoff with jitter (1s, 2s, 4s)
+        const delay = Math.min(
+          1000 * Math.pow(2, attempt - 1) + Math.random() * 500,
+          5000,
+        );
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+  }
+
+  throw (
+    lastError ||
+    new Error(`Failed to load ${url} after ${MAX_RETRIES} attempts`)
+  );
+};
+
+/**
+ * Downloads a GLB with real byte-level progress (via streaming fetch with retries)
+ * and parses it safely.
+ *
+ * @param {string} url
+ * @param {(loader: import('three').Loader) => void} [configureLoader]
+ * @param {(progress: number) => void} [onProgress]
+ * @returns {Promise<import('three').Group>}
+ */
 const fetchAndParseGLB = async (url, configureLoader, onProgress) => {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.status}`);
-  }
-
-  const total = Number(response.headers.get("content-length")) || 0;
-  const reader = response.body?.getReader();
-
-  let buffer;
-  if (!reader || !total) {
-    // No streaming body or no Content-Length (e.g. a proxy/CDN that strips it
-    // on compressed responses) — fall back to a single-shot download.
-    // Progress is indeterminate here, so just report a coarse midpoint
-    // instead of leaving the caller's UI stuck at 0 for the whole transfer.
-    onProgress?.(50);
-    buffer = await response.arrayBuffer();
-  } else {
-    const chunks = [];
-    let loaded = 0;
-
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-      loaded += value.length;
-      // Reserve the top of the range for parsing below — bytes arriving is
-      // not the same as the GLB being usable.
-      onProgress?.(Math.min(90, Math.round((loaded / total) * 90)));
-    }
-
-    const merged = new Uint8Array(loaded);
-    let offset = 0;
-    for (const chunk of chunks) {
-      merged.set(chunk, offset);
-      offset += chunk.length;
-    }
-    buffer = merged.buffer;
-  }
+  const buffer = await fetchWithRetry(url, onProgress);
 
   onProgress?.(95);
 

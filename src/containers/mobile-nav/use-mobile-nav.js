@@ -44,7 +44,8 @@ export function useMobileNav() {
   const onNavItemClick = useCallback(
     (id) => {
       if (id === "home") {
-        window.location.href = getWebsiteRedirectUrl(i18n);
+        navigate(getDashboardRoute(i18n));
+        dispatch(setActivePanel(null));
         return;
       }
       if (id === "more") {

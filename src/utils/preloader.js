@@ -72,65 +72,124 @@ export const configureLoader = (loader) => {
 };
 
 /**
+ * Set of already requested asset URLs to prevent duplicate loads.
+ */
+const loadedAssetUrls = new Set();
+
+const safePreloadGLTF = (path) => {
+  if (!path || loadedAssetUrls.has(path)) return Promise.resolve();
+  loadedAssetUrls.add(path);
+  return new Promise((resolve) => {
+    try {
+      useGLTF.preload(path, false, false, configureLoader);
+      if (typeof window !== "undefined" && window.requestIdleCallback) {
+        window.requestIdleCallback(() => resolve(), { timeout: 1200 });
+      } else {
+        setTimeout(resolve, 250);
+      }
+    } catch {
+      resolve();
+    }
+  });
+};
+
+const safePreloadEnv = (env) => {
+  if (!env) return Promise.resolve();
+  const key = typeof env === "object" ? JSON.stringify(env) : String(env);
+  if (loadedAssetUrls.has(key)) return Promise.resolve();
+  loadedAssetUrls.add(key);
+  return new Promise((resolve) => {
+    try {
+      useEnvironment.preload(env);
+      if (typeof window !== "undefined" && window.requestIdleCallback) {
+        window.requestIdleCallback(() => resolve(), { timeout: 800 });
+      } else {
+        setTimeout(resolve, 200);
+      }
+    } catch {
+      resolve();
+    }
+  });
+};
+
+/**
+ * Preload a specific building model, hitbox, and environment.
+ */
+export const preloadBuilding = (buildingIndexOrName) => {
+  const config =
+    typeof buildingIndexOrName === "number"
+      ? BUILDING_CONFIG[buildingIndexOrName]
+      : BUILDING_CONFIG.find(
+          (b) =>
+            b.name.toUpperCase() === String(buildingIndexOrName).toUpperCase(),
+        );
+  if (!config) return;
+  if (config.model) safePreloadGLTF(config.model);
+  if (config.hitbox) safePreloadGLTF(config.hitbox);
+  if (config.environment) safePreloadEnv(config.environment);
+};
+
+let isSequentialPreloadRunning = false;
+let isSequentialPreloadCancelled = false;
+
+/**
+ * Starts a sequential background queue that downloads Building A, B, C, D, E, F, G
+ * one after another during idle browser frames.
+ * Safe to call multiple times (idempotent).
+ */
+export const startSequentialBuildingPreload = async () => {
+  if (isSequentialPreloadRunning) return;
+  isSequentialPreloadRunning = true;
+  isSequentialPreloadCancelled = false;
+
+  const queue = [];
+  BUILDING_CONFIG.forEach((config) => {
+    if (config.model && !loadedAssetUrls.has(config.model)) {
+      queue.push({ type: "model", path: config.model });
+    }
+    if (config.hitbox && !loadedAssetUrls.has(config.hitbox)) {
+      queue.push({ type: "hitbox", path: config.hitbox });
+    }
+    if (config.environment) {
+      const key =
+        typeof config.environment === "object"
+          ? JSON.stringify(config.environment)
+          : String(config.environment);
+      if (!loadedAssetUrls.has(key)) {
+        queue.push({ type: "env", path: config.environment });
+      }
+    }
+  });
+
+  for (const item of queue) {
+    if (isSequentialPreloadCancelled) break;
+    if (item.type === "env") {
+      await safePreloadEnv(item.path);
+    } else {
+      await safePreloadGLTF(item.path);
+    }
+  }
+
+  isSequentialPreloadRunning = false;
+};
+
+export const cancelSequentialBuildingPreload = () => {
+  isSequentialPreloadCancelled = true;
+  isSequentialPreloadRunning = false;
+};
+
+/**
  * Triggers prioritized preloading of unique building and hitbox models.
- * Senior approach: Only load unique file paths to save bandwidth.
- * Staggered loading for low-end systems.
  */
 export const preloadModels = () => {
   const landingBuilding = BUILDING_CONFIG[0];
-  const landingModel = landingBuilding.model;
-  const landingHitbox = landingBuilding.hitbox;
-
-  const landingEnv = landingBuilding.environment;
-
-  // 1. High Priority: Landing building
-  // useDraco/useMeshopt passed as `false`: drei's useGLTF/preload wrapper
-  // only overrides configureLoader's self-hosted DRACOLoader with its own
-  // gstatic.com-CDN-backed one when these flags are truthy — see the
-  // matching comment in use-building-instance.js.
-  if (landingModel)
-    useGLTF.preload(landingModel, false, false, configureLoader);
-  if (landingHitbox)
-    useGLTF.preload(landingHitbox, false, false, configureLoader);
-  if (landingEnv) useEnvironment.preload(landingEnv);
+  if (landingBuilding?.model) safePreloadGLTF(landingBuilding.model);
+  if (landingBuilding?.hitbox) safePreloadGLTF(landingBuilding.hitbox);
+  if (landingBuilding?.environment) safePreloadEnv(landingBuilding.environment);
 };
 
 export const preloadBackgroundModels = () => {
-  const landingBuilding = BUILDING_CONFIG[0];
-  const landingModel = landingBuilding.model;
-  const landingHitbox = landingBuilding.hitbox;
-  const landingEnv = landingBuilding.environment;
-
-  // 2. Background Priority: Remaining unique models
-  const otherModels = [
-    ...new Set(
-      BUILDING_CONFIG.slice(1)
-        .map((b) => b.model)
-        .filter((path) => path && path !== landingModel),
-    ),
-  ];
-  const otherHitboxes = [
-    ...new Set(
-      BUILDING_CONFIG.slice(1)
-        .map((b) => b.hitbox)
-        .filter((path) => path && path !== landingHitbox),
-    ),
-  ];
-  const otherEnvs = [
-    ...new Set(
-      BUILDING_CONFIG.slice(1)
-        .map((b) => b.environment)
-        .filter((env) => env && env !== landingEnv),
-    ),
-  ];
-
-  otherModels.forEach((path) =>
-    useGLTF.preload(path, false, false, configureLoader),
-  );
-  otherHitboxes.forEach((path) =>
-    useGLTF.preload(path, false, false, configureLoader),
-  );
-  otherEnvs.forEach((env) => useEnvironment.preload(env));
+  startSequentialBuildingPreload();
 };
 
 /**

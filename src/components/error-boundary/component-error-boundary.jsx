@@ -20,10 +20,15 @@ import { logError } from "./error-logger";
  * @param {string} [props.name] - Optional name to identify which section errored in logs.
  * @param {() => void} [props.onReset] - Called after the boundary resets.
  */
-const ComponentErrorBoundary = ({ children, name, onReset }) => {
+const ComponentErrorBoundary = ({
+  children,
+  name,
+  onReset,
+  FallbackComponent = ErrorFallback,
+}) => {
   return (
     <ErrorBoundary
-      FallbackComponent={ErrorFallback}
+      FallbackComponent={FallbackComponent}
       onError={(error, info) =>
         logError({ error, info, level: "component", componentName: name })
       }
