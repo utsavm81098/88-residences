@@ -11,7 +11,7 @@ import EnvironmentSetup from "./environment-setup";
 // baked into the supplied GLB. The dome remains the visible background.
 const ENVIRONMENT_ROTATION_DEG = 1;
 
-const HomeSceneImpl = ({ controlsRef, onReady }) => {
+const HomeSceneImpl = ({ controlsRef, onReady, active = true }) => {
   const { scene } = useHomeScene();
   const environmentRotation = useMemo(
     () => [0, THREE.MathUtils.degToRad(ENVIRONMENT_ROTATION_DEG), 0],
@@ -32,7 +32,7 @@ const HomeSceneImpl = ({ controlsRef, onReady }) => {
           reach full res. That was the blurry-then-sharpens first render. This is a
           static architectural view, so a fixed dpr is the right trade. */}
 
-      <CameraRig controlsRef={controlsRef} />
+      <CameraRig controlsRef={controlsRef} active={active} />
 
       {/* Low-energy image-based lighting restores natural sky bounce on shaded
           facades without replacing the GLB's own panorama sphere. */}

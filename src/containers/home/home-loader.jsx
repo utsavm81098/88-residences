@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import HeroCarousel from "@/components/ui/hero-carousel";
 import { HOME_LOADER_SLIDES } from "@/utils/constant";
@@ -39,6 +39,20 @@ export const HomeLoader = ({ isReady = false }) => {
       setUnmounted(false);
     }
   }, [isReady]);
+
+  // `unmounted` used to be a safely permanent one-way latch, because a
+  // navigation away from home unmounted this component and the next visit got a
+  // fresh one. Under keep-alive (containers/keep-alive-outlet) the home view
+  // mounts once and never again, so the latch would be permanent for the whole
+  // session — and a WebGL context loss would strand the user. useHome's
+  // handleResetCache sets isReady back to false and evicts the cached GLB, but
+  // this component sits OUTSIDE the ComponentErrorBoundary in
+  // containers/home/index.jsx, so nothing remounts it: the scene would reload
+  // behind a blank canvas with no loader at all. Re-arming on the true->false
+  // edge of isReady restores the recovery path.
+  useEffect(() => {
+    if (!isReady && unmounted) setUnmounted(false);
+  }, [isReady, unmounted]);
 
   const handleTransitionEnd = useCallback(
     (event) => {

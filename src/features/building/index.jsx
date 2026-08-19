@@ -30,13 +30,14 @@ const BuildingModel = memo(function BuildingModel({
       {BUILDING_CONFIG.map((config, index) => {
         const isCurrent = index === currentBuildingIndex;
         const isPrevious = isTransitioning && index === previousBuildingIndex;
-        const isLanding = index === 0;
 
         // If it's a background building and we haven't reached the mount delay, do not render it.
         // This ensures the main canvas loads immediately with only the active building.
-        if (!isLanding && !isCurrent && !isPrevious && !mountBackground) {
+        if (!isCurrent && !isPrevious && !mountBackground) {
           return null;
         }
+
+        const isVisible = isCurrent || isPrevious;
 
         const instance = (
           <BuildingInstance
@@ -45,6 +46,7 @@ const BuildingModel = memo(function BuildingModel({
               groupRef: (el) => (groupRefs.current[index] = el),
               config,
               active: isCurrent,
+              isVisible,
               isTransitioning,
               controlsRef,
               renderOrder,
@@ -53,7 +55,7 @@ const BuildingModel = memo(function BuildingModel({
         );
 
         // Background buildings must have their own Suspense to avoid blocking the main canvas
-        if (!isLanding && !isCurrent && !isPrevious) {
+        if (!isCurrent && !isPrevious) {
           return (
             <Suspense key={config.name} fallback={null}>
               {instance}
@@ -76,6 +78,7 @@ const GLASS_RENDER_ORDER_OFFSET = 1;
 const BuildingInstance = memo(function BuildingInstance({
   config,
   active,
+  isVisible,
   isTransitioning,
   controlsRef,
   renderOrder,
@@ -96,16 +99,18 @@ const BuildingInstance = memo(function BuildingInstance({
 
   const glassRenderOrder = renderOrder + GLASS_RENDER_ORDER_OFFSET;
 
-  // During transitions, we let GSAP completely control the position by passing undefined.
-  // Otherwise, active building is at [0, 0, 0] and inactive ones are warmed underground.
+  // During transitions, GSAP animates position for visible building groups directly.
+  // Inactive background buildings remain underground at [0, -1000, 0].
   const position = isTransitioning
-    ? undefined
+    ? isVisible
+      ? undefined
+      : INACTIVE_POSITION
     : active
       ? ACTIVE_POSITION
       : INACTIVE_POSITION;
 
   return (
-    <group ref={groupRef} visible={true} position={position}>
+    <group ref={groupRef} visible={isVisible} position={position}>
       <primitive object={buildingScene} renderOrder={renderOrder} />
       <primitive
         key={glassScene.uuid}

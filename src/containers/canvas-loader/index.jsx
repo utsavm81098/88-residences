@@ -2,34 +2,55 @@ import React, { useState, useEffect } from "react";
 import { useProgress } from "@react-three/drei";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import { ENV_CONFIG } from "@/utils/env-config";
+
+/**
+ * drei's `useProgress` is a global zustand store shared by every loader in the
+ * app, and it is NOT reset between mounts. On any mount that happens after a
+ * load has already finished it already reads `progress: 100, active: false`.
+ *
+ * Reading it here — synchronously, for the `useState` initialiser — instead of
+ * in a post-paint `useEffect` avoids rendering the overlay at `opacity-100` for
+ * one frame before discovering there was nothing to load, which produced a
+ * visible 700ms fade of a "100%" card followed by a 750ms unmount timer.
+ *
+ * CRITICAL: this seeding is only correct when this component can REMOUNT.
+ * Under keep-alive (containers/keep-alive-outlet) the inventory view mounts
+ * exactly once per session, and that single mount is the genuine first load —
+ * precisely when the loader must appear. Seeding from the global store there
+ * would suppress it permanently, because Home's own environment textures and
+ * the idle preloadModels() call have already driven that shared store to
+ * `progress: 100, active: false` long before the user ever opens Inventory.
+ * The result would be a blank canvas with no feedback while the building GLB
+ * downloads, unrecoverable for the rest of the session.
+ *
+ * So: keep-alive ON → always start visible and let useProgress drive the
+ * fade-out. Keep-alive OFF → the component remounts on every navigation, the
+ * one-frame flash is real, and this seeding is the fix for it.
+ */
+const readInitialProgress = () => {
+  if (ENV_CONFIG.KEEP_ALIVE_ROUTES) {
+    return { progress: 0, isComplete: false };
+  }
+
+  try {
+    const state = useProgress.getState();
+    const progress = state?.progress ?? 0;
+    return { progress, isComplete: progress >= 100 && !state?.active };
+  } catch {
+    // Defensive: matches the existing try/catch around the same call.
+    return { progress: 0, isComplete: false };
+  }
+};
 
 export const CanvasLoader = () => {
   const { t, i18n } = useTranslation();
-  const [progress, setProgress] = useState(() => {
-    try {
-      return useProgress.getState()?.progress ?? 0;
-    } catch {
-      return 0;
-    }
-  });
-
-  const [isReady, setIsReady] = useState(() => {
-    try {
-      const state = useProgress.getState();
-      return !state?.active || (state?.progress ?? 0) >= 100;
-    } catch {
-      return false;
-    }
-  });
-
-  const [mounted, setMounted] = useState(() => {
-    try {
-      const state = useProgress.getState();
-      return Boolean(state?.active && (state?.progress ?? 0) < 100);
-    } catch {
-      return true;
-    }
-  });
+  const [initial] = useState(readInitialProgress);
+  const [progress, setProgress] = useState(initial.progress);
+  const [isReady, setIsReady] = useState(initial.isComplete);
+  // Already complete at first render → never mount the overlay at all, so
+  // there is no frame at opacity-100 to fade out.
+  const [mounted, setMounted] = useState(!initial.isComplete);
 
   useEffect(() => {
     try {

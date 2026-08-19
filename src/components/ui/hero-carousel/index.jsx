@@ -56,11 +56,13 @@ export const HeroCarousel = ({ slides = [], className }) => {
       )}
 
       {/* ── Center-Screen Rotating 88 Logo (Enlarged size) ── */}
-      <div
-        data-slot="hero-logo"
-        className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex h-[60px] w-[60px] -translate-x-1/2 -translate-y-1/2 items-center justify-center animate-rotating drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)] sm:h-[60px] sm:w-[60px] md:h-[90px] md:w-[90px]"
-      >
-        <Logo />
+      <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+        <div
+          data-slot="hero-logo"
+          className="flex h-[60px] w-[60px] items-center justify-center animate-rotating drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)] sm:h-[60px] sm:w-[60px] md:h-[90px] md:w-[90px]"
+        >
+          <Logo />
+        </div>
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import Building from "@/features/building";
 import AdaptiveControls from "@/features/adaptive-controls";
 import DirectionLabel from "@/features/direction-label";
 import BuildingTooltip from "@/features/building-tooltip";
+import KTX2Init from "@/features/ktx2-init";
 import { CanvasLoader } from "@/containers/canvas-loader";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
 import { CANVAS_GL_CONFIG } from "@/utils/constant";
@@ -32,14 +33,14 @@ function WebGLRecoveryGuard({ onFatalLoss }) {
  * InventoryContainer - Coordinates the main 3D canvas viewport,
  * controls, tooltips, and side panel layouts.
  */
-export default function InventoryContainer() {
+export default function InventoryContainer({ active = true }) {
   const {
     controlsRef,
     modelRef,
     canvasHeight,
     handleResetCamera,
     handleResetCache,
-  } = useInventory();
+  } = useInventory({ active });
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-background">
@@ -65,10 +66,25 @@ export default function InventoryContainer() {
               dpr={[1, Math.min(window.devicePixelRatio, 2)]}
               performance={{ min: 0.5, debounce: 200 }}
               gl={CANVAS_GL_CONFIG}
+              // See the matching comment in containers/home/index.jsx. This
+              // container stays mounted and hidden after its first visit;
+              // "never" halts the render loop so the hidden scene — including
+              // the EffectComposer/SMAA pass — costs no GPU time.
+              //
+              // CAUTION for anyone adding post-processing here: R3F's
+              // setFrameloop resets clock.elapsedTime to 0 on every toggle, and
+              // EffectComposer already feeds `delta` into composer.render().
+              // That is safe for SMAA, which is time-independent, and the first
+              // delta after resuming is small because clock.start() resets
+              // oldTime. A TIME-DEPENDENT pass (Noise, Glitch, ShockWave, any
+              // custom shader driving a uTime uniform) would jump on every
+              // route switch. Keep every pass in this composer time-independent.
+              frameloop={active ? "always" : "never"}
             >
+              <KTX2Init />
               <WebGLRecoveryGuard onFatalLoss={handleResetCache} />
               <Suspense fallback={null}>
-                <SceneEnvironment>
+                <SceneEnvironment active={active}>
                   <Building
                     {...{
                       controlsRef,

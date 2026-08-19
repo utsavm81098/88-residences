@@ -1,13 +1,13 @@
-import { Suspense, useLayoutEffect, useMemo } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Suspense, useMemo } from "react";
+import { Canvas } from "@react-three/fiber";
 import useHome from "./use-home";
 import HomeLoader from "./home-loader";
 import HomeScene from "@/features/home-scene";
+import KTX2Init from "@/features/ktx2-init";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
 import { solveFraming } from "@/features/home-scene/fit-camera";
 import { HOME_CAMERA, getHomeDpr, getHomeGlConfig } from "@/utils/constant";
 import useWebGLRecovery from "@/hooks/use-webgl-recovery";
-import { initKTX2 } from "@/utils/preloader";
 import { logger } from "@/utils/logger";
 
 /**
@@ -34,26 +34,6 @@ function WebGLRecoveryGuard({ onFatalLoss }) {
 }
 
 /**
- * KTX2Loader needs a live renderer to know which compressed formats the GPU
- * supports. Rendered outside <Suspense> so it runs before the GLB is requested.
- *
- * useLayoutEffect, not a render-phase call: calling initKTX2 directly in the
- * component body was a side effect during render (harmless in practice since
- * it's idempotent, but against the rules of pure render). useLayoutEffect
- * still fires before any *passive* useEffect in the same commit — including
- * useHomeScene's effect that kicks off the GLB fetch — so KTX2 support
- * detection is still guaranteed to complete before anything tries to
- * transcode a KHR_texture_basisu texture.
- */
-function KTX2Init() {
-  const gl = useThree((state) => state.gl);
-  useLayoutEffect(() => {
-    initKTX2(gl);
-  }, [gl]);
-  return null;
-}
-
-/**
  * HomeContainer — hosts the 3D masterplan canvas on the home route.
  *
  * All devices load the same optimised GLB; only dpr, MSAA and texture anisotropy
@@ -61,7 +41,7 @@ function KTX2Init() {
  * features/home-scene/fit-camera.js), so there are no per-breakpoint camera
  * numbers to keep in sync.
  */
-export const HomeContainer = () => {
+export const HomeContainer = ({ active = true }) => {
   const {
     controlsRef,
     isMobile,
@@ -107,11 +87,33 @@ export const HomeContainer = () => {
           FallbackComponent={HomeCanvasFallback}
           onReset={handleResetCache}
         >
-          <Canvas dpr={dpr} gl={glConfig} camera={initialCamera}>
+          <Canvas
+            dpr={dpr}
+            gl={glConfig}
+            camera={initialCamera}
+            // This container stays mounted after its first visit and is hidden
+            // by containers/keep-alive-outlet rather than unmounted, so the
+            // WebGL context (and every compiled program and uploaded texture)
+            // survives navigation. "never" is what stops that mounted-but-
+            // invisible scene from costing GPU time: it halts the render loop
+            // entirely, so no useFrame callback and no OrbitControls.update()
+            // runs while hidden.
+            //
+            // CAUTION: R3F's setFrameloop does clock.stop() and
+            // clock.elapsedTime = 0 on every toggle. Nothing in this subtree
+            // may read clock.elapsedTime or delta in useFrame — audited at the
+            // time of writing (camera-rig ignores its args, building-markers
+            // reads camera/size only). Keep it that way.
+            frameloop={active ? "always" : "never"}
+          >
             <KTX2Init />
             <WebGLRecoveryGuard onFatalLoss={handleResetCache} />
             <Suspense fallback={null}>
-              <HomeScene controlsRef={controlsRef} onReady={handleReady} />
+              <HomeScene
+                controlsRef={controlsRef}
+                onReady={handleReady}
+                active={active}
+              />
             </Suspense>
           </Canvas>
         </ComponentErrorBoundary>

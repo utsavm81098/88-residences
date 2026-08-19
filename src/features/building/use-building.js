@@ -39,7 +39,7 @@ const useBuildingTransition = ({ groupRefs, controlsRef }) => {
         const group = groupRefs.current[key];
         if (group) {
           group.visible = false;
-          group.position.set(0, 0, 0);
+          group.position.set(0, -1000, 0);
           group.rotation.y = 0;
         }
       }
@@ -147,10 +147,10 @@ const useBuildingTransition = ({ groupRefs, controlsRef }) => {
       },
       onComplete: () => {
         oldGroup.visible = false;
-        [oldGroup, newGroup].forEach((g) => {
-          g.position.set(0, 0, 0);
-          g.rotation.y = 0;
-        });
+        oldGroup.position.set(0, -1000, 0);
+        oldGroup.rotation.y = 0;
+        newGroup.position.set(0, 0, 0);
+        newGroup.rotation.y = 0;
         invalidate();
       },
     });

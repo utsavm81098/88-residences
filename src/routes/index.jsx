@@ -5,13 +5,11 @@ import {
   useParams,
   useLocation,
 } from "react-router";
-import HomePage from "@/pages/home";
 import { WEB_ROUTES } from "./routes";
 import i18n from "@/i18n";
 import { SUPPORTED_LANGS } from "@/utils/languages";
 
 import MainLayout from "@/layouts/main-layout";
-import Inventory from "@/pages/inventory";
 import { DASHBOARD_PREFIX } from "@/utils/constant";
 import { getDashboardRoute } from "@/utils/helper";
 
@@ -81,18 +79,23 @@ const router = createBrowserRouter([
     children: [
       {
         element: <MainLayout />,
+        // These leaves intentionally declare no element/Component. They exist
+        // to match the URL and to name the view via `handle`; the actual mount
+        // is owned by containers/keep-alive-outlet, which keeps a visited
+        // route's <Canvas> alive across navigations. A leaf route with no
+        // element is a valid react-router pass-through and renders nothing.
         children: [
           {
             index: true,
-            Component: HomePage,
+            handle: { keepAlive: "home" },
           },
           {
             path: WEB_ROUTES.landing.path,
-            Component: Inventory,
+            handle: { keepAlive: "inventory" },
           },
           {
             path: WEB_ROUTES.home.path,
-            Component: HomePage,
+            handle: { keepAlive: "home" },
           },
         ],
       },

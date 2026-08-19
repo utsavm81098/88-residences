@@ -14,7 +14,7 @@ import GradientSky from "./gradient-sky";
 import { GROUND_CONFIG, Preset } from "@/utils/constant";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const SceneEnvironment = ({ children }) => {
+const SceneEnvironment = ({ children, active = true }) => {
   const {
     environment,
     lighting,
@@ -53,11 +53,22 @@ const SceneEnvironment = ({ children }) => {
 
   return (
     <Fragment>
-      <PerformanceMonitor
-        onDecline={onPerformanceDecline}
-        onIncline={onPerformanceIncline}
-      />
-      <AdaptiveDpr />
+      {/* Unmounted while this view is hidden by containers/keep-alive-outlet.
+          PerformanceMonitor samples wall-clock time (performance.now), not the
+          R3F clock, and does NOT clear its sample buffer across a
+          frameloop="never" freeze — so the first sample after every
+          re-activation spans the entire hidden period and reads as ~0 fps.
+          Enough of those inside one 10-sample window trips onDecline, and
+          AdaptiveDpr then drops this canvas's resolution for the rest of the
+          session. Neither component does anything useful while no frames are
+          rendering anyway. */}
+      {active && (
+        <PerformanceMonitor
+          onDecline={onPerformanceDecline}
+          onIncline={onPerformanceIncline}
+        />
+      )}
+      {active && <AdaptiveDpr />}
       <AdaptiveEvents />
 
       <PerspectiveCamera

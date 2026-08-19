@@ -37,6 +37,26 @@ const ktx2Loader = new KTX2Loader().setTranscoderPath(BASIS_PATH);
 // against an actual production build, before it's safe to re-enable.
 
 let ktx2SupportDetected = false;
+let resolveKTX2Ready;
+
+/**
+ * Resolves the first time a live WebGLRenderer reaches initKTX2 below.
+ *
+ * Anything that parses a GLB containing KHR_texture_basisu textures from
+ * OUTSIDE a mounted <Canvas> — i.e. the idle cross-route warm-up in
+ * src/main.jsx — must await this. KTX2Loader throws "Missing initialization
+ * with `.detectSupport( renderer )`" otherwise, and a renderer only exists once
+ * a Canvas has committed. Awaiting a promise is deterministic; racing the first
+ * Canvas commit against a requestIdleCallback is not.
+ *
+ * Never resolves if no Canvas ever mounts (e.g. WebGL unavailable) — which is
+ * correct: there is nothing to warm up in that case.
+ */
+const ktx2ReadyPromise = new Promise((resolve) => {
+  resolveKTX2Ready = resolve;
+});
+
+export const whenKTX2Ready = () => ktx2ReadyPromise;
 
 /**
  * KTX2Loader cannot transcode until it knows which compressed texture formats
@@ -54,6 +74,7 @@ export const initKTX2 = (renderer) => {
   if (ktx2SupportDetected || !renderer) return;
   ktx2Loader.detectSupport(renderer);
   ktx2SupportDetected = true;
+  resolveKTX2Ready();
 };
 
 /**
@@ -69,6 +90,20 @@ export const configureLoader = (loader) => {
   loader.setDRACOLoader(dracoLoader);
   loader.setKTX2Loader(ktx2Loader);
   loader.setMeshoptDecoder(MeshoptDecoder);
+};
+
+export const getInitialLandingBuilding = () => {
+  if (typeof window !== "undefined") {
+    const params = new URLSearchParams(window.location.search);
+    const buildingParam = params.get("building");
+    if (buildingParam) {
+      const b = BUILDING_CONFIG.find(
+        (c) => c.name.toUpperCase() === buildingParam.toUpperCase(),
+      );
+      if (b) return b;
+    }
+  }
+  return BUILDING_CONFIG[0];
 };
 
 /**
@@ -182,14 +217,60 @@ export const cancelSequentialBuildingPreload = () => {
  * Triggers prioritized preloading of unique building and hitbox models.
  */
 export const preloadModels = () => {
-  const landingBuilding = BUILDING_CONFIG[0];
-  if (landingBuilding?.model) safePreloadGLTF(landingBuilding.model);
-  if (landingBuilding?.hitbox) safePreloadGLTF(landingBuilding.hitbox);
-  if (landingBuilding?.environment) safePreloadEnv(landingBuilding.environment);
+  const landingBuilding = getInitialLandingBuilding();
+  const landingModel = landingBuilding.model;
+  const landingHitbox = landingBuilding.hitbox;
+
+  const landingEnv = landingBuilding.environment;
+
+  // 1. High Priority: Landing building
+  // useDraco/useMeshopt passed as `false`: drei's useGLTF/preload wrapper
+  // only overrides configureLoader's self-hosted DRACOLoader with its own
+  // gstatic.com-CDN-backed one when these flags are truthy — see the
+  // matching comment in use-building-instance.js.
+  if (landingModel)
+    useGLTF.preload(landingModel, false, false, configureLoader);
+  if (landingHitbox)
+    useGLTF.preload(landingHitbox, false, false, configureLoader);
+  if (landingEnv) useEnvironment.preload(landingEnv);
 };
 
 export const preloadBackgroundModels = () => {
-  startSequentialBuildingPreload();
+  const landingBuilding = getInitialLandingBuilding();
+  const landingModel = landingBuilding.model;
+  const landingHitbox = landingBuilding.hitbox;
+  const landingEnv = landingBuilding.environment;
+
+  // 2. Background Priority: Remaining unique models
+  const otherModels = [
+    ...new Set(
+      BUILDING_CONFIG.map((b) => b.model).filter(
+        (path) => path && path !== landingModel,
+      ),
+    ),
+  ];
+  const otherHitboxes = [
+    ...new Set(
+      BUILDING_CONFIG.map((b) => b.hitbox).filter(
+        (path) => path && path !== landingHitbox,
+      ),
+    ),
+  ];
+  const otherEnvs = [
+    ...new Set(
+      BUILDING_CONFIG.map((b) => b.environment).filter(
+        (env) => env && env !== landingEnv,
+      ),
+    ),
+  ];
+
+  otherModels.forEach((path) =>
+    useGLTF.preload(path, false, false, configureLoader),
+  );
+  otherHitboxes.forEach((path) =>
+    useGLTF.preload(path, false, false, configureLoader),
+  );
+  otherEnvs.forEach((env) => useEnvironment.preload(env));
 };
 
 /**

@@ -250,6 +250,26 @@ export const useGLBLoader = (url, configureLoader) => {
 };
 
 /**
+ * Warms the module-scope cache for a URL without mounting a component. The
+ * fetch+parse still runs at most once per URL, so a later useGLBLoader for the
+ * same URL resolves instantly from the same entry instead of re-downloading.
+ *
+ * Callers outside a mounted <Canvas> must gate this on whenKTX2Ready() when the
+ * GLB carries KHR_texture_basisu textures — see utils/preloader.js.
+ *
+ * @param {string | null | undefined} url
+ * @param {(loader: import('three').Loader) => void} [configureLoader]
+ */
+export const preloadGLB = (url, configureLoader) => {
+  if (!url) return;
+  // The .catch is required, not defensive: getOrCreateEntry logs the failure
+  // and evicts the entry so a real consumer still gets a genuine retry, but
+  // with no handler attached here a failed preload would surface as an
+  // unhandled promise rejection.
+  getOrCreateEntry(url, configureLoader).promise.catch(() => {});
+};
+
+/**
  * Evicts a cached GLB so the next mount performs a real re-fetch/re-parse.
  * Callers are responsible for disposing the previous scene's GPU resources
  * first (see disposeThreeScene in utils/preloader.js).

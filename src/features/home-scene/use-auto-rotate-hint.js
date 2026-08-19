@@ -41,7 +41,7 @@ const RESUME_IDLE_MS = 2 * 60_000;
  * live that mounting/unmounting repeatedly does not accumulate timers or
  * listeners.
  */
-export const useAutoRotateHint = ({ controlsRef }) => {
+export const useAutoRotateHint = ({ controlsRef, enabled = true }) => {
   const invalidate = useThree((state) => state.invalidate);
 
   const idleTimerRef = useRef(null);
@@ -62,15 +62,31 @@ export const useAutoRotateHint = ({ controlsRef }) => {
   // First arm: CameraRig only mounts once the GLB has loaded
   // (src/features/home-scene/index.jsx), so "on mount" already means "after
   // the model is ready" — no separate onReady/SceneReadyGate gating needed.
+  //
+  // `enabled` exists because this container is no longer unmounted when the
+  // user navigates away (see containers/keep-alive-outlet). frameloop="never"
+  // freezes the render loop but NOT this setTimeout, so without the gate the
+  // 20s timer would still fire while the home view was hidden and flip
+  // autoRotate on — and the scene would be spinning the instant the user came
+  // back. Disabling clears the pending timer and forces autoRotate off;
+  // re-enabling re-arms the full initial delay, so returning to the route
+  // behaves like arriving at it.
   useEffect(() => {
+    const controls = controlsRef.current;
+
+    if (!enabled) {
+      clearTimeout(idleTimerRef.current);
+      if (controls) controls.autoRotate = false;
+      return undefined;
+    }
+
     scheduleIdleTimer(INITIAL_ROTATE_DELAY_MS);
 
-    const controls = controlsRef.current;
     return () => {
       clearTimeout(idleTimerRef.current);
       if (controls) controls.autoRotate = false;
     };
-  }, [scheduleIdleTimer, controlsRef]);
+  }, [enabled, scheduleIdleTimer, controlsRef]);
 
   // 'start'/'end' are three.js EventDispatcher events (not DOM events),
   // dispatched by OrbitControls itself around every orbit drag, pan drag,
@@ -80,7 +96,7 @@ export const useAutoRotateHint = ({ controlsRef }) => {
   // (longer) resume timer for the next idle stretch.
   useEffect(() => {
     const controls = controlsRef.current;
-    if (!controls) return;
+    if (!controls || !enabled) return undefined;
 
     const handleStart = () => {
       clearTimeout(idleTimerRef.current);
@@ -96,7 +112,7 @@ export const useAutoRotateHint = ({ controlsRef }) => {
       controls.removeEventListener("start", handleStart);
       controls.removeEventListener("end", handleEnd);
     };
-  }, [controlsRef, scheduleIdleTimer]);
+  }, [enabled, controlsRef, scheduleIdleTimer]);
 };
 
 export default useAutoRotateHint;

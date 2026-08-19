@@ -46,7 +46,7 @@ const BASE_PAN_SPEED = 1.5;
  * (useMemo(() => new OrbitControls(camera), [camera])), so the very first frames
  * show a different view. Creating the camera up front removes that entirely.
  */
-const CameraRigImpl = ({ controlsRef }) => {
+const CameraRigImpl = ({ controlsRef, active = true }) => {
   const camera = useThree((state) => state.camera);
   const gl = useThree((state) => state.gl);
   const size = useThree((state) => state.size);
@@ -270,7 +270,10 @@ const CameraRigImpl = ({ controlsRef }) => {
   // sequence and the memory-leak audit notes. Pure side effect: talks to
   // controlsRef imperatively, same as CameraRig's own onReady/isReady wiring
   // elsewhere in this feature.
-  useAutoRotateHint({ controlsRef });
+  // `enabled` is gated on route activity: frameloop="never" stops the render
+  // loop but not setTimeout, so without this the idle timer would fire while
+  // the home view is hidden and the scene would be mid-spin on return.
+  useAutoRotateHint({ controlsRef, enabled: active });
 
   return (
     <OrbitControls
