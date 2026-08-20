@@ -99,12 +99,27 @@ export const HomeContainer = ({ active = true }) => {
             // entirely, so no useFrame callback and no OrbitControls.update()
             // runs while hidden.
             //
+            // "demand" instead of "always" while active — was previously
+            // "always" (continuous render every frame regardless of whether
+            // anything moved), meaning 608 draw calls / up to 300 shader
+            // switches every frame even while the user is just looking at a
+            // static camera. Verified safe, not just faster: drei's
+            // <OrbitControls> (camera-rig.jsx) already calls invalidate() on
+            // every 'change' event it dispatches, and controls.update() itself
+            // runs inside a useFrame — which only fires on frames R3F actually
+            // renders. That's a self-sustaining chain: every rendered frame's
+            // update() detects ongoing damping or autoRotate and dispatches
+            // 'change' again, requesting the next frame, for as long as
+            // something is actually still moving — and stops the instant it
+            // settles. No extra invalidate() wiring was needed anywhere in
+            // this subtree for that to work.
+            //
             // CAUTION: R3F's setFrameloop does clock.stop() and
             // clock.elapsedTime = 0 on every toggle. Nothing in this subtree
             // may read clock.elapsedTime or delta in useFrame — audited at the
             // time of writing (camera-rig ignores its args, building-markers
             // reads camera/size only). Keep it that way.
-            frameloop={active ? "always" : "never"}
+            frameloop={active ? "demand" : "never"}
           >
             <KTX2Init />
             <WebGLRecoveryGuard onFatalLoss={handleResetCache} />

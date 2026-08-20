@@ -218,9 +218,20 @@ export const useBuilding = ({ controlsRef }) => {
   useEffect(() => {
     if (!warmedUp) return;
 
-    // Always start preloading model files in the background (network fetch + parse).
-    // This is safe — files are cached by useGLTF and don't hit GPU until mounted.
-    preloadBackgroundModels();
+    // Desktop only: preload the OTHER buildings' model files in the background
+    // (network fetch + parse) for instant transitions. This used to run
+    // unconditionally on the assumption that it's "safe" because the parsed
+    // data doesn't hit GPU until mounted — true for VRAM, but the parsed
+    // geometry/texture data still lands in JS heap via useGLTF's permanent
+    // cache regardless of device. On mobile, where mountBackground below
+    // already guarantees these buildings never mount/render, preloading them
+    // anyway just grows JS heap for buildings that will never be shown,
+    // stacking on top of whatever Home's scene already holds resident (see
+    // containers/keep-alive-outlet/use-keep-alive-outlet.js) — the same
+    // total-process-memory budget that crashed low-end mobile.
+    if (!isMobile) {
+      preloadBackgroundModels();
+    }
 
     // On mobile: keep mountBackground false to prevent loading inactive buildings into the scene graph.
     // This saves maximum GPU memory. They will only mount/render on-demand when active.

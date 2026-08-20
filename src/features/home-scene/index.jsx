@@ -3,7 +3,7 @@ import * as THREE from "three";
 import useHomeScene from "./use-home-scene";
 import CameraRig from "./camera-rig";
 import SceneLights from "./scene-lights";
-import SceneReadyGate from "./scene-ready-gate";
+import SceneReadyGate from "@/features/scene-ready-gate";
 import BuildingMarkers from "@/features/building-markers";
 import EnvironmentSetup from "./environment-setup";
 

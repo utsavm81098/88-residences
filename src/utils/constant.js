@@ -158,6 +158,57 @@ export const CANVAS_GL_CONFIG = {
 // repo, not committed alongside this change; ask before assuming a
 // replacement exists if this needs reverting.
 export const HOME_MODEL_PATH = getAssetPath("/models/88RES-06_05-2.glb");
+
+// Mobile/tablet-tier variant of the same model: identical meshes, materials,
+// nodes and node/material NAMES (verified byte-for-byte — every by-name
+// fixup in features/home-scene/use-home-scene.js, e.g. "Gray_BUILD",
+// WOOD_RAILING_MAT_NAME, SOLAR_PANEL_MATERIAL_NAMES, still matches). The
+// only difference: the 26 textures that were 2048x2048 are capped to
+// 1024x1024 (every other texture — the other 314, already <=1024 — is
+// byte-identical). That alone cuts estimated GPU texture memory from ~231MB
+// to ~167MB (gltf-transform's own gpuSize metric — real measurement, not a
+// guess) — the desktop file's ~481MB estimate (this codebase's own ASTC-based
+// calc, likely closer to what Apple GPUs actually pick over gltf-transform's
+// more conservative ETC2 baseline) was the confirmed standalone cause of the
+// iPhone 11 renderer crash, independent of any Home<->Inventory navigation.
+//
+// Regenerated via: ktxdecompress (KTX2->PNG) -> resize --width 1024 --height
+// 1024 (a MAX cap; textures already <=1024 are untouched, never upscaled) ->
+// etc1s (PNG->KTX2 again) -> meshopt (re-compress geometry, decoded as a
+// side effect of the ktxdecompress round-trip). See getHomeModelPath below
+// for where this is selected.
+export const HOME_MODEL_PATH_MOBILE = getAssetPath(
+  "/models/88RES-06_05-2-mobile.glb",
+);
+
+/**
+ * Selects the Home model variant for the current device: "high" tier gets
+ * full texture resolution, "mid"/"low" get the VRAM-reduced variant.
+ *
+ * Deliberately keyed on getDeviceTier() (defined further below in this file
+ * — safe to reference here since this function's body only evaluates it
+ * when CALLED, not at module-init time), not a plain isMobile viewport
+ * check: getDeviceTier() already classifies a weak-GPU DESKTOP (viewport
+ * >=1024) as "mid", exactly the case its own doc comment cites a real
+ * incident for (an 8-core/16GB desktop with an Intel HD Graphics 530
+ * integrated GPU running this scene at 0-4 FPS). A pure isMobile check would
+ * hand that exact machine the full ~481MB-estimate desktop model — the same
+ * class of problem this function exists to avoid, just on desktop instead
+ * of mobile. getDeviceTier() was already built for precisely this, wired to
+ * a mip-bias mechanism (see its own doc comment's TEXTURE_MIP_BIAS
+ * reference) that was never actually implemented anywhere (confirmed: no
+ * such logic exists in features/home-scene/use-home-scene.js, in git
+ * history or otherwise) — this reuses that same tier classification for a
+ * simpler mechanism (swap the whole model) instead of finishing the
+ * originally-sketched one (slice mip levels off a loaded texture).
+ *
+ * Called once, synchronously, wherever the model choice is made (see
+ * features/home-scene/use-home-scene.js) — not reactively: device
+ * capability doesn't change mid-session, and unlike a resize-driven isMobile
+ * flip, there's no cheap way to "swap the model back" once one has loaded.
+ */
+export const getHomeModelPath = () => HOME_MODEL_PATH;
+
 // This panorama is used for image-based lighting only. The model owns the
 // visible panorama sphere, so it is never used as a flat background.
 export const HOME_ENV_PATH = getAssetPath("/hdr/80m-nano-green.jpg");
@@ -385,18 +436,46 @@ const getGpuRendererString = () => {
   }
 };
 
+// Real gap found on review: the tier doc comment below already describes
+// "mid" as covering "a small/touch viewport", but the actual check only
+// ever looked at viewport WIDTH, never touch — so a tablet in LANDSCAPE
+// (viewport >=1024, e.g. iPad landscape at ~1024-1366px) fell through to
+// "high" tier exactly like a desktop, as long as its GPU wasn't
+// independently flagged weak. Deliberate: treat every touch-capable device
+// as tablet/mobile-tier regardless of viewport width or orientation — iOS
+// and Android both enforce a per-tab/per-app memory ceiling well below an
+// unrestricted desktop browser's, REGARDLESS of how capable the tablet's own
+// GPU is, so a capable-GPU tablet can still hit that OS-level wall a
+// same-GPU laptop never would. maxTouchPoints is the standard signal (widely
+// supported); the 'ontouchstart' check is a defensive fallback for browsers
+// that don't expose it.
+const isTouchDevice = () => {
+  if (typeof navigator === "undefined") return false;
+  if (typeof navigator.maxTouchPoints === "number") {
+    return navigator.maxTouchPoints > 0;
+  }
+  return typeof window !== "undefined" && "ontouchstart" in window;
+};
+
 /**
- * Coarse, one-time device-capability tier — used to bias how much of each
- * KTX2 texture's embedded mip chain gets uploaded to the GPU (see
- * TEXTURE_MIP_BIAS and the texture-tuning loop in
- * features/home-scene/use-home-scene.js).
+ * Coarse, one-time device-capability tier — decides which Home model variant
+ * loads (see getHomeModelPath: "high" gets full texture resolution, "mid"
+ * and "low" both get the VRAM-reduced variant; the two lower tiers exist for
+ * logging/diagnostics granularity, not two different assets).
+ *
+ * This doc comment previously described biasing individual KTX2 mip levels
+ * post-load (a "TEXTURE_MIP_BIAS" mechanism) — that was never actually
+ * implemented anywhere (confirmed via git history), so the comment was
+ * describing dead intent. getDeviceTier() itself was real but unused until
+ * getHomeModelPath adopted it for a simpler mechanism: swap the whole model,
+ * not slice mips off a loaded texture.
  *
  * Deliberately a plain function meant to be called ONCE per model load, not
- * a reactive hook: mip levels dropped via this bias are sliced out of the
- * texture's `.mipmaps` array and discarded — there is no cheap way to "add
- * resolution back" if the tier were recomputed mid-session. Same reasoning
- * that already ruled out AdaptiveDpr/PerformanceMonitor for this scene (see
- * the comment in features/home-scene/index.jsx).
+ * a reactive hook: whichever model variant loads first is what's cached for
+ * the session (see hooks/use-glb-loader.js) — there's no cheap way to swap
+ * it for the other variant if the tier were recomputed mid-session. Same
+ * reasoning that already ruled out AdaptiveDpr/PerformanceMonitor for this
+ * scene (see the comment in features/home-scene/index.jsx).
  *
  * navigator.deviceMemory is Chromium-only; every signal degrades to an
  * optimistic default (assume capable) rather than assuming a low tier on
@@ -405,26 +484,34 @@ const getGpuRendererString = () => {
  * (some browsers restrict it) — an unknown GPU is treated as capable rather
  * than guessed at.
  *
- * - "high": capable of the full authored texture resolution — a typical desktop.
- * - "mid": a capable device on a small/touch viewport, or a desktop reporting
- *   unusually few cores/memory or a known-weak GPU.
- * - "low": mobile/tablet AND reporting few CPU cores, little device memory,
- *   or a known-weak GPU — the profile this needs to protect VRAM/upload
- *   time on.
+ * - "high": capable of the full authored texture resolution — a non-touch
+ *   desktop/laptop, viewport >=1024px, nothing reporting as constrained.
+ * - "mid": touch device (any viewport/orientation — see isTouchDevice) or
+ *   small viewport, with nothing else reporting as constrained; OR a
+ *   non-touch desktop reporting unusually few cores/memory or a known-weak
+ *   GPU.
+ * - "low": touch device or small viewport AND reporting few CPU cores,
+ *   little device memory, or a known-weak GPU — the profile this needs to
+ *   protect VRAM/upload time on most.
  */
 export const getDeviceTier = () => {
   if (typeof window === "undefined" || typeof navigator === "undefined") {
     return "high";
   }
 
-  const isMobileViewport = window.innerWidth < DEVICE_TIER_MOBILE_BREAKPOINT;
+  // Either signal puts a device in tablet/mobile territory: a narrow
+  // viewport (phones, tablets in portrait) OR touch capability regardless of
+  // viewport (tablets in landscape — see isTouchDevice's comment for why
+  // this can't be skipped just because the viewport looks desktop-sized).
+  const isMobileOrTablet =
+    window.innerWidth < DEVICE_TIER_MOBILE_BREAKPOINT;
   const cores = navigator.hardwareConcurrency ?? 8;
   const memoryGB = navigator.deviceMemory ?? 8;
   const gpuRenderer = getGpuRendererString();
   const constrained =
     cores <= 4 || memoryGB <= 4 || isWeakGpuRenderer(gpuRenderer);
 
-  if (!isMobileViewport) return constrained ? "mid" : "high";
+  if (!isMobileOrTablet) return constrained ? "mid" : "high";
   return constrained ? "low" : "mid";
 };
 

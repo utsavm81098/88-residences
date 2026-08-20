@@ -1,8 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import { configureLoader } from "@/utils/preloader";
-import { HOME_MODEL_PATH } from "@/utils/constant";
+import { getHomeModelPath } from "@/utils/constant";
 import { useGLBLoader } from "@/hooks/use-glb-loader";
 
 // Ground overlay/decal materials that lie co-planar on top of base terrain
@@ -100,7 +100,21 @@ export const useHomeScene = () => {
   // containers/home/home-loader.jsx), and bubbling the value up re-rendered
   // HomeContainer and <Canvas> once per streamed chunk for no visual effect. The
   // value is still returned here if a readout is ever wanted again.
-  const { scene, error } = useGLBLoader(HOME_MODEL_PATH, configureLoader);
+  // High-tier devices get the full-texture-resolution model; mobile/tablet
+  // AND weak-GPU desktops get the VRAM-reduced variant (see
+  // getHomeModelPath's doc comment in utils/constant.js) — same
+  // node/material names either way, so every by-name fixup below applies
+  // unchanged regardless of which loads.
+  //
+  // Resolved via a lazy useState initializer (called once, synchronously,
+  // on the first render), NOT read fresh on every render: getHomeModelPath()
+  // is a plain synchronous function (no hook lag to guard against, unlike
+  // useIsMobile — its own state starts undefined-coerced-false for one
+  // render before self-correcting), but the URL it returns still needs to
+  // stay fixed for the life of this mount so it can't flip and trigger a
+  // second, wasted fetch for the other variant mid-session.
+  const [modelPath] = useState(() => getHomeModelPath());
+  const { scene, error } = useGLBLoader(modelPath, configureLoader);
   const gl = useThree((state) => state.gl);
   const maxAnisotropy = useMemo(
     () =>

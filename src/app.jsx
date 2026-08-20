@@ -8,6 +8,7 @@ import router from "@/routes";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import GlobalLoader from "@/containers/global-loader";
 
 const AppProviders = () => {
   const { i18n } = useTranslation();
@@ -23,6 +24,12 @@ const AppProviders = () => {
             </TooltipProvider>
           </AuthProvider>
         </GlobalErrorBoundary>
+
+        {/* Mounted above the router (but still inside the Redux/i18n
+            providers it needs): see containers/global-loader for why this
+            has to sit here rather than inside Home/Inventory's own
+            containers. */}
+        <GlobalLoader />
 
         {/* Global UI utilities */}
         <Toaster

@@ -11,7 +11,7 @@ import {
   whenKTX2Ready,
 } from "@/utils/preloader";
 import { preloadGLB } from "@/hooks/use-glb-loader";
-import { HOME_MODEL_PATH } from "@/utils/constant";
+import { getHomeModelPath } from "@/utils/constant";
 import { WEB_ROUTES } from "@/routes/routes";
 
 const isLandingOnInventory =
@@ -29,14 +29,23 @@ if (typeof window !== "undefined") {
     // Mirror of the branch below: warm the OTHER route's asset on idle so the
     // first Inventory -> Home switch is as fast as every switch after it.
     // Under containers/keep-alive-outlet the home <Canvas> stays alive once
-    // visited, so this download is paid at most once per session.
+    // visited on desktop (mobile evicts it on every switch instead — see
+    // that file), so this download is paid at most once per session there.
+    //
+    // getHomeModelPath(): must warm the SAME variant
+    // features/home-scene/use-home-scene.js will actually request (it's a
+    // plain synchronous function — device tier doesn't change between this
+    // call and that one — see its doc comment in utils/constant.js), or this
+    // preload is wasted (a different cache key entirely).
     //
     // Gated on whenKTX2Ready(): the home GLB carries KHR_texture_basisu
     // textures and this parse happens outside any <Canvas>, so KTX2Loader has
     // no renderer to detect format support against until the inventory canvas
     // mounts <KTX2Init />. See utils/preloader.js.
     scheduleIdlePreload(() => {
-      whenKTX2Ready().then(() => preloadGLB(HOME_MODEL_PATH, configureLoader));
+      whenKTX2Ready().then(() =>
+        preloadGLB(getHomeModelPath(), configureLoader),
+      );
     });
   } else {
     scheduleIdlePreload(preloadModels);

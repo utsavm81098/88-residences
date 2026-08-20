@@ -1,8 +1,10 @@
 import { useCallback, useRef, useState } from "react";
+import { useDispatch } from "react-redux";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useBottomMenuHeight from "@/hooks/use-bottom-menu-height";
 import { clearGLBCache, getCachedGLBScene } from "@/hooks/use-glb-loader";
-import { HOME_MODEL_PATH } from "@/utils/constant";
+import { getDeviceTier, getHomeModelPath } from "@/utils/constant";
+import { markInitialLoadComplete } from "@/store/slices/app-loader-slice";
 import {
   disposeThreeScene,
   startSequentialBuildingPreload,
@@ -10,6 +12,7 @@ import {
 } from "@/utils/preloader";
 
 export const useHome = () => {
+  const dispatch = useDispatch();
   const controlsRef = useRef();
   const isMobile = useIsMobile();
   const [isReady, setIsReady] = useState(false);
@@ -25,7 +28,28 @@ export const useHome = () => {
 
   const handleReady = useCallback(() => {
     setIsReady(true);
-    // Start sequential background loading of inventory buildings only after home scene is fully ready
+
+    // Feeds containers/global-loader's one-way session latch. Only meaningful
+    // the very first time this fires (a direct landing on Home) — if the user
+    // instead landed on Inventory first, this dispatch still fires whenever
+    // Home eventually loads, but against an already-true value, so it's a
+    // harmless no-op. See store/slices/app-loader-slice.js.
+    dispatch(markInitialLoadComplete());
+
+    // High tier only: background-preload every OTHER inventory building's
+    // model/hitbox/env so the first switch after opening Inventory is
+    // instant. Was previously unconditional — a real gap found on review:
+    // features/building/use-building.js's mountBackground already
+    // guarantees these buildings never mount/render on mobile/tablet/weak-
+    // GPU desktop, so preloading them here (from Home, before the user has
+    // even opened Inventory, let alone switched buildings) only grows JS
+    // heap for data that might never be used — stacking on top of whatever
+    // Home's own scene already holds resident, the same total-process-
+    // memory budget an iPhone 11 crashed on. The building the user actually
+    // opens still loads correctly on demand (Suspense + CanvasLoader shows
+    // the real fetch) — just not pre-warmed.
+    if (getDeviceTier() !== "high") return;
+
     if (typeof window !== "undefined" && window.requestIdleCallback) {
       window.requestIdleCallback(() => startSequentialBuildingPreload(), {
         timeout: 2000,
@@ -33,18 +57,23 @@ export const useHome = () => {
     } else {
       setTimeout(() => startSequentialBuildingPreload(), 400);
     }
-  }, []);
+  }, [dispatch]);
 
   const handleResetCache = useCallback(() => {
+    // getHomeModelPath() re-resolves the SAME tier decision
+    // use-home-scene.js made when it first loaded the model — device
+    // capability doesn't change mid-session, so this always lands on
+    // whichever variant is actually cached.
+    const modelPath = getHomeModelPath();
     try {
-      const cachedScene = getCachedGLBScene(HOME_MODEL_PATH);
+      const cachedScene = getCachedGLBScene(modelPath);
       if (cachedScene) {
         disposeThreeScene(cachedScene);
       }
     } catch {
       // Ignore if cache getter fails
     }
-    clearGLBCache(HOME_MODEL_PATH);
+    clearGLBCache(modelPath);
     setIsReady(false);
   }, []);
 

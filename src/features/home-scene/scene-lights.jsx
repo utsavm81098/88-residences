@@ -1,6 +1,6 @@
 import { Fragment, memo, useMemo } from "react";
 import * as THREE from "three";
-import { HOME_CAMERA, getDeviceTier } from "@/utils/constant";
+import { HOME_CAMERA } from "@/utils/constant";
 
 // Measured sun position matching the PANO_Sphere dome emissive sun disc
 const PANORAMA_SUN_AZIMUTH_DEG = 200.0;
