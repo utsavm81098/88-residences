@@ -4,13 +4,12 @@ import { Logo } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
 
 // Loader crossfade parameters:
-// - Day aerial image sits permanently solid (opacity 1) at the base.
+// - Day aerial image sits permanently solid (opacity 1) at zIndex 1.
 // - Night aerial image cross-fades smoothly in and out on top with a silky-smooth
-//   cubic-bezier(0.45, 0.05, 0.55, 0.95) easing curve over 1800ms.
-// - 3200ms hold on pure Day, 3200ms hold on pure Night, 1800ms per transition = 10000ms total loop.
+//   cubic-bezier(0.45, 0.05, 0.55, 0.95) easing curve.
 // - GPU-composited CSS animation: runs at 60/120fps with zero JS thread blocking.
 const ANIMATION_RULE =
-  "hero-night-crossfade 10000ms cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite";
+  "hero-night-crossfade 6000ms cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite";
 
 /**
  * HeroCarousel — Full-screen ultra-smooth infinite crossfade loader.
@@ -22,18 +21,18 @@ const ANIMATION_RULE =
  * perfectly smooth transition without any darkness dip or blinking.
  */
 export const HeroCarousel = ({ slides = [], className }) => {
-  const baseSlide = slides[0];
-  const overlaySlide = slides[1];
+  const baseSlide = slides[0]; // Day (PLOT88-birdeye-day.jpg)
+  const overlaySlide = slides[1]; // Night (PLOT88-birdeye-night.jpg)
 
   return (
     <div
       dir="ltr"
       className={cn(
         "relative h-full w-full select-none overflow-hidden bg-background [touch-action:pinch-zoom]",
-        className,
+        className
       )}
     >
-      {/* ── Base Layer (Day) — Solid Opacity ── */}
+      {/* ── Base Layer (Day) — Solid Opacity at zIndex 1 ── */}
       {baseSlide && (
         <HeroSlide
           key={baseSlide.id || "day"}
@@ -44,7 +43,7 @@ export const HeroCarousel = ({ slides = [], className }) => {
         />
       )}
 
-      {/* ── Overlay Layer (Night) — Smooth ease-in-out Crossfade ── */}
+      {/* ── Overlay Layer (Night) — Smooth ease-in-out Crossfade at zIndex 2 ── */}
       {overlaySlide && (
         <HeroSlide
           key={overlaySlide.id || "night"}
@@ -55,11 +54,11 @@ export const HeroCarousel = ({ slides = [], className }) => {
         />
       )}
 
-      {/* ── Center-Screen Rotating 88 Logo (Enlarged size) ── */}
+      {/* ── Center-Screen Rotating 88 Logo ── */}
       <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
         <div
           data-slot="hero-logo"
-          className="flex h-[60px] w-[60px] items-center justify-center animate-rotating drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)] sm:h-[60px] sm:w-[60px] md:h-[90px] md:w-[90px]"
+          className="animate-rotate-logo flex h-[60px] w-[60px] items-center justify-center drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)] sm:h-[60px] sm:w-[60px] md:h-[90px] md:w-[90px]"
         >
           <Logo />
         </div>
@@ -69,3 +68,4 @@ export const HeroCarousel = ({ slides = [], className }) => {
 };
 
 export default HeroCarousel;
+

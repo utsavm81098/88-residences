@@ -26,7 +26,8 @@ const TopNavigationContainer = memo(({ onReset }) => {
     onToggleMenu,
   } = useTopNavigation();
 
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRtl = i18n.dir() === "rtl";
   const navigate = useNavigate();
 
   const handleHomeClick = React.useCallback(() => {
@@ -82,16 +83,28 @@ const TopNavigationContainer = memo(({ onReset }) => {
 
                 <div
                   className={cn(
-                    "mx-6 text-gray-800 font-open-sans font-semibold text-2xl tracking-wider transition-colors",
+                    "mx-6 text-gray-800 font-open-sans font-semibold text-2xl tracking-wider transition-colors flex items-center justify-center gap-1.5",
                     buildings.length > 1
                       ? "hover:text-gray-900"
                       : "cursor-default",
                   )}
+                  dir={isRtl ? "rtl" : "ltr"}
                 >
-                  <span className="text-accent-yellow font-bold">
-                    {currentBuilding?.name}
-                  </span>
-                  <span className="text-gray-800"> Building</span>
+                  {isRtl ? (
+                    <>
+                      <span className="text-gray-800">{t("building")}</span>
+                      <span className="text-accent-yellow font-bold">
+                        {currentBuilding?.name}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-accent-yellow font-bold">
+                        {currentBuilding?.name}
+                      </span>
+                      <span className="text-gray-800">{t("building")}</span>
+                    </>
+                  )}
                 </div>
 
                 <Button
@@ -125,17 +138,29 @@ const TopNavigationContainer = memo(({ onReset }) => {
                     <DropdownMenuItem
                       key={b.name}
                       className={cn(
-                        "px-6 py-4 text-center font-open-sans text-base cursor-pointer transition-colors hover:bg-gray-100 focus:bg-gray-100 focus:text-gray-900 outline-none block border-b border-gray-100 last:border-b-0",
+                        "px-6 py-4 text-center font-open-sans text-base cursor-pointer transition-colors hover:bg-gray-100 focus:bg-gray-100 focus:text-gray-900 outline-none flex items-center justify-center gap-1.5 border-b border-gray-100 last:border-b-0",
                         currentBuilding.name === b.name
                           ? "bg-accent-yellow/10 font-bold"
                           : "font-medium text-gray-700",
                       )}
                       onClick={() => handleSelect(idx)}
+                      dir={isRtl ? "rtl" : "ltr"}
                     >
-                      <span className="text-accent-yellow font-bold">
-                        {b.name}
-                      </span>
-                      <span className="text-gray-800"> Building</span>
+                      {isRtl ? (
+                        <>
+                          <span className="text-gray-800">{t("building")}</span>
+                          <span className="text-accent-yellow font-bold">
+                            {b.name}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-accent-yellow font-bold">
+                            {b.name}
+                          </span>
+                          <span className="text-gray-800">{t("building")}</span>
+                        </>
+                      )}
                     </DropdownMenuItem>
                   ))}
                 </div>

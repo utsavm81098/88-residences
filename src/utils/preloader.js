@@ -228,10 +228,21 @@ export const preloadModels = () => {
   // only overrides configureLoader's self-hosted DRACOLoader with its own
   // gstatic.com-CDN-backed one when these flags are truthy — see the
   // matching comment in use-building-instance.js.
-  if (landingModel)
-    useGLTF.preload(landingModel, false, false, configureLoader);
-  if (landingHitbox)
-    useGLTF.preload(landingHitbox, false, false, configureLoader);
+  //
+  // Gated on whenKTX2Ready(): the building GLBs now carry KHR_texture_basisu
+  // textures (converted from plain webp/jpeg to KTX2 for GPU-compressed VRAM
+  // usage on low-end devices), and this call can run from main.jsx BEFORE any
+  // <Canvas> — and therefore no live WebGLRenderer — exists. Same reasoning
+  // as the HOME_MODEL_PATH preload in src/main.jsx; see whenKTX2Ready's own
+  // doc comment above. The hitbox/env preloads don't carry KTX2 textures, but
+  // are grouped here for simplicity — the wait costs them nothing, since both
+  // resolve on the same "first Canvas mounted" event this already needs.
+  whenKTX2Ready().then(() => {
+    if (landingModel)
+      useGLTF.preload(landingModel, false, false, configureLoader);
+    if (landingHitbox)
+      useGLTF.preload(landingHitbox, false, false, configureLoader);
+  });
   if (landingEnv) useEnvironment.preload(landingEnv);
 };
 

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "react-router";
 import {
@@ -7,6 +7,7 @@ import {
   setBuildingImmediate,
 } from "@/store/slices/building-slice";
 import { hideTooltip } from "@/store/slices/tooltip-slice";
+import { markInitialLoadComplete } from "@/store/slices/app-loader-slice";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useBottomMenuHeight from "@/hooks/use-bottom-menu-height";
 import { useGLTF } from "@react-three/drei";
@@ -23,6 +24,26 @@ export const useInventory = ({ active = true } = {}) => {
   const modelRef = useRef();
   const [searchParams] = useSearchParams();
   const wasActiveRef = useRef(false);
+
+  // Mirrors containers/home/use-home.js's isReady exactly: drei's useProgress
+  // (what containers/canvas-loader/index.jsx used to gate on alone) only means
+  // the GLB's bytes have downloaded and parsed — not that its shaders have
+  // actually finished compiling / its textures have actually reached the GPU.
+  // features/scene-ready-gate mounted inside the Canvas below flips this only
+  // once that real work is done, same as Home's onReady already did — see
+  // that file's own doc comment for why useProgress alone was never enough.
+  const [isReady, setIsReady] = useState(false);
+  const handleReady = useCallback(() => {
+    setIsReady(true);
+
+    // Feeds containers/global-loader's one-way session latch — mirrors the
+    // identical dispatch in containers/home/use-home.js's handleReady. Only
+    // meaningful the very first time this fires (a direct landing on
+    // Inventory, e.g. /inventory?building=A); if the user came from Home
+    // instead, this fires later against an already-true value, a harmless
+    // no-op. See store/slices/app-loader-slice.js.
+    dispatch(markInitialLoadComplete());
+  }, [dispatch]);
 
   const { bottomMenuHeight: combinedBottomHeight } = useBottomMenuHeight(
     0,
@@ -89,6 +110,11 @@ export const useInventory = ({ active = true } = {}) => {
 
   const handleResetCache = useCallback(() => {
     useGLTF.clear();
+    // Re-arm the loader (mirrors use-home.js's handleResetCache): on WebGL
+    // context loss recovery the Canvas remounts and its scene has to
+    // recompile from scratch, so the "truly ready" signal must go back to
+    // false instead of leaving the loader permanently hidden.
+    setIsReady(false);
   }, []);
 
   const totalBottomOffset = snapHeight + combinedBottomHeight;
@@ -101,6 +127,8 @@ export const useInventory = ({ active = true } = {}) => {
     controlsRef,
     modelRef,
     canvasHeight,
+    isReady,
+    handleReady,
     handleResetCamera,
     handleResetCache,
   };
