@@ -31,7 +31,7 @@
   <!-- End Google Tag Manager -->
   <meta charset="UTF-8" />
 
-  <link rel="icon" type="image/png" href="./favicon-32x32.png" />
+  <link rel="icon" type="image/png" href="/favicon-32x32.png" />
   <!-- Preload the home masterplan GLB so the browser starts fetching it at
        HTML-parse time, in parallel with React / Vite bootstrap. Without this
        the fetch only begins after <Canvas> mounts and useGLBLoader fires its
@@ -61,14 +61,14 @@
   <link
     rel="preload"
     as="fetch"
-    href="./models/88RES-06_05-2.glb"
+    href="/models/88RES-06_05-2.glb"
     media="(min-width: 1024px)"
     crossorigin
   />
   <link
     rel="preload"
     as="fetch"
-    href="./models/88RES-06_05-2-mobile.glb"
+    href="/models/88RES-06_05-2-mobile.glb"
     media="(max-width: 1023px)"
     crossorigin
   />
@@ -86,12 +86,12 @@
        (this file is fetched via `new Image()`, not a `<script>`/`<style>`, so
        Chrome still treats it as a CORS-mode-sensitive resource for cache
        matching purposes). -->
-  <link rel="preload" as="image" href="./hdr/80m-nano-green.jpg" crossorigin />
+  <link rel="preload" as="image" href="/hdr/80m-nano-green.jpg" crossorigin />
   <!-- Hero loader stills (Day and Night), shown full-screen while the masterplan GLB
        above streams in (see containers/home/home-loader.jsx). Preloaded so both images
        are ready immediately for the crossfade animation. -->
-  <link rel="preload" as="image" href="./images/hero/PLOT88-birdeye-day.jpg" fetchpriority="high" />
-  <link rel="preload" as="image" href="./images/hero/PLOT88-birdeye-night.jpg" />
+  <link rel="preload" as="image" href="/images/hero/PLOT88-birdeye-day.jpg" fetchpriority="high" />
+  <link rel="preload" as="image" href="/images/hero/PLOT88-birdeye-night.jpg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="index, follow" />
   <meta property="og:image" content="https://www.88residences.com/wp-content/uploads/2026/04/PLOT88-birdeye-night.jpg" />
@@ -292,10 +292,10 @@
          depend on JS to be removed or hidden. -->
     <div id="app-boot-splash" aria-hidden="true">
       <div class="abs-slide abs-slide--day">
-        <img src="./images/hero/PLOT88-birdeye-day.jpg" alt="" width="2500" height="1375" fetchpriority="high" />
+        <img src="/images/hero/PLOT88-birdeye-day.jpg" alt="" width="2500" height="1375" fetchpriority="high" />
       </div>
       <div class="abs-slide abs-slide--night">
-        <img src="./images/hero/PLOT88-birdeye-day.jpg" alt="" width="2500" height="1375" fetchpriority="low" />
+        <img src="/images/hero/PLOT88-birdeye-day.jpg" alt="" width="2500" height="1375" fetchpriority="low" />
       </div>
       <div class="logo-wrap">
         <svg viewBox="0 0 174.12 122.78" xmlns="http://www.w3.org/2000/svg">
@@ -311,7 +311,7 @@
        Vite serves the public/ folder at the site root, so the script is
        available at /res88-pdf-modal.js in all environments. -->
   <!-- @vite-ignore -->
-  <script src="./res88-pdf-modal.js" defer></script>
+  <script src="/res88-pdf-modal.js" defer></script>
 </body>
 
 </html>

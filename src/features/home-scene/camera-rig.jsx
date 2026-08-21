@@ -12,7 +12,6 @@ import { OrbitControls } from "@react-three/drei";
 import { solveFraming } from "./fit-camera";
 import { AUTO_ROTATE_SPEED, useAutoRotateHint } from "./use-auto-rotate-hint";
 import { HOME_CAMERA, HOME_PAN_BOUNDARY } from "@/utils/constant";
-import { logger } from "@/utils/logger";
 
 // Below this relative change in aspect the framing is left alone. Prevents a
 // mobile browser's collapsing address bar, or a 1px resize, from yanking the
@@ -48,25 +47,20 @@ const BASE_PAN_SPEED = 1.5;
  */
 const CameraRigImpl = ({ controlsRef, active = true }) => {
   const camera = useThree((state) => state.camera);
-  const gl = useThree((state) => state.gl);
   const size = useThree((state) => state.size);
 
-  // Verified this is NOT set automatically: the canvas's computed touch-action
-  // is "auto" by default, so a one-finger drag meant to orbit the camera would
-  // also trigger the browser's native touch-scroll/pull-to-refresh at the same
-  // time. Set explicitly rather than assumed.
-  useEffect(() => {
-    const el = gl?.domElement;
-    if (el) {
-      el.style.touchAction = "none";
-    }
-    return () => {
-      if (el) {
-        el.style.touchAction = "";
-      }
-    };
-  }, [gl]);
-
+  // touch-action: none for the shared canvas is now owned in exactly one
+  // place — the wrapping <div style={{ touchAction: "none" }}> in
+  // containers/scene-canvas/index.jsx — because it must hold regardless of
+  // which scene is active. This component used to set it here imperatively
+  // on gl.domElement, but CameraRig only mounts while Home is active
+  // ({active && <CameraRig .../>} in features/home-scene/index.jsx), so its
+  // cleanup unset it the instant Home deactivated, with nothing on the
+  // Inventory side ever setting it back — leaving Inventory's touch-action
+  // at the browser default ("auto") on mobile: one-finger drag scrolled the
+  // page instead of orbiting, and pinch-zoom fought the browser's native
+  // viewport zoom instead of driving OrbitControls' dolly. See that file's
+  // comment for the full explanation.
   const aspect = size.height > 0 ? size.width / size.height : 0;
 
   // Used only to pick the pan boundary below — enablePan, zoom range, and the
@@ -109,91 +103,105 @@ const CameraRigImpl = ({ controlsRef, active = true }) => {
     [isMobileOrTablet],
   );
 
-  // Aspect the camera position was last seeded from, so we can tell a genuine
-  // layout change from incidental jitter.
+  // Track previous active state to re-seed framing on route return
+  const wasActiveRef = useRef(false);
   const seededAspect = useRef(0);
+  const activationFramesRef = useRef(0);
+
+  const applyFraming = useCallback(
+    (force = false) => {
+      if (!active || !framing || !camera) return;
+
+      const previous = seededAspect.current;
+      const isReturning = !wasActiveRef.current;
+      const changedEnough =
+        force ||
+        isReturning ||
+        previous === 0 ||
+        Math.abs(aspect - previous) / Math.max(aspect, previous) >
+          ASPECT_REFRAME_THRESHOLD;
+
+      if (changedEnough) {
+        camera.clearViewOffset?.();
+        camera.fov = framing.fov;
+        camera.near = HOME_CAMERA.near;
+        camera.far = HOME_CAMERA.far;
+        camera.position.set(...framing.position);
+        camera.lookAt(...HOME_CAMERA.target);
+        camera.updateProjectionMatrix();
+
+        const controls = controlsRef.current;
+        if (controls) {
+          controls.target.set(...HOME_CAMERA.target);
+          controls.object.position.set(...framing.position);
+          controls.object.lookAt(...HOME_CAMERA.target);
+          if (controls.target0) controls.target0.set(...HOME_CAMERA.target);
+          if (controls.position0) controls.position0.set(...framing.position);
+          controls.minPolarAngle = THREE.MathUtils.degToRad(HOME_CAMERA.minPolarDeg);
+          controls.maxPolarAngle = THREE.MathUtils.degToRad(HOME_CAMERA.maxPolarDeg);
+          if (zoomLimits.minDistance && zoomLimits.maxDistance) {
+            controls.minDistance = zoomLimits.minDistance;
+            controls.maxDistance = zoomLimits.maxDistance;
+          }
+          controls.enablePan = true;
+          controls.enableZoom = true;
+          controls.enableRotate = true;
+          controls.touches = {
+            ONE: THREE.TOUCH.ROTATE,
+            TWO: THREE.TOUCH.DOLLY_PAN,
+          };
+          if (controls._sphericalDelta) {
+            controls._sphericalDelta.set(0, 0, 0);
+          }
+          if (controls._panOffset) {
+            controls._panOffset.set(0, 0, 0);
+          }
+          if (controls.sphericalDelta) {
+            controls.sphericalDelta.theta = 0;
+            controls.sphericalDelta.phi = 0;
+          }
+          if (controls.panDelta) {
+            controls.panDelta.set(0, 0, 0);
+          }
+          controls.saveState?.();
+          controls.update();
+        }
+        seededAspect.current = aspect;
+        wasActiveRef.current = true;
+      }
+    },
+    [active, framing, zoomLimits, camera, aspect, controlsRef],
+  );
 
   useLayoutEffect(() => {
-    if (!framing || !camera) return;
-
-    camera.fov = framing.fov;
-    camera.near = HOME_CAMERA.near;
-    camera.far = HOME_CAMERA.far;
-    camera.updateProjectionMatrix();
-
-    const controls = controlsRef.current;
-    if (controls) {
-      controls.minDistance = zoomLimits.minDistance;
-      controls.maxDistance = zoomLimits.maxDistance;
+    if (!active) {
+      wasActiveRef.current = false;
+      activationFramesRef.current = 0;
+      return;
     }
+    camera.clearViewOffset?.();
+    applyFraming(true);
+    activationFramesRef.current = 20; // Re-sync smoothly across the 300ms mobile canvas expansion
+  }, [active, aspect, applyFraming, camera]);
 
-    const previous = seededAspect.current;
-    const changedEnough =
-      previous === 0 ||
-      Math.abs(aspect - previous) / Math.max(aspect, previous) >
-        ASPECT_REFRAME_THRESHOLD;
-
-    // Only re-seed the position on first layout or a real layout change —
-    // otherwise every incidental resize would discard the user's orbit.
-    if (changedEnough) {
-      camera.position.set(...framing.position);
-      camera.lookAt(...HOME_CAMERA.target);
-      if (controls) {
-        controls.target.set(...HOME_CAMERA.target);
-        controls.update();
-      }
-      seededAspect.current = aspect;
-      logger.info("[CameraRig] Framing applied", {
-        aspect: +aspect.toFixed(3),
-        fov: framing.fov,
-        distance: Math.round(framing.distance),
-      });
-    }
-  }, [framing, zoomLimits, camera, aspect, controlsRef]);
+  useEffect(() => {
+    if (!active) return;
+    // Guaranteed pass after OrbitControls ref is attached
+    applyFraming(true);
+  }, [active, aspect, applyFraming]);
 
   // Keep the camera's own aspect in sync if R3F ever lags a resize.
   useEffect(() => {
-    if (!camera || !aspect) return;
+    if (!camera || !aspect || !active) return;
     if (camera.aspect !== aspect) {
       camera.aspect = aspect;
       camera.updateProjectionMatrix();
     }
-  }, [camera, aspect]);
+  }, [camera, aspect, active]);
 
   // Clamps controls.target in place to HOME_PAN_BOUNDARY and, if it moved,
   // shifts camera.position by the same correction vector so the camera-target
-  // offset (distance/angles) is preserved exactly. useCallback keeps this
-  // referentially stable across renders.
-  //
-  // controls.update() runs FIRST, unconditionally — not only when a
-  // correction is needed. OrbitControls queues each pointermove's pan delta
-  // internally and only commits it into `target` the next time update() runs;
-  // reading target without flushing first would see stale, pre-event state.
-  //
-  // ROOT CAUSE OF ASYMMETRIC CLAMPING (fixed here):
-  // With enableDamping=true, OrbitControls stores pan input in `_panOffset`
-  // and each update() call adds only `_panOffset * dampingFactor` to the
-  // target, then multiplies _panOffset by (1 - dampingFactor) — decaying it
-  // geometrically across ~20+ frames. This means even after we correct
-  // camera.position and set target back to the boundary, the residual
-  // _panOffset keeps leaking pan delta into target on every subsequent
-  // update() call, pushing it back past the boundary. Whichever axis had
-  // more accumulated _panOffset on that particular drag direction could fight
-  // its way through the clamp — making restriction appear to work in one
-  // direction but not the other.
-  //
-  // Fix: zero controls._panOffset immediately after any boundary correction.
-  // This kills the damping tail at the wall so no residual delta remains to
-  // re-apply. The orbit and zoom damping (_sphericalDelta) are left intact so
-  // rotation/zoom still feel smooth.
-  // Clamps controls.target in place to HOME_PAN_BOUNDARY and, if it moved,
-  // shifts camera.position by the same correction vector so the camera-target
   // offset (distance/angles) is preserved exactly.
-  //
-  // NOTE: controls.update() is NOT called here. Drei's <OrbitControls> already runs
-  // controls.update() once per frame in its own useFrame. Calling update() here
-  // applied OrbitControls' internal damping decay multiple times per frame,
-  // causing jerky stepping and micro-stuttering during camera rotation and panning.
   const clampPanTarget = useCallback(() => {
     const controls = controlsRef.current;
     if (!controls) return;
@@ -214,17 +222,19 @@ const CameraRigImpl = ({ controlsRef, active = true }) => {
       controls.object.position.y += dy;
       controls.object.position.z += dz;
 
-      // Zero the internal pan accumulator so damping decay cannot re-apply
-      // the residual delta past the boundary on following frames.
       if (controls._panOffset) {
         controls._panOffset.set(0, 0, 0);
       }
     }
   }, [controlsRef, panBoundary]);
 
-  // Per-frame boundary clamp — runs after OrbitControls updates target position
-  // to ensure target remains strictly within the plot bounds without stutter.
+  // Per-frame boundary clamp & mobile activation transition sync
   useFrame(() => {
+    if (!active) return;
+    if (activationFramesRef.current > 0) {
+      activationFramesRef.current -= 1;
+      applyFraming(true);
+    }
     clampPanTarget();
   });
 
@@ -278,7 +288,8 @@ const CameraRigImpl = ({ controlsRef, active = true }) => {
   return (
     <OrbitControls
       ref={controlsRef}
-      makeDefault
+      makeDefault={active}
+      enabled={active}
       enableDamping
       dampingFactor={0.05}
       // Ambient idle rotation — see AUTO_ROTATE_SPEED and the idle-timer

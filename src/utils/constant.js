@@ -103,7 +103,7 @@ export const EXPOSURE = 0.0;
 
 export const CANVAS_GL_CONFIG = {
   antialias: true,
-  toneMapping: THREE.LinearToneMapping,
+  toneMapping: THREE.NeutralToneMapping,
   toneMappingExposure: Math.pow(2, EXPOSURE),
   powerPreference: "high-performance",
   outputColorSpace: THREE.SRGBColorSpace,
@@ -207,7 +207,10 @@ export const HOME_MODEL_PATH_MOBILE = getAssetPath(
  * capability doesn't change mid-session, and unlike a resize-driven isMobile
  * flip, there's no cheap way to "swap the model back" once one has loaded.
  */
-export const getHomeModelPath = () => HOME_MODEL_PATH;
+export const getHomeModelPath = () =>
+  typeof window !== "undefined" && window.innerWidth <= 1024
+    ? HOME_MODEL_PATH_MOBILE
+    : HOME_MODEL_PATH;
 
 // This panorama is used for image-based lighting only. The model owns the
 // visible panorama sphere, so it is never used as a flat background.
@@ -260,42 +263,25 @@ export const BUILDING_BBOX = {
 export const HOME_CAMERA = {
   target: [-8.5, 11.1, -11.3],
   azimuthDeg: -115.73,
-  // 22° elevation matches the reference screenshot — camera is near-horizon,
-  // building facades dominate (not rooftops), sea visible at top of frame.
   elevationDeg: 10,
   bbox: BUILDING_BBOX,
 
   baseFov: 35,
   baseAspect: 1.6,
-  // 50° rather than 60°: portrait phones would otherwise need a fish-eye FOV to
-  // hold the long axis. Past this point extra distance is the better lever.
   maxFov: 50,
   margin: 1.06,
 
-  // The model's own PANO_Sphere dome has a radius of ~670 units, so the far
-  // The dome needs a 1290-unit view distance at the outer orbit limit. A 2/1400
-  // clip range is tight enough to preserve depth precision for the context
-  // layers while remaining comfortably clear of the nearest orbitable surface.
   near: 2,
   far: 1400,
 
   minDistanceScale: 0.6,
   maxDistanceScale: 1.1,
-  // Hard ceiling: keeps the camera well inside the PANO_Sphere dome radius.
-  // Same scale factors and cap are used on every device — mobile/tablet
-  // pinch-zoom range now matches desktop exactly.
   maxDistanceCap: 400,
 
-  mobileMargin: 0.5, // Tighter framing on mobile (crops sides to zoom closer to the center)
-  mobileMaxFov: 55, // Slightly wider FOV limit on mobile to allow getting closer without fish-eye
+  mobileMargin: 0.5,
+  mobileElevationDeg: 14,
+  mobileMaxFov: 55,
 
-  // Opening at 30° elevation (polar 60°) — moderate aerial view matching the reference
-  // image. Shows rooftops + facades with a gentle diagonal (not steep top-down).
-  // The building cluster's 180-unit Z span creates less vertical screen displacement
-  // at 30° than at 45° (tan 30° = 0.577 vs tan 45° = 1.0), giving a balanced frame.
-  // Orbit range: minPolar 35° (55° elevation max) ↔ maxPolar 72° (18° min elevation).
-  // maxPolarDeg reduced from 85° → 72° to prevent the camera from dropping close
-  // enough to ground level that the surface plane dominates the view.
   minPolarDeg: 35,
   maxPolarDeg: 82,
 };
@@ -504,7 +490,7 @@ export const getDeviceTier = () => {
   // viewport (tablets in landscape — see isTouchDevice's comment for why
   // this can't be skipped just because the viewport looks desktop-sized).
   const isMobileOrTablet =
-    window.innerWidth < DEVICE_TIER_MOBILE_BREAKPOINT;
+    window.innerWidth < DEVICE_TIER_MOBILE_BREAKPOINT || isTouchDevice();
   const cores = navigator.hardwareConcurrency ?? 8;
   const memoryGB = navigator.deviceMemory ?? 8;
   const gpuRenderer = getGpuRendererString();
@@ -520,7 +506,7 @@ const typeAConfig = {
   hitbox: getAssetPath("/models/a-hitbox.glb"),
   heroAngle: 0,
   environment: {
-    files: getAssetPath("/hdr/sky-40m-compressed.exr"),
+    files: getAssetPath("/hdr/sky-40m.hdr"),
     background: false,
     rotation: [0, 0, 0],
     backgroundRotation: [0, 0, 0],

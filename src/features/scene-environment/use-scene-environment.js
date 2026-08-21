@@ -25,13 +25,20 @@ export const useSceneEnvironment = () => {
   const { size } = useThree();
   const config = useResponsiveConfig();
 
+  const snapHeight = useSelector((state) => state.building.snapHeight);
+
   // Calculate dynamic FOV to keep horizontal framing consistent when aspect ratio shrinks.
   // Uses a fixed reference aspect (1.2 = typical desktop landscape) so the camera never
   // jumps when the window crosses a responsive breakpoint during resize.
   const fov = useMemo(() => {
     const baseFov = 60;
     const baseAspect = 1.2;
-    const aspect = size.width / size.height;
+    const isMobile = size.width < 1024;
+    const visibleHeight =
+      isMobile && snapHeight > 0
+        ? Math.max(size.height - snapHeight, 100)
+        : size.height;
+    const aspect = size.width / visibleHeight;
 
     if (aspect < baseAspect) {
       const baseFovRad = (baseFov * Math.PI) / 180;
@@ -45,7 +52,7 @@ export const useSceneEnvironment = () => {
     }
 
     return baseFov;
-  }, [size.width, size.height]);
+  }, [size.width, size.height, snapHeight]);
 
   const onPerformanceDecline = () => {
     logger.warn("Performance dropped");
