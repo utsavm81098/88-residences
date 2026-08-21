@@ -126,26 +126,8 @@ const getCachedEdges = (geometry) => {
 };
 
 /**
- * Removes and disposes all EdgesGeometry entries that were created for meshes
- * in this scene. Called alongside material disposal so EDGES_CACHE never
- * accumulates stale GPU geometry across building switches or unmounts.
- */
-const disposeCachedEdgesForScene = (scene) => {
-  if (!scene) return;
-  scene.traverse((child) => {
-    if (!child.isMesh || !child.geometry) return;
-    const uuid = child.geometry.uuid;
-    const cached = EDGES_CACHE.get(uuid);
-    if (cached) {
-      cached.dispose();
-      EDGES_CACHE.delete(uuid);
-    }
-  });
-};
-
-/**
- * Safely disposes all materials and textures in a cloned building scene.
- * Three.js materials/textures hold GPU-side data that persists beyond JS GC.
+ * Safely disposes cloned materials in a building scene.
+ * Does NOT dispose shared textures belonging to the persistent GLTF loader cache.
  */
 const disposeBuildingScene = (scene) => {
   if (!scene) return;
@@ -155,28 +137,19 @@ const disposeBuildingScene = (scene) => {
       ? child.material
       : [child.material];
     materials.forEach((mat) => {
-      // Dispose all texture maps held by the material
-      Object.keys(mat).forEach((key) => {
-        const value = mat[key];
-        if (value && value.isTexture) {
-          value.dispose();
-        }
-      });
+      if (!mat) return;
+      gsap.killTweensOf(mat);
       mat.dispose();
     });
   });
 };
 
 /**
- * Safely disposes all materials in a given glassScene.
- * Kills active GSAP tweens on materials to prevent memory leak references.
- * Also removes cached EdgesGeometry from EDGES_CACHE and disposes them.
+ * Safely disposes materials in a given glassScene.
+ * Kills active GSAP tweens on materials to prevent memory leaks.
  */
 const disposeSceneMaterials = (scene) => {
   if (!scene) return;
-  // Dispose cached edge geometries first so the EDGES_CACHE Map does not
-  // accumulate stale GPU geometry across building switches or unmounts.
-  disposeCachedEdgesForScene(scene);
   scene.traverse((child) => {
     if (child.isMesh) {
       if (child.material) {
@@ -184,6 +157,7 @@ const disposeSceneMaterials = (scene) => {
           ? child.material
           : [child.material];
         materials.forEach((m) => {
+          if (!m) return;
           gsap.killTweensOf([m.color, m]);
           m.dispose();
         });
@@ -196,6 +170,7 @@ const disposeSceneMaterials = (scene) => {
             ? subChild.material
             : [subChild.material];
           subMaterials.forEach((m) => {
+            if (!m) return;
             gsap.killTweensOf(m);
             m.dispose();
           });
@@ -209,7 +184,7 @@ const disposeSceneMaterials = (scene) => {
  * Handles the logic for a single building instance.
  * Loads models, sets up hitboxes, and manages unit interactions.
  */
-export const useBuildingInstance = ({ config, controlsRef }) => {
+export const useBuildingInstance = ({ config, controlsRef, sceneActive = true }) => {
   const dispatch = useDispatch();
   const isDragging = useSelector((state) => state.drag.isDragging);
   const {
@@ -328,27 +303,6 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
     });
     return buildingClone;
   }, [building]);
-
-  // Dispose old buildingScene GPU resources when the scene reference changes or unmounts
-  const prevBuildingSceneRef = useRef(null);
-  useEffect(() => {
-    // If the scene reference changed, dispose the previous one
-    if (
-      prevBuildingSceneRef.current &&
-      prevBuildingSceneRef.current !== buildingScene
-    ) {
-      disposeBuildingScene(prevBuildingSceneRef.current);
-    }
-    prevBuildingSceneRef.current = buildingScene;
-
-    return () => {
-      // On unmount, dispose the current scene
-      if (prevBuildingSceneRef.current) {
-        disposeBuildingScene(prevBuildingSceneRef.current);
-        prevBuildingSceneRef.current = null;
-      }
-    };
-  }, [buildingScene]);
 
   // Use inventoryKey (stable string) instead of unitMap (new object every render)
   // to prevent glassScene from being rebuilt on every Redux state change.
@@ -592,31 +546,33 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
     [unitMap, dispatch, isMobile],
   );
 
-  // Track glassScene changes for reliable disposal
-  const prevGlassSceneRef = useRef(null);
-
-  // Dedicated disposal effect: runs ONLY when glassScene reference changes or on unmount.
-  // Separated from the selection effect to prevent false disposal on selection changes.
-  useEffect(() => {
-    if (prevGlassSceneRef.current && prevGlassSceneRef.current !== glassScene) {
-      disposeSceneMaterials(prevGlassSceneRef.current);
-    }
-    prevGlassSceneRef.current = glassScene;
-
-    return () => {
-      // On unmount, dispose the current glassScene
-      if (prevGlassSceneRef.current) {
-        disposeSceneMaterials(prevGlassSceneRef.current);
-        prevGlassSceneRef.current = null;
-      }
-    };
-  }, [glassScene]);
-
   // Selection highlight and camera focus effect — no disposal logic here
   useEffect(() => {
-    // Only update highlights and camera focus for the active building
-    // Inactive buildings don't need to waste cycles on selection changes
-    if (isTransitioning || !isActiveBuilding) return;
+    // Only update highlights and camera focus for the active building.
+    // Inactive buildings don't need to waste cycles on selection changes.
+    //
+    // `sceneActive` (Inventory actually being the VISIBLE view under the
+    // unified canvas, not just "this building happens to be selected in
+    // Redux") is the guard that actually matters here, and it used to be
+    // missing entirely. A marker click on Home dispatches
+    // setBuildingImmediate(...) — which flips `isActiveBuilding` to true —
+    // BEFORE the route/canvas switch to Inventory lands in a later commit.
+    // Without this guard, focusCameraOnMesh below fired immediately in that
+    // first commit and captured its rotation radius/height from whatever
+    // the camera happened to be at that instant (Home's aerial masterplan
+    // view, or a stale position from the last building visited) instead of
+    // Inventory's own baseline. The tween then converges on the right
+    // azimuth but the WRONG distance/height — read by users as "the camera
+    // position changed" after repeated Home <-> Inventory navigation.
+    //
+    // Gating on `sceneActive` instead defers this effect until the SAME
+    // commit Inventory becomes visible in. features/adaptive-controls's
+    // camera reset runs in a useLayoutEffect, and React guarantees every
+    // layout effect in the whole tree completes before any passive effect
+    // (this one) runs — so by the time this fires, the camera has already
+    // been reset to Inventory's canonical baseline for this building, and
+    // focusCameraOnMesh's captured offset is correct.
+    if (!sceneActive || isTransitioning || !isActiveBuilding) return;
 
     let focusObj = null;
     glassScene.traverse((child) => {
@@ -643,6 +599,7 @@ export const useBuildingInstance = ({ config, controlsRef }) => {
     glassScene,
     isTransitioning,
     isActiveBuilding,
+    sceneActive,
     config.name,
     animateMesh,
     focusCameraOnMesh,

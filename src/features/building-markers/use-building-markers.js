@@ -85,6 +85,7 @@ export const useBuildingMarkers = () => {
       logger.info(
         `[useBuildingMarkers] Marker clicked: Building ${buildingName} (index ${buildingIndex})`,
       );
+      preloadBuilding(buildingIndex ?? buildingName);
       dispatch(setBuildingImmediate(buildingIndex));
       // Use the language-aware route so the /dashboard-en prefix is preserved.
       // buildingName is already uppercase ("A"…"G").
