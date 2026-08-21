@@ -87,14 +87,17 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
+            element: null,
             handle: { keepAlive: "home" },
           },
           {
             path: WEB_ROUTES.landing.path,
+            element: null,
             handle: { keepAlive: "inventory" },
           },
           {
             path: WEB_ROUTES.home.path,
+            element: null,
             handle: { keepAlive: "home" },
           },
         ],

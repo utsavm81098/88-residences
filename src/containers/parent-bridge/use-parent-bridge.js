@@ -71,14 +71,25 @@ export function useParentBridge() {
     /*
      * Send state to WordPress parent.
      */
-    if (typeof window !== "undefined" && window.parent) {
+    if (
+      typeof window !== "undefined" &&
+      window.parent &&
+      window.parent !== window
+    ) {
       try {
-        window.parent.postMessage(statePayload, PARENT_ORIGIN);
-
-        // Support environments where the parent origin differs (e.g. www subdomain or demo staging)
-        if (window.location.origin !== PARENT_ORIGIN) {
-          window.parent.postMessage(statePayload, "*");
+        let targetOrigin = "*";
+        if (typeof document !== "undefined" && document.referrer) {
+          try {
+            const referrerOrigin = new URL(document.referrer).origin;
+            if (referrerOrigin && referrerOrigin !== "null") {
+              targetOrigin = referrerOrigin;
+            }
+          } catch {
+            targetOrigin = "*";
+          }
         }
+
+        window.parent.postMessage(statePayload, targetOrigin);
       } catch (error) {
         logger.warn("[ParentBridge] Error posting message to parent:", error);
       }
