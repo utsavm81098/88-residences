@@ -216,16 +216,42 @@ export const getHomeModelPath = () =>
 // visible panorama sphere, so it is never used as a flat background.
 export const HOME_ENV_PATH = getAssetPath("/hdr/80m-nano-green.jpg");
 
-// Full-screen stills the HomeLoader crossfades while the masterplan GLB above
-// streams in (see containers/home/home-loader.jsx).
+// Full-screen stills the GlobalLoader/HeroCarousel crossfades while the
+// masterplan GLB streams in (see containers/global-loader/index.jsx).
 //
-// 2500x1375 = 1.818:1. Do NOT shrink these: hero-slide.jsx zooms to scale(1.3),
-// which needs ~2500px to stay at or above native resolution on a 1920 viewport
-// (1920 x 1.3 = 2496). One file per slide at every device width, matching the
-// reference site — it serves a single CSS background-image with no srcset.
+// 2500x1375 = 1.818:1, the native export resolution. The "do not shrink"
+// constraint this comment used to carry (a CSS scale(1.3) zoom needing
+// ~2500px to stay above native res on a 1920 viewport) no longer applies —
+// components/ui/hero-carousel/hero-slide.jsx has never had a zoom transform
+// in its current form, only `object-cover`, so that rationale was stale.
+//
+// `webp`/`webpMobile` are re-encodes of the SAME `image` JPEG, not resizes
+// with any quality loss of their own: `webp` is the identical 2500x1375 at
+// WebP's more efficient compression (908KB/529KB vs 1.1MB/994KB — most of
+// the size difference on the day slide is because JPEG's DCT already
+// captured most of the entropy in the foliage detail; the night slide's
+// large flat dark-sky regions compress far better under WebP, hence the
+// bigger win there), and `webpMobile` is a real downscale to 960px wide —
+// safe because a 960px-wide source already exceeds what phones typically
+// need (matches the same lg: 1024px breakpoint the GLB preloads below use)
+// and was checked visually before shipping. Confirmed real-world payload,
+// reported and reproduced: on a slow/constrained mobile connection the
+// original single 1.1MB/994KB JPEGs took long enough to arrive that the
+// page showed nothing but its own dark background in the meantime — this
+// is what actually fixes that, not just a smaller number on desktop.
 export const HOME_LOADER_SLIDES = [
-  { id: "day", image: getAssetPath("/images/hero/PLOT88-birdeye-day.jpg") },
-  { id: "night", image: getAssetPath("/images/hero/PLOT88-birdeye-night.jpg") },
+  {
+    id: "day",
+    image: getAssetPath("/images/hero/PLOT88-birdeye-day.jpg"),
+    webp: getAssetPath("/images/hero/PLOT88-birdeye-day.webp"),
+    webpMobile: getAssetPath("/images/hero/PLOT88-birdeye-day-mobile.webp"),
+  },
+  {
+    id: "night",
+    image: getAssetPath("/images/hero/PLOT88-birdeye-night.jpg"),
+    webp: getAssetPath("/images/hero/PLOT88-birdeye-night.webp"),
+    webpMobile: getAssetPath("/images/hero/PLOT88-birdeye-night-mobile.webp"),
+  },
 ];
 
 /**

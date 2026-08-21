@@ -37,6 +37,8 @@ export const HeroCarousel = ({ slides = [], className }) => {
         <HeroSlide
           key={baseSlide.id || "day"}
           image={baseSlide.image}
+          webp={baseSlide.webp}
+          webpMobile={baseSlide.webpMobile}
           zIndex={1}
           opacity={1}
           isFirst={true}
@@ -48,6 +50,8 @@ export const HeroCarousel = ({ slides = [], className }) => {
         <HeroSlide
           key={overlaySlide.id || "night"}
           image={overlaySlide.image}
+          webp={overlaySlide.webp}
+          webpMobile={overlaySlide.webpMobile}
           zIndex={2}
           animation={ANIMATION_RULE}
           isFirst={false}

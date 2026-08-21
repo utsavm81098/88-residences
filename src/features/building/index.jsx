@@ -34,6 +34,7 @@ const BuildingModel = memo(function BuildingModel({
     mountBackground,
   } = useBuilding({
     controlsRef,
+    sceneActive,
   });
 
   return (

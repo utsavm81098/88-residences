@@ -3,7 +3,6 @@ import useInventory from "./use-inventory";
 import TopNavigation from "@/containers/top-navigation";
 import SidebarPanel from "@/containers/sidebar-panel";
 import BuildingTooltip from "@/features/building-tooltip";
-import CanvasLoader from "@/containers/canvas-loader";
 import { cn } from "@/lib/utils";
 
 /**

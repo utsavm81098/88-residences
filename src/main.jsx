@@ -11,7 +11,7 @@ import {
   whenKTX2Ready,
 } from "@/utils/preloader";
 import { preloadGLB } from "@/hooks/use-glb-loader";
-import { getHomeModelPath } from "@/utils/constant";
+import { getHomeModelPath, getDeviceTier } from "@/utils/constant";
 import { WEB_ROUTES } from "@/routes/routes";
 
 const isLandingOnInventory =
@@ -38,15 +38,29 @@ if (typeof window !== "undefined") {
   // preload. The CURRENT route's own required asset (preloadModels() in the
   // isLandingOnInventory branch below) is never skipped — only warming the
   // OTHER route ahead of need is optional.
+  //
+  // REAL BUG FIXED HERE: despite the paragraph above, no getDeviceTier()
+  // check actually existed below it — both branches ran their cross-route
+  // preload unconditionally, on every device, including the exact
+  // constrained ones this comment says should skip it. That's the ~350MB
+  // heap hit this comment already blames for the iPhone 11 crash, paid on
+  // EVERY cold load of the app root, mobile included — reported as "main.jsx
+  // ... heavy load ... at initial root of React.js." The guard now actually
+  // exists, matching the one use-home.js/use-building.js already have for
+  // the equivalent background-building preload.
+  const isHighTier = getDeviceTier() === "high";
+
   if (isLandingOnInventory) {
     preloadModels();
 
-    scheduleIdlePreload(() => {
-      whenKTX2Ready().then(() =>
-        preloadGLB(getHomeModelPath(), configureLoader),
-      );
-    });
-  } else {
+    if (isHighTier) {
+      scheduleIdlePreload(() => {
+        whenKTX2Ready().then(() =>
+          preloadGLB(getHomeModelPath(), configureLoader),
+        );
+      });
+    }
+  } else if (isHighTier) {
     scheduleIdlePreload(preloadModels);
   }
 }
