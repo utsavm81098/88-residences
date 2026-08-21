@@ -1,8 +1,27 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router";
 import { logger } from "@/utils/logger";
+import { WEBSITE_URL } from "@/utils/constant";
 
-const PARENT_ORIGIN = "https://88residences.com";
+// REAL BUG FIXED HERE, confirmed live on production
+// (https://www.88residences.com/dashboard-en/): this used to be hardcoded to
+// "https://88residences.com" — no "www" — which never matches the real site's
+// actual origin ("https://www.88residences.com", the same canonical domain
+// WEBSITE_URL already uses everywhere else in this codebase, e.g.
+// utils/helper.js). window.parent.postMessage(msg, targetOrigin) doesn't
+// throw when targetOrigin mismatches the recipient's real origin — it just
+// silently declines to deliver the message, and Chrome separately logs an
+// unrelated-looking "Failed to execute 'postMessage' on 'DOMWindow'" console
+// error purely as a debugging aid — there's no exception for the try/catch
+// below to actually catch. So on the real production domain, the FIRST
+// postMessage call below was GUARANTEED to fail on every single route
+// change, for every visitor, permanently — the "*" fallback a few lines down
+// papered over the actual functional break (delivery still succeeded via
+// that wildcard), but the console noise was real and reproducible on every
+// navigation. Importing WEBSITE_URL rather than re-hardcoding it also means
+// this can never drift out of sync with the domain the rest of the app
+// already treats as canonical.
+const PARENT_ORIGIN = WEBSITE_URL;
 const MESSAGE_TYPE = "88residences:ui-state";
 
 /**
@@ -52,14 +71,25 @@ export function useParentBridge() {
     /*
      * Send state to WordPress parent.
      */
-    if (typeof window !== "undefined" && window.parent) {
+    if (
+      typeof window !== "undefined" &&
+      window.parent &&
+      window.parent !== window
+    ) {
       try {
-        window.parent.postMessage(statePayload, PARENT_ORIGIN);
-
-        // Support environments where the parent origin differs (e.g. www subdomain or demo staging)
-        if (window.location.origin !== PARENT_ORIGIN) {
-          window.parent.postMessage(statePayload, "*");
+        let targetOrigin = "*";
+        if (typeof document !== "undefined" && document.referrer) {
+          try {
+            const referrerOrigin = new URL(document.referrer).origin;
+            if (referrerOrigin && referrerOrigin !== "null") {
+              targetOrigin = referrerOrigin;
+            }
+          } catch {
+            targetOrigin = "*";
+          }
         }
+
+        window.parent.postMessage(statePayload, targetOrigin);
       } catch (error) {
         logger.warn("[ParentBridge] Error posting message to parent:", error);
       }

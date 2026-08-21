@@ -41,6 +41,18 @@
     --mobile-topbar-border: 0 0% 100% / 0.2;
   }
 
+  html,
+  body {
+    /* Paints the dark theme on the browser's own viewport canvas immediately,
+     * before React mounts (main.jsx awaits i18n init over the network) and
+     * before the router's loader resolves (HydrateFallback renders null while
+     * i18n.changeLanguage() awaits — see routes/index.jsx). Without this the
+     * default white canvas shows through for the entire gap, producing a
+     * white flash before the themed app shell paints over it.
+     */
+    background-color: hsl(var(--background));
+  }
+
   body {
     margin: 0;
     font-family: 'Open Sans', sans-serif;
@@ -210,19 +222,25 @@
   }
 }
 
+/* ── Hero loader logo spin ─────────────────────────────────────────────────── */
+@keyframes rotate-logo {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-rotate-logo {
+  animation: rotate-logo 3s linear infinite !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-slot="accordion-content"],
   [data-slot="accordion-content"] [data-slot="table-row"],
   [data-slot="accordion-trigger-icon"] {
     animation: none !important;
     transition: none !important;
-  }
-
-  /* Hero loader: stop both infinite loops — the logo spin and the slide crossfade.
-     Freezing the crossfade leaves the base (day) still on screen, which is a
-     complete, correct loading visual rather than a degraded one. */
-  [data-slot="hero-logo"],
-  [data-slot="hero-slide"] {
-    animation: none !important;
   }
 }

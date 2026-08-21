@@ -31,7 +31,7 @@
   <!-- End Google Tag Manager -->
   <meta charset="UTF-8" />
 
-  <link rel="icon" type="image/png" href="./favicon-32x32.png" />
+  <link rel="icon" type="image/png" href="/favicon-32x32.png" />
   <!-- Preload the home masterplan GLB so the browser starts fetching it at
        HTML-parse time, in parallel with React / Vite bootstrap. Without this
        the fetch only begins after <Canvas> mounts and useGLBLoader fires its
@@ -40,16 +40,86 @@
        same-origin request but goes through the Fetch API (not <img>/<script>),
        and the browser only reuses a preload-cache entry when the CORS mode
        of the preload tag matches the CORS mode of the consuming request.
-       Omitting it would cause the browser to fetch the file TWICE. -->
-  <link rel="preload" as="fetch" href="./models/88RES-06_05-2.glb" crossorigin />
-  <!-- Preload the HDR panorama used for window glass reflections (EnvironmentSetup).
-       TextureLoader uses a plain XHR/fetch — same-origin, no CORS header needed. -->
-  <link rel="preload" as="fetch" href="./hdr/80m-nano-green.jpg" crossorigin />
+       Omitting it would cause the browser to fetch the file TWICE.
+
+       Two variants, gated by `media` so each device only fetches the one it
+       will actually use (see getHomeModelPath in src/utils/constant.js):
+       desktop gets the full-texture-resolution model, mobile/tablet
+       (<1024px, matching hooks/use-mobile.js's MOBILE_BREAKPOINT) gets the
+       VRAM-reduced variant. A media-gated <link rel="preload"> is a real,
+       standard browser feature — the non-matching one is never fetched.
+
+       KNOWN APPROXIMATION: getHomeModelPath() actually decides via
+       getDeviceTier(), which also downgrades a weak-GPU DESKTOP (viewport
+       >=1024, e.g. an old integrated GPU) to the reduced variant — a plain
+       CSS media query here can only see viewport width, not GPU capability,
+       so that specific machine's preload hint targets the (correct-for-most-
+       desktops but wrong-for-it) full-resolution file, and the actually-
+       correct reduced one gets fetched separately without the preload
+       head-start. Suboptimal for that one case, not incorrect — the JS-driven
+       fetch in use-home-scene.js still resolves the right file either way. -->
+  <link
+    rel="preload"
+    as="fetch"
+    href="/models/88RES-06_05-2.glb"
+    media="(min-width: 1024px)"
+    crossorigin
+  />
+  <link
+    rel="preload"
+    as="fetch"
+    href="/models/88RES-06_05-2-mobile.glb"
+    media="(max-width: 1023px)"
+    crossorigin
+  />
+
   <!-- Hero loader stills (Day and Night), shown full-screen while the masterplan GLB
-       above streams in (see containers/home/home-loader.jsx). Preloaded so both images
-       are ready immediately for the crossfade animation. -->
-  <link rel="preload" as="image" href="./images/hero/PLOT88-birdeye-day.jpg" fetchpriority="high" />
-  <link rel="preload" as="image" href="./images/hero/PLOT88-birdeye-night.jpg" />
+       above streams in (see containers/global-loader/index.jsx and this file's own
+       #app-boot-splash below, which shows the same imagery before any JS runs).
+       Preloaded as WebP re-encodes of the same source JPEGs (see
+       src/utils/constant.js's HOME_LOADER_SLIDES comment for exact numbers and how
+       they were produced) — day.webp/night.webp are the identical 2500x1375 at more
+       efficient compression, day/night-mobile.webp are a real downscale to 960px
+       wide. REAL BUG FIXED HERE: the original single 1.1MB/994KB JPEGs, on a slow or
+       constrained mobile connection, could take long enough to arrive that the page
+       showed nothing but its own dark background in the meantime — reported and
+       reproduced as "black screen" on low-end/low-network. `type="image/webp"` means
+       a browser that can't decode WebP skips these hints entirely rather than
+       double-fetching — it falls through to the plain JPEG <img> in
+       #app-boot-splash below and in hero-slide.jsx, just without a preload
+       head-start, an acceptable trade for a shrinking, now-tiny population. Same
+       1024px breakpoint as the GLB preloads above, for one shared definition of
+       "mobile" across every asset this page preloads. -->
+  <link
+    rel="preload"
+    as="image"
+    type="image/webp"
+    href="/images/hero/PLOT88-birdeye-day-mobile.webp"
+    media="(max-width: 1023px)"
+    fetchpriority="high"
+  />
+  <link
+    rel="preload"
+    as="image"
+    type="image/webp"
+    href="/images/hero/PLOT88-birdeye-day.webp"
+    media="(min-width: 1024px)"
+    fetchpriority="high"
+  />
+  <link
+    rel="preload"
+    as="image"
+    type="image/webp"
+    href="/images/hero/PLOT88-birdeye-night-mobile.webp"
+    media="(max-width: 1023px)"
+  />
+  <link
+    rel="preload"
+    as="image"
+    type="image/webp"
+    href="/images/hero/PLOT88-birdeye-night.webp"
+    media="(min-width: 1024px)"
+  />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="index, follow" />
   <meta property="og:image" content="https://www.88residences.com/wp-content/uploads/2026/04/PLOT88-birdeye-night.jpg" />
@@ -63,6 +133,142 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
+
+  <!-- Static boot splash (below) needs its rules available at first paint, so
+       they are inlined here rather than shipped in src/index.css: an external
+       stylesheet is fine for that file because it is still render-blocking,
+       but keeping this tiny and dependency-free means it never needs to wait
+       on the Tailwind build/purge pipeline to keep the classes around.
+
+       This is a plain-CSS replica of the real HomeLoader (see
+       containers/home/home-loader.jsx, components/ui/hero-carousel and the
+       "Hero loader crossfade" block in src/index.css) — same day/night
+       crossfade timing, same rotating logo — so it can run before any JS has
+       loaded. If that animation's timing, sizing or easing ever changes,
+       update the three spots together (this replica, hero-carousel's JS
+       constants, and src/index.css's @keyframes hero-night-crossfade) plus
+       the FOURTH spot below — a second, byte-identical copy of
+       @keyframes hero-night-crossfade itself, also inlined here for a
+       real, unrelated reason documented at its own definition — or the
+       pre-hydration splash and the post-hydration loader will visibly
+       disagree for one loop. -->
+  <style>
+    /* Guarantee the dark background paints on the VERY FIRST frame — before
+       Vite injects src/index.css (which sets --background via Tailwind).
+       Without this, hsl(var(--background)) in index.css resolves to nothing
+       and the browser paints a white page for the entire JS boot gap. */
+    html, body {
+      background-color: #0a0a0b; /* == hsl(240 10% 3.9%) == --background */
+      margin: 0;
+    }
+
+    #app-boot-splash {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background-color: #0a0a0b;
+    }
+
+    #app-boot-splash .abs-slide {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+    }
+
+    #app-boot-splash .abs-slide img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    /* Night layer: user set both boot-splash slides to the day image, so the
+       overlay just stays hidden. The React HeroCarousel handles day→night
+       crossfade after it mounts. */
+    #app-boot-splash .abs-slide--night {
+      z-index: 2;
+      opacity: 0;
+    }
+
+    /* REAL BUG FIXED HERE: this is a second copy of src/index.css's
+       @keyframes hero-night-crossfade (byte-identical body — keep them in
+       sync), not just app-boot-crossfade's twin above. The React-rendered
+       HeroCarousel (components/ui/hero-carousel) references
+       "hero-night-crossfade" by name, but in dev mode Vite injects
+       src/index.css's ~800-rule Tailwind stylesheet into a runtime <style>
+       tag as a JS side effect of main.jsx's `import "./index.css"` — that
+       injection is not guaranteed to have finished parsing into the CSSOM by
+       the exact moment containers/global-loader or containers/home/
+       home-loader first mounts and computes this element's style. Confirmed
+       directly (Chrome DevTools Protocol, element.getAnimations()): when that
+       race loses, the browser never creates a running Animation for the
+       element — getComputedStyle still reports the animation-name/duration/
+       delay as if everything were fine (it's just echoing the declared CSS),
+       but nothing actually plays, so the overlay sits frozen at its static
+       base opacity (1) for the element's entire lifetime — exactly the
+       "carousel isn't working" symptom reported and reproduced this way, not
+       any JS logic bug. A <style> tag inlined here parses synchronously
+       during initial HTML parsing, before <script type="module" src="/src/
+       main.jsx"> even begins fetching, so this specific rule is guaranteed to
+       exist in the CSSOM before any script — dev or prod build alike — could
+       possibly reference it. Harmless if src/index.css's copy loads later
+       too: CSS permits redefining a @keyframes name, and the two are
+       identical, so there is nothing to visually reconcile. */
+    @keyframes hero-night-crossfade {
+      0%, 32% { opacity: 0; }
+      50%, 82% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    #app-boot-splash .logo-wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    #app-boot-splash .logo-wrap svg {
+      width: 60px;
+      height: 60px;
+      animation: app-boot-rotate 3s linear infinite;
+      filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.9));
+    }
+
+    @media (min-width: 768px) {
+      #app-boot-splash .logo-wrap svg {
+        width: 90px;
+        height: 90px;
+      }
+    }
+
+    @keyframes app-boot-rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Mirrors the portrait crop rule in src/index.css so the handoff to the
+       real HomeLoader is pixel-identical. */
+    @media (max-aspect-ratio: 1/1) {
+      #app-boot-splash .abs-slide img {
+        object-position: 45% center;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #app-boot-splash .abs-slide--night,
+      #app-boot-splash .logo-wrap svg {
+        animation: none !important;
+      }
+    }
+  </style>
 
   <meta name="facebook-domain-verification" content="%VITE_FACEBOOK_DOMAIN_VERIFICATION%" />
   <!-- Meta Pixel Code -->
@@ -96,14 +302,52 @@
   </noscript>
   <!-- End Meta Pixel Code -->
 
-  <div id="root"></div>
+  <div id="root">
+    <!-- Static boot splash: paints at HTML-parse time, before any JS has run,
+         so the browser never shows a blank/white frame while the ~2.4MB app
+         bundle downloads+parses, i18n initializes (main.jsx) and the router
+         resolves (routes/index.jsx). This is the real HomeLoader's exact
+         markup/animation (day+night crossfade, rotating logo) reproduced in
+         plain HTML/CSS — see the <style> block above — using the same hero
+         stills already preloaded, so what the visitor sees never changes: it
+         is the loader from the very first paint, not a placeholder for it.
+
+         No JS is needed to remove this: React's createRoot() clears a plain
+         <div> container's children synchronously on its first commit, before
+         inserting its own tree — see react-dom-client's HostRoot mount path
+         (clearContainerSparingly's `default: root.textContent = ""` branch).
+         So this node never lingers once React mounts; nothing here should
+         depend on JS to be removed or hidden. -->
+    <div id="app-boot-splash" aria-hidden="true">
+      <div class="abs-slide abs-slide--day">
+        <picture>
+          <source srcset="/images/hero/PLOT88-birdeye-day-mobile.webp" type="image/webp" media="(max-width: 1023px)" />
+          <source srcset="/images/hero/PLOT88-birdeye-day.webp" type="image/webp" />
+          <img src="/images/hero/PLOT88-birdeye-day.jpg" alt="" width="2500" height="1375" fetchpriority="high" />
+        </picture>
+      </div>
+      <div class="abs-slide abs-slide--night">
+        <picture>
+          <source srcset="/images/hero/PLOT88-birdeye-day-mobile.webp" type="image/webp" media="(max-width: 1023px)" />
+          <source srcset="/images/hero/PLOT88-birdeye-day.webp" type="image/webp" />
+          <img src="/images/hero/PLOT88-birdeye-day.jpg" alt="" width="2500" height="1375" fetchpriority="low" />
+        </picture>
+      </div>
+      <div class="logo-wrap">
+        <svg viewBox="0 0 174.12 122.78" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#daba66" d="m39.11.09C20.79,1.38,3.06,16.86,3.43,31.75c.57,22.55,21.84,29.07,25.53,30.13,32.56,9.32,38.6,21.32,38.81,27.57.3,8.84-2.45,18.31-9.71,23.37-5.06,3.52-10.44,3.39-13.27,3.69-13.91,1.51-25.66-6.09-30-18.19-4.86-13.55,4.14-28,9.65-32.66.31-.26-.06-.99-.46-1.23-4.44-2.7-26.53,12.14-23.74,29.62,2.52,15.84,21.62,28.3,39.7,28.72,2.38.06,9.96-.34,18.96-3.95,11.05-4.43,24.62-17.09,24.31-30.01-.44-18.38-25.78-29.23-33.32-30.89-13.39-2.95-23.51-7.1-29.36-17.62-2.79-5.02-2.7-9.3-2.81-10.34-1.23-12.02,6.72-22.84,22.47-23.74,16.2-.93,28.59,11.54,27.06,24.51-1.5,12.79-11.57,22.23-10.21,23.49,1.64,1.52,22.61-9.7,22.98-25.02C80.41,13.38,58.67-1.29,39.11.09Z" />
+          <path fill="#daba66" d="m130.01.09c-18.32,1.29-36.05,16.77-35.68,31.66.57,22.55,21.84,29.07,25.53,30.13,32.56,9.32,38.6,21.32,38.81,27.57.3,8.84-2.45,18.31-9.71,23.37-5.06,3.52-10.44,3.39-13.27,3.69-13.91,1.51-25.66-6.09-30-18.19-4.86-13.55,4.14-28,9.65-32.66.31-.26-.06-.99-.46-1.23-4.44-2.7-26.53,12.14-23.74,29.62,2.52,15.84,21.62,28.3,39.7,28.72,2.38.06,9.96-.34,18.96-3.95,11.05-4.43,24.62-17.09,24.31-30.01-.44-18.38-25.78-29.23-33.32-30.89-13.39-2.95-23.51-7.1-29.36-17.62-2.79-5.02-2.7-9.3-2.81-10.34-1.23-12.02,6.72-22.84,22.47-23.74,16.2-.93,28.59,11.54,27.06,24.51-1.5,12.79-11.57,22.23-10.21,23.49,1.64,1.52,22.61-9.7,22.98-25.02.38-15.82-21.36-30.49-40.91-29.11Z" />
+        </svg>
+      </div>
+    </div>
+  </div>
   <script type="module" src="/src/main.jsx"></script>
 
   <!-- PDF viewer modal — must be placed in public/res88-pdf-modal.js
        Vite serves the public/ folder at the site root, so the script is
        available at /res88-pdf-modal.js in all environments. -->
   <!-- @vite-ignore -->
-  <script src="./res88-pdf-modal.js" defer></script>
+  <script src="/res88-pdf-modal.js" defer></script>
 </body>
 
 </html>

@@ -197,7 +197,7 @@ const useBuildingTransition = ({ groupRefs, controlsRef }) => {
  * Main hook for the BuildingModel component.
  * Manages global building state and transitions.
  */
-export const useBuilding = ({ controlsRef }) => {
+export const useBuilding = ({ controlsRef, sceneActive = true }) => {
   const {
     currentBuilding,
     currentBuildingIndex,
@@ -210,17 +210,51 @@ export const useBuilding = ({ controlsRef }) => {
   const frames = useRef(0);
   const [mountBackground, setMountBackground] = useState(false);
   useBuildingTransition({ groupRefs, controlsRef });
+  // REAL BUG FOUND HERE: this warmup counter used to run unconditionally
+  // from the moment <Building> first mounted — which, since it's an
+  // always-resident child of features/scene-environment (itself always
+  // mounted under the unified canvas), is effectively "from app boot,
+  // regardless of whether the user has ever opened Inventory." On desktop
+  // it reached WARMUP_FRAMES (2 — about 33ms) almost immediately, which
+  // flipped mountBackground true and mounted all 5 buildings' full-detail
+  // models, hitbox glass overlays, per-unit materials and edge outlines
+  // into the permanently-resident scene graph — even for a visitor who
+  // stays on Home the whole session and never opens Inventory. That extra
+  // scene-graph weight has a real per-frame traversal/cull cost
+  // (Object3D.updateMatrixWorld, WebGLRenderer's visible-object walk) that
+  // is paid on EVERY frame regardless of visibility, directly competing
+  // with Home's own OrbitControls damping for CPU time — reported as
+  // "camera isn't smooth" and "heavy load, lagging" while looking at Home,
+  // which never needed any of this mounted. Gating the counter on
+  // `sceneActive` (Inventory actually having been the visible view at
+  // least once) means Home stays light for as long as the user stays on
+  // it; the instant Inventory is opened for the first time, this reaches
+  // WARMUP_FRAMES within ~2 frames same as before, so the "other buildings
+  // preload for instant switching" behavior still kicks in immediately
+  // once the user has shown any intent to browse Inventory — it just no
+  // longer runs before they ever asked for it.
   useFrame(() => {
-    if (warmedUp) return;
+    if (warmedUp || !sceneActive) return;
     frames.current++;
     if (frames.current >= WARMUP_FRAMES) setWarmedUp(true);
   });
   useEffect(() => {
     if (!warmedUp) return;
 
-    // Always start preloading model files in the background (network fetch + parse).
-    // This is safe — files are cached by useGLTF and don't hit GPU until mounted.
-    preloadBackgroundModels();
+    // Desktop only: preload the OTHER buildings' model files in the background
+    // (network fetch + parse) for instant transitions. This used to run
+    // unconditionally on the assumption that it's "safe" because the parsed
+    // data doesn't hit GPU until mounted — true for VRAM, but the parsed
+    // geometry/texture data still lands in JS heap via useGLTF's permanent
+    // cache regardless of device. On mobile, where mountBackground below
+    // already guarantees these buildings never mount/render, preloading them
+    // anyway just grows JS heap for buildings that will never be shown,
+    // stacking on top of whatever Home's scene already holds resident (see
+    // containers/keep-alive-outlet/use-keep-alive-outlet.js) — the same
+    // total-process-memory budget that crashed low-end mobile.
+    if (!isMobile) {
+      preloadBackgroundModels();
+    }
 
     // On mobile: keep mountBackground false to prevent loading inactive buildings into the scene graph.
     // This saves maximum GPU memory. They will only mount/render on-demand when active.

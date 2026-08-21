@@ -12,6 +12,8 @@ import { logger } from "@/utils/logger";
  */
 export const HeroSlide = ({
   image,
+  webp,
+  webpMobile,
   animation,
   zIndex = 1,
   opacity = 1,
@@ -35,19 +37,37 @@ export const HeroSlide = ({
       }}
       aria-hidden="true"
     >
-      <img
-        data-slot="hero-slide-image"
-        src={image}
-        alt=""
-        width={2500}
-        height={1375}
-        draggable={false}
-        loading="eager"
-        decoding="async"
-        fetchPriority={isFirst ? "high" : "low"}
-        onError={handleError}
-        className="h-full w-full select-none object-cover object-center [-webkit-touch-callout:none]"
-      />
+      {/* WebP first (smaller at equal visual quality — see utils/constant.js's
+          HOME_LOADER_SLIDES comment for measured sizes), mobile-width variant
+          before the full-size one so a phone on a slow connection never
+          fetches the desktop file. Same 1024px breakpoint the GLB preloads in
+          index.html already use, for one shared definition of "mobile" across
+          every asset this loader touches. Browsers without WebP support (or
+          missing this markup entirely, e.g. the pre-JS static splash in
+          index.html) fall through to the <img> JPEG below untouched. */}
+      <picture>
+        {webpMobile && (
+          <source
+            srcSet={webpMobile}
+            type="image/webp"
+            media="(max-width: 1023px)"
+          />
+        )}
+        {webp && <source srcSet={webp} type="image/webp" />}
+        <img
+          data-slot="hero-slide-image"
+          src={image}
+          alt=""
+          width={2500}
+          height={1375}
+          draggable={false}
+          loading="eager"
+          decoding="async"
+          fetchPriority={isFirst ? "high" : "low"}
+          onError={handleError}
+          className="h-full w-full select-none object-cover object-center [-webkit-touch-callout:none]"
+        />
+      </picture>
     </div>
   );
 };

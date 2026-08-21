@@ -182,13 +182,14 @@ export const solveFraming = ({ camera, aspect }) => {
   });
 
   const margin = isMobileOrTablet && camera.mobileMargin !== undefined ? camera.mobileMargin : camera.margin;
+  const elevationDeg = isMobileOrTablet && camera.mobileElevationDeg !== undefined ? camera.mobileElevationDeg : camera.elevationDeg;
 
   const distance = fitDistance({
     bbox: camera.bbox,
     target: camera.target,
     fovDeg: fov,
     aspect,
-    elevationDeg: camera.elevationDeg,
+    elevationDeg,
     margin,
   });
 
@@ -198,7 +199,7 @@ export const solveFraming = ({ camera, aspect }) => {
     position: orbitPosition({
       target: camera.target,
       azimuthDeg: camera.azimuthDeg,
-      elevationDeg: camera.elevationDeg,
+      elevationDeg,
       distance,
     }),
     minDistance: distance * camera.minDistanceScale,

@@ -103,7 +103,7 @@ export const EXPOSURE = 0.0;
 
 export const CANVAS_GL_CONFIG = {
   antialias: true,
-  toneMapping: THREE.LinearToneMapping,
+  toneMapping: THREE.NeutralToneMapping,
   toneMappingExposure: Math.pow(2, EXPOSURE),
   powerPreference: "high-performance",
   outputColorSpace: THREE.SRGBColorSpace,
@@ -158,20 +158,100 @@ export const CANVAS_GL_CONFIG = {
 // repo, not committed alongside this change; ask before assuming a
 // replacement exists if this needs reverting.
 export const HOME_MODEL_PATH = getAssetPath("/models/88RES-06_05-2.glb");
+
+// Mobile/tablet-tier variant of the same model: identical meshes, materials,
+// nodes and node/material NAMES (verified byte-for-byte — every by-name
+// fixup in features/home-scene/use-home-scene.js, e.g. "Gray_BUILD",
+// WOOD_RAILING_MAT_NAME, SOLAR_PANEL_MATERIAL_NAMES, still matches). The
+// only difference: the 26 textures that were 2048x2048 are capped to
+// 1024x1024 (every other texture — the other 314, already <=1024 — is
+// byte-identical). That alone cuts estimated GPU texture memory from ~231MB
+// to ~167MB (gltf-transform's own gpuSize metric — real measurement, not a
+// guess) — the desktop file's ~481MB estimate (this codebase's own ASTC-based
+// calc, likely closer to what Apple GPUs actually pick over gltf-transform's
+// more conservative ETC2 baseline) was the confirmed standalone cause of the
+// iPhone 11 renderer crash, independent of any Home<->Inventory navigation.
+//
+// Regenerated via: ktxdecompress (KTX2->PNG) -> resize --width 1024 --height
+// 1024 (a MAX cap; textures already <=1024 are untouched, never upscaled) ->
+// etc1s (PNG->KTX2 again) -> meshopt (re-compress geometry, decoded as a
+// side effect of the ktxdecompress round-trip). See getHomeModelPath below
+// for where this is selected.
+export const HOME_MODEL_PATH_MOBILE = getAssetPath(
+  "/models/88RES-06_05-2-mobile.glb",
+);
+
+/**
+ * Selects the Home model variant for the current device: "high" tier gets
+ * full texture resolution, "mid"/"low" get the VRAM-reduced variant.
+ *
+ * Deliberately keyed on getDeviceTier() (defined further below in this file
+ * — safe to reference here since this function's body only evaluates it
+ * when CALLED, not at module-init time), not a plain isMobile viewport
+ * check: getDeviceTier() already classifies a weak-GPU DESKTOP (viewport
+ * >=1024) as "mid", exactly the case its own doc comment cites a real
+ * incident for (an 8-core/16GB desktop with an Intel HD Graphics 530
+ * integrated GPU running this scene at 0-4 FPS). A pure isMobile check would
+ * hand that exact machine the full ~481MB-estimate desktop model — the same
+ * class of problem this function exists to avoid, just on desktop instead
+ * of mobile. getDeviceTier() was already built for precisely this, wired to
+ * a mip-bias mechanism (see its own doc comment's TEXTURE_MIP_BIAS
+ * reference) that was never actually implemented anywhere (confirmed: no
+ * such logic exists in features/home-scene/use-home-scene.js, in git
+ * history or otherwise) — this reuses that same tier classification for a
+ * simpler mechanism (swap the whole model) instead of finishing the
+ * originally-sketched one (slice mip levels off a loaded texture).
+ *
+ * Called once, synchronously, wherever the model choice is made (see
+ * features/home-scene/use-home-scene.js) — not reactively: device
+ * capability doesn't change mid-session, and unlike a resize-driven isMobile
+ * flip, there's no cheap way to "swap the model back" once one has loaded.
+ */
+export const getHomeModelPath = () =>
+  typeof window !== "undefined" && window.innerWidth <= 1024
+    ? HOME_MODEL_PATH_MOBILE
+    : HOME_MODEL_PATH;
+
 // This panorama is used for image-based lighting only. The model owns the
 // visible panorama sphere, so it is never used as a flat background.
 export const HOME_ENV_PATH = getAssetPath("/hdr/80m-nano-green.jpg");
 
-// Full-screen stills the HomeLoader crossfades while the masterplan GLB above
-// streams in (see containers/home/home-loader.jsx).
+// Full-screen stills the GlobalLoader/HeroCarousel crossfades while the
+// masterplan GLB streams in (see containers/global-loader/index.jsx).
 //
-// 2500x1375 = 1.818:1. Do NOT shrink these: hero-slide.jsx zooms to scale(1.3),
-// which needs ~2500px to stay at or above native resolution on a 1920 viewport
-// (1920 x 1.3 = 2496). One file per slide at every device width, matching the
-// reference site — it serves a single CSS background-image with no srcset.
+// 2500x1375 = 1.818:1, the native export resolution. The "do not shrink"
+// constraint this comment used to carry (a CSS scale(1.3) zoom needing
+// ~2500px to stay above native res on a 1920 viewport) no longer applies —
+// components/ui/hero-carousel/hero-slide.jsx has never had a zoom transform
+// in its current form, only `object-cover`, so that rationale was stale.
+//
+// `webp`/`webpMobile` are re-encodes of the SAME `image` JPEG, not resizes
+// with any quality loss of their own: `webp` is the identical 2500x1375 at
+// WebP's more efficient compression (908KB/529KB vs 1.1MB/994KB — most of
+// the size difference on the day slide is because JPEG's DCT already
+// captured most of the entropy in the foliage detail; the night slide's
+// large flat dark-sky regions compress far better under WebP, hence the
+// bigger win there), and `webpMobile` is a real downscale to 960px wide —
+// safe because a 960px-wide source already exceeds what phones typically
+// need (matches the same lg: 1024px breakpoint the GLB preloads below use)
+// and was checked visually before shipping. Confirmed real-world payload,
+// reported and reproduced: on a slow/constrained mobile connection the
+// original single 1.1MB/994KB JPEGs took long enough to arrive that the
+// page showed nothing but its own dark background in the meantime — this
+// is what actually fixes that, not just a smaller number on desktop.
 export const HOME_LOADER_SLIDES = [
-  { id: "day", image: getAssetPath("/images/hero/PLOT88-birdeye-day.jpg") },
-  { id: "night", image: getAssetPath("/images/hero/PLOT88-birdeye-night.jpg") },
+  {
+    id: "day",
+    image: getAssetPath("/images/hero/PLOT88-birdeye-day.jpg"),
+    webp: getAssetPath("/images/hero/PLOT88-birdeye-day.webp"),
+    webpMobile: getAssetPath("/images/hero/PLOT88-birdeye-day-mobile.webp"),
+  },
+  {
+    id: "night",
+    image: getAssetPath("/images/hero/PLOT88-birdeye-night.jpg"),
+    webp: getAssetPath("/images/hero/PLOT88-birdeye-night.webp"),
+    webpMobile: getAssetPath("/images/hero/PLOT88-birdeye-night-mobile.webp"),
+  },
 ];
 
 /**
@@ -209,42 +289,25 @@ export const BUILDING_BBOX = {
 export const HOME_CAMERA = {
   target: [-8.5, 11.1, -11.3],
   azimuthDeg: -115.73,
-  // 22° elevation matches the reference screenshot — camera is near-horizon,
-  // building facades dominate (not rooftops), sea visible at top of frame.
   elevationDeg: 10,
   bbox: BUILDING_BBOX,
 
   baseFov: 35,
   baseAspect: 1.6,
-  // 50° rather than 60°: portrait phones would otherwise need a fish-eye FOV to
-  // hold the long axis. Past this point extra distance is the better lever.
   maxFov: 50,
   margin: 1.06,
 
-  // The model's own PANO_Sphere dome has a radius of ~670 units, so the far
-  // The dome needs a 1290-unit view distance at the outer orbit limit. A 2/1400
-  // clip range is tight enough to preserve depth precision for the context
-  // layers while remaining comfortably clear of the nearest orbitable surface.
   near: 2,
   far: 1400,
 
   minDistanceScale: 0.6,
   maxDistanceScale: 1.1,
-  // Hard ceiling: keeps the camera well inside the PANO_Sphere dome radius.
-  // Same scale factors and cap are used on every device — mobile/tablet
-  // pinch-zoom range now matches desktop exactly.
   maxDistanceCap: 400,
 
-  mobileMargin: 0.5, // Tighter framing on mobile (crops sides to zoom closer to the center)
-  mobileMaxFov: 55, // Slightly wider FOV limit on mobile to allow getting closer without fish-eye
+  mobileMargin: 0.5,
+  mobileElevationDeg: 14,
+  mobileMaxFov: 55,
 
-  // Opening at 30° elevation (polar 60°) — moderate aerial view matching the reference
-  // image. Shows rooftops + facades with a gentle diagonal (not steep top-down).
-  // The building cluster's 180-unit Z span creates less vertical screen displacement
-  // at 30° than at 45° (tan 30° = 0.577 vs tan 45° = 1.0), giving a balanced frame.
-  // Orbit range: minPolar 35° (55° elevation max) ↔ maxPolar 72° (18° min elevation).
-  // maxPolarDeg reduced from 85° → 72° to prevent the camera from dropping close
-  // enough to ground level that the surface plane dominates the view.
   minPolarDeg: 35,
   maxPolarDeg: 82,
 };
@@ -385,18 +448,46 @@ const getGpuRendererString = () => {
   }
 };
 
+// Real gap found on review: the tier doc comment below already describes
+// "mid" as covering "a small/touch viewport", but the actual check only
+// ever looked at viewport WIDTH, never touch — so a tablet in LANDSCAPE
+// (viewport >=1024, e.g. iPad landscape at ~1024-1366px) fell through to
+// "high" tier exactly like a desktop, as long as its GPU wasn't
+// independently flagged weak. Deliberate: treat every touch-capable device
+// as tablet/mobile-tier regardless of viewport width or orientation — iOS
+// and Android both enforce a per-tab/per-app memory ceiling well below an
+// unrestricted desktop browser's, REGARDLESS of how capable the tablet's own
+// GPU is, so a capable-GPU tablet can still hit that OS-level wall a
+// same-GPU laptop never would. maxTouchPoints is the standard signal (widely
+// supported); the 'ontouchstart' check is a defensive fallback for browsers
+// that don't expose it.
+const isTouchDevice = () => {
+  if (typeof navigator === "undefined") return false;
+  if (typeof navigator.maxTouchPoints === "number") {
+    return navigator.maxTouchPoints > 0;
+  }
+  return typeof window !== "undefined" && "ontouchstart" in window;
+};
+
 /**
- * Coarse, one-time device-capability tier — used to bias how much of each
- * KTX2 texture's embedded mip chain gets uploaded to the GPU (see
- * TEXTURE_MIP_BIAS and the texture-tuning loop in
- * features/home-scene/use-home-scene.js).
+ * Coarse, one-time device-capability tier — decides which Home model variant
+ * loads (see getHomeModelPath: "high" gets full texture resolution, "mid"
+ * and "low" both get the VRAM-reduced variant; the two lower tiers exist for
+ * logging/diagnostics granularity, not two different assets).
+ *
+ * This doc comment previously described biasing individual KTX2 mip levels
+ * post-load (a "TEXTURE_MIP_BIAS" mechanism) — that was never actually
+ * implemented anywhere (confirmed via git history), so the comment was
+ * describing dead intent. getDeviceTier() itself was real but unused until
+ * getHomeModelPath adopted it for a simpler mechanism: swap the whole model,
+ * not slice mips off a loaded texture.
  *
  * Deliberately a plain function meant to be called ONCE per model load, not
- * a reactive hook: mip levels dropped via this bias are sliced out of the
- * texture's `.mipmaps` array and discarded — there is no cheap way to "add
- * resolution back" if the tier were recomputed mid-session. Same reasoning
- * that already ruled out AdaptiveDpr/PerformanceMonitor for this scene (see
- * the comment in features/home-scene/index.jsx).
+ * a reactive hook: whichever model variant loads first is what's cached for
+ * the session (see hooks/use-glb-loader.js) — there's no cheap way to swap
+ * it for the other variant if the tier were recomputed mid-session. Same
+ * reasoning that already ruled out AdaptiveDpr/PerformanceMonitor for this
+ * scene (see the comment in features/home-scene/index.jsx).
  *
  * navigator.deviceMemory is Chromium-only; every signal degrades to an
  * optimistic default (assume capable) rather than assuming a low tier on
@@ -405,26 +496,34 @@ const getGpuRendererString = () => {
  * (some browsers restrict it) — an unknown GPU is treated as capable rather
  * than guessed at.
  *
- * - "high": capable of the full authored texture resolution — a typical desktop.
- * - "mid": a capable device on a small/touch viewport, or a desktop reporting
- *   unusually few cores/memory or a known-weak GPU.
- * - "low": mobile/tablet AND reporting few CPU cores, little device memory,
- *   or a known-weak GPU — the profile this needs to protect VRAM/upload
- *   time on.
+ * - "high": capable of the full authored texture resolution — a non-touch
+ *   desktop/laptop, viewport >=1024px, nothing reporting as constrained.
+ * - "mid": touch device (any viewport/orientation — see isTouchDevice) or
+ *   small viewport, with nothing else reporting as constrained; OR a
+ *   non-touch desktop reporting unusually few cores/memory or a known-weak
+ *   GPU.
+ * - "low": touch device or small viewport AND reporting few CPU cores,
+ *   little device memory, or a known-weak GPU — the profile this needs to
+ *   protect VRAM/upload time on most.
  */
 export const getDeviceTier = () => {
   if (typeof window === "undefined" || typeof navigator === "undefined") {
     return "high";
   }
 
-  const isMobileViewport = window.innerWidth < DEVICE_TIER_MOBILE_BREAKPOINT;
+  // Either signal puts a device in tablet/mobile territory: a narrow
+  // viewport (phones, tablets in portrait) OR touch capability regardless of
+  // viewport (tablets in landscape — see isTouchDevice's comment for why
+  // this can't be skipped just because the viewport looks desktop-sized).
+  const isMobileOrTablet =
+    window.innerWidth < DEVICE_TIER_MOBILE_BREAKPOINT || isTouchDevice();
   const cores = navigator.hardwareConcurrency ?? 8;
   const memoryGB = navigator.deviceMemory ?? 8;
   const gpuRenderer = getGpuRendererString();
   const constrained =
     cores <= 4 || memoryGB <= 4 || isWeakGpuRenderer(gpuRenderer);
 
-  if (!isMobileViewport) return constrained ? "mid" : "high";
+  if (!isMobileOrTablet) return constrained ? "mid" : "high";
   return constrained ? "low" : "mid";
 };
 
@@ -433,7 +532,7 @@ const typeAConfig = {
   hitbox: getAssetPath("/models/a-hitbox.glb"),
   heroAngle: 0,
   environment: {
-    files: getAssetPath("/hdr/sky-40m-compressed.exr"),
+    files: getAssetPath("/hdr/sky-40m.hdr"),
     background: false,
     rotation: [0, 0, 0],
     backgroundRotation: [0, 0, 0],

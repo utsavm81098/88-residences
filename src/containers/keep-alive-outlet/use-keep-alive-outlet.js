@@ -7,18 +7,31 @@ import { KEEP_ALIVE_VIEWS } from "./keep-alive-views";
 /**
  * useKeepAliveOutlet — decides which route views are rendered.
  *
- * Navigating between two <Canvas>-bearing routes used to unmount one and mount
- * the other, which destroys the WebGLRenderer and its context. The parsed GLB
- * survives in the module-scope caches (hooks/use-glb-loader.js, drei's
- * useGLTF), but compiled shader programs, uploaded textures and the PMREM
- * target live in the CONTEXT — so every switch re-linked every program and
- * re-uploaded every texture, which is the multi-second gl.compile() the loading
- * overlay was covering.
+ * Navigating between 3D routes (Home <-> Inventory) keeps visited route views
+ * mounted in the scene graph so WebGL contexts, compiled shaders, and parsed GLBs
+ * remain resident.
  *
- * The fix is that `visited` below only ever grows. A key enters on its first
- * activation and is never removed, so its <Canvas> stays mounted for the rest
- * of the session. Removing a key here would destroy the context again and undo
- * the entire feature.
+ * When switching routes, the inactive view has its render loop halted (frameloop="never")
+ * and visibility hidden (visibility: hidden), allowing instantaneous switching with
+ * zero loader delay on both mobile and desktop.
+ *
+ * Constrained-device guard: keeping BOTH routes' <Canvas> mounted means TWO live
+ * WebGL contexts hold Home's masterplan scene and an Inventory building scene on
+ * the GPU at once — see
+ * docs/superpowers/specs/2026-08-17-keep-alive-route-hosting-design.md §9, which
+ * flagged this as a known mobile-regression risk and named the mitigation below
+ * ("gate visited-set growth on useIsMobile()") without ever shipping it. Desktop
+ * GPUs have VRAM headroom for both contexts simultaneously; mobile/tablet
+ * browsers enforce a much stricter per-tab GPU memory ceiling and were
+ * confirmed crashing (tab/renderer OOM) once both routes had been visited.
+ *
+ * `getDeviceTier()` (utils/constant.js), not the viewport-only `useIsMobile()`,
+ * is the discriminator: it already folds in touch-capability, so a landscape
+ * tablet (viewport >=1024px) is correctly treated as constrained instead of
+ * falling through to "desktop" behaviour — the same gap that function's own
+ * doc comment documents for the Home model variant. It's a plain, non-reactive
+ * function (device capability doesn't change mid-session), so it's read once
+ * into state rather than recomputed on every render.
  */
 export const useKeepAliveOutlet = () => {
   const activeKey = useKeepAliveKey();
@@ -28,23 +41,14 @@ export const useKeepAliveOutlet = () => {
     if (!activeKey || !ENV_CONFIG.KEEP_ALIVE_ROUTES) return;
     if (!KEEP_ALIVE_VIEWS[activeKey]) return;
 
-    setVisited((previous) =>
-      previous.has(activeKey) ? previous : new Set(previous).add(activeKey),
-    );
+    setVisited((previous) => {
+      return previous.has(activeKey)
+        ? previous
+        : new Set(previous).add(activeKey);
+    });
   }, [activeKey]);
 
-  // Activation timing.
-  //
-  // performance.mark/measure rather than a logger-only readout: logger.info is
-  // gated on import.meta.env.DEV (utils/logger.js) and is stripped from staging
-  // and production builds — the exact builds whose switching cost is in
-  // question. User Timing entries show up in the DevTools Performance timeline
-  // in every build mode. The logger line below is the convenience readout for
-  // dev.
-  //
-  // Double rAF: the first fires before the browser paints the newly activated
-  // view, the second after — so the measure spans "route changed" to "the user
-  // can see it". Target: under ~100ms for a previously-visited route.
+  // Activation timing measurement for dev and timeline inspection
   useEffect(() => {
     if (!activeKey) return undefined;
 
@@ -73,16 +77,9 @@ export const useKeepAliveOutlet = () => {
   const views = useMemo(() => {
     if (!activeKey || !KEEP_ALIVE_VIEWS[activeKey]) return [];
 
-    // `activeKey` is unioned in explicitly rather than waited for: the effect
-    // above lands one commit later, and the route the user just navigated to
-    // has to render on THIS one.
-    //
-    // With the flag off, only the active key renders — i.e. exactly the
-    // unmount-on-navigate behaviour that shipped before this feature, on the
-    // same code path rather than a forked one.
-    const keys = ENV_CONFIG.KEEP_ALIVE_ROUTES
-      ? Array.from(new Set([...visited, activeKey]))
-      : [activeKey];
+    const keys = !ENV_CONFIG.KEEP_ALIVE_ROUTES
+      ? [activeKey]
+      : Array.from(new Set([...visited, activeKey]));
 
     return keys.map((key) => ({
       key,

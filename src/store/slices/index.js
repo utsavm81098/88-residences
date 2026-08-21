@@ -2,13 +2,13 @@ import { combineReducers } from "@reduxjs/toolkit";
 import buildingReducer from "./building-slice";
 import tooltipReducer from "./tooltip-slice";
 import dragReducer from "./drag-slice";
-import sidebarReducer from "./sidebar-slice";
+import appLoaderReducer from "./app-loader-slice";
 
 const appReducer = combineReducers({
   building: buildingReducer,
   tooltip: tooltipReducer,
   drag: dragReducer,
-  sidebar: sidebarReducer,
+  appLoader: appLoaderReducer,
 });
 
 const rootReducer = (state, action) => {

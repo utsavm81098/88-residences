@@ -90,6 +90,8 @@ const BuildingAccordionCard = memo(
     language,
     t,
   }) => {
+    const isRtl = language === "he" || language?.startsWith("he");
+
     return (
       <div
         ref={(el) => (itemRefs.current[building] = el)}
@@ -109,8 +111,18 @@ const BuildingAccordionCard = memo(
                   className="text-gray-700 transition-colors group-data-[state=open]/accordion-trigger:text-accent-yellow"
                 />
               )}
-              <span>
-                {building} {t("building", "Building")}
+              <span className="flex items-center gap-1">
+                {isRtl ? (
+                  <>
+                    <span>{t("building", "Building")}</span>
+                    <span>{building}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{building}</span>
+                    <span>{t("building", "Building")}</span>
+                  </>
+                )}
               </span>
             </div>
           </AccordionTrigger>

@@ -1,11 +1,14 @@
-import { Fragment, memo, useMemo } from "react";
+import { Fragment, memo, useMemo, useEffect, useLayoutEffect } from "react";
 import * as THREE from "three";
+import { useThree } from "@react-three/fiber";
 import useHomeScene from "./use-home-scene";
 import CameraRig from "./camera-rig";
 import SceneLights from "./scene-lights";
-import SceneReadyGate from "./scene-ready-gate";
+import SceneReadyGate from "@/features/scene-ready-gate";
 import BuildingMarkers from "@/features/building-markers";
 import EnvironmentSetup from "./environment-setup";
+import { solveFraming } from "./fit-camera";
+import { HOME_CAMERA, HOME_EXPOSURE } from "@/utils/constant";
 
 // Keep the reflection panorama in the same orientation as the panoramic dome
 // baked into the supplied GLB. The dome remains the visible background.
@@ -13,6 +16,33 @@ const ENVIRONMENT_ROTATION_DEG = 1;
 
 const HomeSceneImpl = ({ controlsRef, onReady, active = true }) => {
   const { scene } = useHomeScene();
+  const { gl, scene: rootScene, camera } = useThree();
+
+  useLayoutEffect(() => {
+    if (!active || !camera) return;
+    const aspect =
+      typeof window === "undefined"
+        ? HOME_CAMERA.baseAspect
+        : window.innerWidth / Math.max(window.innerHeight, 1);
+    const framing = solveFraming({ camera: HOME_CAMERA, aspect });
+    if (framing) {
+      camera.position.set(...framing.position);
+      camera.fov = framing.fov;
+      camera.near = HOME_CAMERA.near;
+      camera.far = HOME_CAMERA.far;
+      camera.lookAt(...HOME_CAMERA.target);
+      camera.updateProjectionMatrix();
+    }
+  }, [active, camera]);
+
+  useEffect(() => {
+    if (!active || !gl) return;
+    if (rootScene.fog) rootScene.fog = null;
+    gl.toneMapping = THREE.NeutralToneMapping;
+    gl.toneMappingExposure = Math.pow(2, HOME_EXPOSURE);
+    gl.needsUpdate = true;
+  }, [gl, rootScene, active]);
+
   const environmentRotation = useMemo(
     () => [0, THREE.MathUtils.degToRad(ENVIRONMENT_ROTATION_DEG), 0],
     [],
@@ -32,22 +62,22 @@ const HomeSceneImpl = ({ controlsRef, onReady, active = true }) => {
           reach full res. That was the blurry-then-sharpens first render. This is a
           static architectural view, so a fixed dpr is the right trade. */}
 
-      <CameraRig controlsRef={controlsRef} active={active} />
+      {active && <CameraRig controlsRef={controlsRef} active={active} />}
 
       {/* Low-energy image-based lighting restores natural sky bounce on shaded
           facades without replacing the GLB's own panorama sphere. */}
-      <EnvironmentSetup environmentRotation={environmentRotation} />
+      <EnvironmentSetup modelScene={scene} environmentRotation={environmentRotation} active={active} />
 
       {/* A fixed sun keeps the site lighting stable while the camera orbits. */}
-      <SceneLights environmentRotationDeg={ENVIRONMENT_ROTATION_DEG} />
+      <SceneLights environmentRotationDeg={ENVIRONMENT_ROTATION_DEG} active={active} />
 
       <primitive object={scene} />
 
-      {/* Display SVG markers on top of each of the 7 buildings in the masterplan scene */}
-      <BuildingMarkers />
+      {/* Display SVG markers on top of each of the 7 buildings in the masterplan scene only when Home is active */}
+      {active && <BuildingMarkers />}
 
       {/* Mounted last so the scene graph is complete before warm-up compiles it. */}
-      <SceneReadyGate onReady={onReady} />
+      {active && <SceneReadyGate onReady={onReady} />}
 
       {/* EffectComposer + FXAA removed: native hardware MSAA (antialias:true in
           getHomeGlConfig) is now restored on the canvas. Native MSAA provides

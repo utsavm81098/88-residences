@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Outlet } from "react-router";
 import useKeepAliveOutlet from "./use-keep-alive-outlet";
 
@@ -40,7 +41,19 @@ export const KeepAliveOutlet = () => {
           inert={!isActive}
           aria-hidden={!isActive}
         >
-          <Component active={isActive} />
+          {/* Required now that KEEP_ALIVE_VIEWS can hold a React.lazy()
+              component (currently Inventory — see that file's own comment):
+              without a Suspense ancestor, React throws the instant that
+              component's dynamic import() hasn't resolved yet. fallback is
+              null, not a spinner: the 3D canvas/camera readiness (which
+              really does need a loading state) is entirely independent of
+              this 2D UI shell's own JS chunk, driven by
+              containers/global-loader instead — briefly showing the 3D
+              preview without top-nav/sidebar chrome on a slow connection is
+              a better failure mode than blocking on it. */}
+          <Suspense fallback={null}>
+            <Component active={isActive} />
+          </Suspense>
         </div>
       ))}
     </div>

@@ -11,7 +11,7 @@ import {
   whenKTX2Ready,
 } from "@/utils/preloader";
 import { preloadGLB } from "@/hooks/use-glb-loader";
-import { HOME_MODEL_PATH } from "@/utils/constant";
+import { getHomeModelPath, getDeviceTier } from "@/utils/constant";
 import { WEB_ROUTES } from "@/routes/routes";
 
 const isLandingOnInventory =
@@ -23,22 +23,44 @@ if (typeof window !== "undefined") {
     ? (cb) => window.requestIdleCallback(cb, { timeout: 4000 })
     : (cb) => setTimeout(cb, 1500);
 
+  // Constrained devices (mobile/tablet, or a desktop with a known-weak GPU —
+  // see getDeviceTier() in utils/constant.js) skip every CROSS-ROUTE preload
+  // below. Warming the OTHER route's heaviest asset ahead of need costs real,
+  // long-lived memory well before any GPU is involved: KTX2/Basis textures
+  // are transcoded to raw pixel buffers at PARSE time, not upload time, so
+  // merely preloading the home masterplan model retains on the order of
+  // ~350MB of JS/WASM heap (measured) for the rest of the session — on a
+  // device whose whole browser tab shares ONE memory budget across JS heap,
+  // decoded textures, AND GPU VRAM. Confirmed contributor to the iPhone 11
+  // crash, independent of the keep-alive GPU-VRAM issue already fixed in
+  // use-keep-alive-outlet.js. Mirrors the same guard already used in
+  // use-home.js and use-building.js for the equivalent background-building
+  // preload. The CURRENT route's own required asset (preloadModels() in the
+  // isLandingOnInventory branch below) is never skipped — only warming the
+  // OTHER route ahead of need is optional.
+  //
+  // REAL BUG FIXED HERE: despite the paragraph above, no getDeviceTier()
+  // check actually existed below it — both branches ran their cross-route
+  // preload unconditionally, on every device, including the exact
+  // constrained ones this comment says should skip it. That's the ~350MB
+  // heap hit this comment already blames for the iPhone 11 crash, paid on
+  // EVERY cold load of the app root, mobile included — reported as "main.jsx
+  // ... heavy load ... at initial root of React.js." The guard now actually
+  // exists, matching the one use-home.js/use-building.js already have for
+  // the equivalent background-building preload.
+  const isHighTier = getDeviceTier() === "high";
+
   if (isLandingOnInventory) {
     preloadModels();
 
-    // Mirror of the branch below: warm the OTHER route's asset on idle so the
-    // first Inventory -> Home switch is as fast as every switch after it.
-    // Under containers/keep-alive-outlet the home <Canvas> stays alive once
-    // visited, so this download is paid at most once per session.
-    //
-    // Gated on whenKTX2Ready(): the home GLB carries KHR_texture_basisu
-    // textures and this parse happens outside any <Canvas>, so KTX2Loader has
-    // no renderer to detect format support against until the inventory canvas
-    // mounts <KTX2Init />. See utils/preloader.js.
-    scheduleIdlePreload(() => {
-      whenKTX2Ready().then(() => preloadGLB(HOME_MODEL_PATH, configureLoader));
-    });
-  } else {
+    if (isHighTier) {
+      scheduleIdlePreload(() => {
+        whenKTX2Ready().then(() =>
+          preloadGLB(getHomeModelPath(), configureLoader),
+        );
+      });
+    }
+  } else if (isHighTier) {
     scheduleIdlePreload(preloadModels);
   }
 }

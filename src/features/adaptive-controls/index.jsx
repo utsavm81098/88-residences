@@ -1,15 +1,106 @@
-import React from "react";
+import React, { useEffect, useLayoutEffect, useCallback } from "react";
+import { useSelector } from "react-redux";
+import { useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import useAdaptiveControls from "./use-adaptive-controls";
 
-const AdaptiveControls = ({ controlsRef }) => {
-  const { orbitLimits, onStart, onEnd, POLAR, TARGET } =
-    useAdaptiveControls(controlsRef);
+const SIDEBAR_WIDTH = 380;
 
+const AdaptiveControls = ({ controlsRef, active = true }) => {
+  const { orbitLimits, onStart, onEnd, POLAR, TARGET, config } =
+    useAdaptiveControls(controlsRef);
+  const snapHeight = useSelector((state) => state.building.snapHeight);
+  const camera = useThree((state) => state.camera);
+  const size = useThree((state) => state.size);
+
+  const syncCameraAndControls = useCallback(() => {
+    if (!active || !camera) return;
+
+    if (size.width >= 1024) {
+      camera.setViewOffset(
+        size.width,
+        size.height,
+        -Math.round(SIDEBAR_WIDTH / 2),
+        0,
+        size.width,
+        size.height,
+      );
+    } else if (snapHeight > 0) {
+      camera.setViewOffset(
+        size.width,
+        size.height,
+        0,
+        Math.round(snapHeight / 2),
+        size.width,
+        size.height,
+      );
+    } else {
+      camera.clearViewOffset?.();
+    }
+
+    camera.position.set(0, 10, config.cameraZ);
+    camera.lookAt(...TARGET);
+    camera.updateProjectionMatrix();
+
+    const controls = controlsRef.current;
+    if (controls) {
+      controls.target.set(...TARGET);
+      controls.object.position.set(0, 10, config.cameraZ);
+      controls.object.lookAt(...TARGET);
+      controls.minPolarAngle = POLAR.min;
+      controls.maxPolarAngle = POLAR.max;
+      controls.minDistance = orbitLimits.min;
+      controls.maxDistance = orbitLimits.max;
+      if (controls.sphericalDelta) {
+        controls.sphericalDelta.theta = 0;
+        controls.sphericalDelta.phi = 0;
+      }
+      if (controls.panDelta) {
+        controls.panDelta.set(0, 0, 0);
+      }
+      controls.update();
+    }
+  }, [
+    active,
+    camera,
+    size.width,
+    size.height,
+    snapHeight,
+    config.cameraZ,
+    controlsRef,
+    TARGET,
+    POLAR,
+    orbitLimits,
+  ]);
+
+  useLayoutEffect(() => {
+    syncCameraAndControls();
+  }, [syncCameraAndControls]);
+
+  useEffect(() => {
+    syncCameraAndControls();
+  }, [syncCameraAndControls]);
+
+  useEffect(() => {
+    return () => {
+      camera.clearViewOffset?.();
+    };
+  }, [camera]);
+
+  // Kept mounted (never `return null`) even while inactive, mirroring
+  // features/home-scene/camera-rig.jsx's OrbitControls. Unmounting drei's
+  // <OrbitControls> destroys the underlying three-stdlib instance and tears
+  // down its pointer/wheel DOM listeners; remounting on every single
+  // Home <-> Inventory toggle rebuilds all of that for no reason, leaves
+  // `controlsRef.current` transiently null for anything reading it during
+  // the swap (focusCameraOnMesh, direction-label's moveCamera), and is a
+  // real source of mobile touch-gesture glitches on repeated navigation.
+  // `enabled`/`makeDefault` below already fully gate it off while inactive.
   return (
     <OrbitControls
       ref={controlsRef}
-      makeDefault
+      makeDefault={active}
+      enabled={active}
       enableDamping
       dampingFactor={0.05}
       target={TARGET}
