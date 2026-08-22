@@ -1,20 +1,23 @@
 import { useGLTF, useEnvironment } from "@react-three/drei";
-import { BUILDING_CONFIG } from "./constant";
+import { BUILDING_CONFIG, getAssetPath } from "./constant";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 
 // ✅ Singleton instances — created once, reused everywhere
 // DRACO handles mesh compression (geometry)
-// BASIS handles texture compression (images)
-const BASE_URL = import.meta.env.BASE_URL.endsWith("/")
-  ? import.meta.env.BASE_URL.slice(0, -1)
-  : import.meta.env.BASE_URL;
+const DRACO_PATH = getAssetPath("/draco/");
+const BASIS_PATH = getAssetPath("/basis/");
 
-const DRACO_PATH = `${BASE_URL}/draco/`;
-const BASIS_PATH = `${BASE_URL}/basis/`;
+const maxDracoWorkers =
+  typeof navigator !== "undefined"
+    ? Math.min(Math.max(navigator.hardwareConcurrency || 2, 2), 4)
+    : 2;
 
-const dracoLoader = new DRACOLoader().setDecoderPath(DRACO_PATH);
+const dracoLoader = new DRACOLoader()
+  .setDecoderPath(DRACO_PATH)
+  .setDecoderConfig({ type: "wasm" })
+  .setWorkerLimit(maxDracoWorkers);
 const ktx2Loader = new KTX2Loader().setTranscoderPath(BASIS_PATH);
 
 // NOT calling MeshoptDecoder.useWorkers() here (tried once, reverted).
@@ -116,12 +119,14 @@ const safePreloadGLTF = (path) => {
   loadedAssetUrls.add(path);
   return new Promise((resolve) => {
     try {
-      useGLTF.preload(path, false, false, configureLoader);
-      if (typeof window !== "undefined" && window.requestIdleCallback) {
-        window.requestIdleCallback(() => resolve(), { timeout: 1200 });
-      } else {
-        setTimeout(resolve, 250);
-      }
+      whenKTX2Ready().then(() => {
+        useGLTF.preload(path, false, false, configureLoader);
+        if (typeof window !== "undefined" && window.requestIdleCallback) {
+          window.requestIdleCallback(() => resolve(), { timeout: 1200 });
+        } else {
+          setTimeout(resolve, 250);
+        }
+      }).catch(() => resolve());
     } catch {
       resolve();
     }
@@ -237,6 +242,12 @@ export const preloadModels = () => {
   // doc comment above. The hitbox/env preloads don't carry KTX2 textures, but
   // are grouped here for simplicity — the wait costs them nothing, since both
   // resolve on the same "first Canvas mounted" event this already needs.
+  try {
+    dracoLoader.preload();
+  } catch {
+    // Ignore if already preloaded
+  }
+
   whenKTX2Ready().then(() => {
     if (landingModel)
       useGLTF.preload(landingModel, false, false, configureLoader);
@@ -275,12 +286,14 @@ export const preloadBackgroundModels = () => {
     ),
   ];
 
-  otherModels.forEach((path) =>
-    useGLTF.preload(path, false, false, configureLoader),
-  );
-  otherHitboxes.forEach((path) =>
-    useGLTF.preload(path, false, false, configureLoader),
-  );
+  whenKTX2Ready().then(() => {
+    otherModels.forEach((path) =>
+      useGLTF.preload(path, false, false, configureLoader),
+    );
+    otherHitboxes.forEach((path) =>
+      useGLTF.preload(path, false, false, configureLoader),
+    );
+  }).catch(() => {});
   otherEnvs.forEach((env) => useEnvironment.preload(env));
 };
 

@@ -3,11 +3,24 @@ import { ICONS } from "@/assets/icons";
 
 export const DASHBOARD_PREFIX = "dashboard";
 export const WEBSITE_URL = "https://www.88residences.com";
-const BASE_URL = import.meta.env.BASE_URL.endsWith("/")
-  ? import.meta.env.BASE_URL.slice(0, -1)
-  : import.meta.env.BASE_URL;
+export const getAssetPrefix = () => {
+  if (typeof window !== "undefined") {
+    const match = window.location.pathname.match(/^\/(dashboard-[a-z]{2})/i);
+    if (match) return `/${match[1].toLowerCase()}`;
+    return `/${DASHBOARD_PREFIX}-en`;
+  }
+  return `/${DASHBOARD_PREFIX}-en`;
+};
 
-export const getAssetPath = (path) => `${BASE_URL}${path}`;
+export const getAssetPath = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  if (/^\/dashboard-[a-z]{2}\//i.test(path)) return path;
+
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  const prefix = getAssetPrefix();
+  return `${prefix}${cleanPath}`;
+};
 
 /**
  * Desktop navigation rail widths, in px.
@@ -405,7 +418,7 @@ const DESKTOP_DPR_FLOOR = 1;
 export const getHomeDpr = (isMobile) => {
   if (typeof window === "undefined") return 1;
   const dpr = window.devicePixelRatio || 1;
-  return isMobile ? Math.min(dpr, 1.5) : Math.min(Math.max(dpr, 1), 2);
+  return isMobile ? Math.min(dpr, 1.5) : Math.min(Math.max(dpr, DESKTOP_DPR_FLOOR), 2);
 };
 
 // Matches hooks/use-mobile.js's MOBILE_BREAKPOINT. Not imported from there:

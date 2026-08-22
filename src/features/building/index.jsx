@@ -54,16 +54,15 @@ const BuildingModel = memo(function BuildingModel({
         const instance = (
           <BuildingInstance
             key={config.name}
-            {...{
-              groupRef: (el) => (groupRefs.current[index] = el),
-              config,
-              active: isCurrent,
-              sceneActive,
-              isVisible,
-              isTransitioning,
-              controlsRef,
-              renderOrder,
-            }}
+            index={index}
+            groupRefs={groupRefs}
+            config={config}
+            active={isCurrent}
+            sceneActive={sceneActive}
+            isVisible={isVisible}
+            isTransitioning={isTransitioning}
+            controlsRef={controlsRef}
+            renderOrder={renderOrder}
           />
         );
 
@@ -101,6 +100,8 @@ const BuildingModel = memo(function BuildingModel({
 const GLASS_RENDER_ORDER_OFFSET = 1;
 
 const BuildingInstance = memo(function BuildingInstance({
+  index,
+  groupRefs,
   config,
   active,
   sceneActive,
@@ -108,7 +109,6 @@ const BuildingInstance = memo(function BuildingInstance({
   isTransitioning,
   controlsRef,
   renderOrder,
-  groupRef,
 }) {
   const {
     buildingScene,
@@ -137,7 +137,13 @@ const BuildingInstance = memo(function BuildingInstance({
       : INACTIVE_POSITION;
 
   return (
-    <group ref={groupRef} visible={isVisible} position={position}>
+    <group
+      ref={(el) => {
+        if (groupRefs?.current) groupRefs.current[index] = el;
+      }}
+      visible={isVisible}
+      position={position}
+    >
       <primitive object={buildingScene} renderOrder={renderOrder} />
       <primitive
         key={glassScene.uuid}
