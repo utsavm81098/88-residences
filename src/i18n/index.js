@@ -1,28 +1,14 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
+import HttpBackend from "i18next-http-backend";
+import { getAssetPath } from "@/utils/constant";
 import {
   DEFAULT_NS,
   NAMESPACES,
   RTL_LANGS,
   SUPPORTED_LANGS,
 } from "@/utils/languages";
-
-import enTranslation from "../../public/locales/en/translation.json";
-import enCommon from "../../public/locales/en/common.json";
-import heTranslation from "../../public/locales/he/translation.json";
-import heCommon from "../../public/locales/he/common.json";
-
-const resources = {
-  en: {
-    translation: enTranslation,
-    common: enCommon,
-  },
-  he: {
-    translation: heTranslation,
-    common: heCommon,
-  },
-};
 
 /**
  * Determine text direction from a language code.
@@ -45,10 +31,13 @@ function syncDocumentDirection(lang) {
 i18n.on("languageChanged", syncDocumentDirection);
 
 const initPromise = i18n
+  .use(HttpBackend)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources,
+    backend: {
+      loadPath: getAssetPath("/locales/{{lng}}/{{ns}}.json"),
+    },
     supportedLngs: [...SUPPORTED_LANGS],
     fallbackLng: "en",
     load: "languageOnly", // 'en-US' → 'en', prevents region mismatches

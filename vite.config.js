@@ -14,21 +14,21 @@ export default defineConfig({
       name: "dashboard-spa-fallback",
       configureServer(server) {
         server.middlewares.use((req, _res, next) => {
-          if (
-            req.url &&
-            /^\/dashboard-[a-z]{2}(\/|$)/.test(req.url) &&
-            !req.url.match(/\.\w+($|\?)/)
-          ) {
-            req.url = "/index.html";
+          if (req.url && /^\/dashboard-[a-z]{2}(\/|$)/i.test(req.url)) {
+            if (req.url.match(/\.\w+($|\?)/)) {
+              req.url = req.url.replace(/^\/dashboard-[a-z]{2}\//i, "/");
+            } else {
+              req.url = "/index.html";
+            }
           }
           next();
         });
       },
       configurePreviewServer(server) {
         server.middlewares.use((req, _res, next) => {
-          if (req.url && /^\/dashboard-[a-z]{2}(\/|$)/.test(req.url)) {
+          if (req.url && /^\/dashboard-[a-z]{2}(\/|$)/i.test(req.url)) {
             if (req.url.match(/\.\w+($|\?)/)) {
-              req.url = req.url.replace(/^\/dashboard-[a-z]{2}\//, "/");
+              req.url = req.url.replace(/^\/dashboard-[a-z]{2}\//i, "/");
             } else {
               req.url = "/index.html";
             }
