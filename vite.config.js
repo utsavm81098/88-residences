@@ -3,70 +3,60 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
-  const isStaging = mode === "staging";
-
-  return {
-    base: "/",
-    plugins: [
-      react({
-        jsxRuntime: "automatic",
-      }),
-      // Replicates Upress NGINX rules locally for dev/preview servers
-      {
-        name: "dashboard-spa-fallback",
-        transformIndexHtml(html) {
-          if (isStaging) {
-            return html.replace(/\/dashboard-[a-z]{2}\//gi, "/");
+export default defineConfig({
+  base: "./",
+  plugins: [
+    react({
+      jsxRuntime: "automatic",
+    }),
+    // Replicates Upress NGINX rules locally for dev/preview servers
+    {
+      name: "dashboard-spa-fallback",
+      configureServer(server) {
+        server.middlewares.use((req, _res, next) => {
+          if (
+            req.url &&
+            /^\/dashboard-[a-z]{2}(\/|$)/.test(req.url) &&
+            !req.url.match(/\.\w+($|\?)/)
+          ) {
+            req.url = "/index.html";
           }
-          return html;
-        },
-        configureServer(server) {
-          server.middlewares.use((req, _res, next) => {
-            if (req.url && /^\/dashboard-[a-z]{2}(\/|$)/i.test(req.url)) {
-              if (req.url.match(/\.\w+($|\?)/)) {
-                req.url = req.url.replace(/^\/dashboard-[a-z]{2}\//i, "/");
-              } else {
-                req.url = "/index.html";
-              }
-            }
-            next();
-          });
-        },
-        configurePreviewServer(server) {
-          server.middlewares.use((req, _res, next) => {
-            if (req.url && /^\/dashboard-[a-z]{2}(\/|$)/i.test(req.url)) {
-              if (req.url.match(/\.\w+($|\?)/)) {
-                req.url = req.url.replace(/^\/dashboard-[a-z]{2}\//i, "/");
-              } else {
-                req.url = "/index.html";
-              }
-            }
-            next();
-          });
-        },
+          next();
+        });
       },
-    ],
-    resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "./src"),
+      configurePreviewServer(server) {
+        server.middlewares.use((req, _res, next) => {
+          if (req.url && /^\/dashboard-[a-z]{2}(\/|$)/.test(req.url)) {
+            if (req.url.match(/\.\w+($|\?)/)) {
+              req.url = req.url.replace(/^\/dashboard-[a-z]{2}\//, "/");
+            } else {
+              req.url = "/index.html";
+            }
+          }
+          next();
+        });
       },
     },
-    server: {
-      host: true,
-      port: 5173,
+  ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
     },
-    build: {
-      outDir: "build",
-    },
-    optimizeDeps: {
-      include: ["three", "@react-three/fiber", "@react-three/drei"],
-    },
-    test: {
-      globals: true,
-      environment: "jsdom",
-      setupFiles: ["./src/test-setup.js"],
-      include: ["src/**/*.test.{js,jsx}"],
-    },
-  };
+  },
+  server: {
+    host: true,
+    port: 5173,
+  },
+  build: {
+    outDir: "build",
+  },
+  optimizeDeps: {
+    include: ["three", "@react-three/fiber", "@react-three/drei"],
+  },
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: ["./src/test-setup.js"],
+    include: ["src/**/*.test.{js,jsx}"],
+  },
 });

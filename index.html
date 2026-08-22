@@ -30,7 +30,48 @@
   </script>
   <!-- End Google Tag Manager -->
   <meta charset="UTF-8" />
+
   <link rel="icon" type="image/png" href="/favicon-32x32.png" />
+  <!-- Preload the home masterplan GLB so the browser starts fetching it at
+       HTML-parse time, in parallel with React / Vite bootstrap. Without this
+       the fetch only begins after <Canvas> mounts and useGLBLoader fires its
+       useEffect — several hundred ms of wasted time on every cold load.
+       crossorigin is required: the later fetch() in use-glb-loader.js is a
+       same-origin request but goes through the Fetch API (not <img>/<script>),
+       and the browser only reuses a preload-cache entry when the CORS mode
+       of the preload tag matches the CORS mode of the consuming request.
+       Omitting it would cause the browser to fetch the file TWICE.
+
+       Two variants, gated by `media` so each device only fetches the one it
+       will actually use (see getHomeModelPath in src/utils/constant.js):
+       desktop gets the full-texture-resolution model, mobile/tablet
+       (<1024px, matching hooks/use-mobile.js's MOBILE_BREAKPOINT) gets the
+       VRAM-reduced variant. A media-gated <link rel="preload"> is a real,
+       standard browser feature — the non-matching one is never fetched.
+
+       KNOWN APPROXIMATION: getHomeModelPath() actually decides via
+       getDeviceTier(), which also downgrades a weak-GPU DESKTOP (viewport
+       >=1024, e.g. an old integrated GPU) to the reduced variant — a plain
+       CSS media query here can only see viewport width, not GPU capability,
+       so that specific machine's preload hint targets the (correct-for-most-
+       desktops but wrong-for-it) full-resolution file, and the actually-
+       correct reduced one gets fetched separately without the preload
+       head-start. Suboptimal for that one case, not incorrect — the JS-driven
+       fetch in use-home-scene.js still resolves the right file either way. -->
+  <link
+    rel="preload"
+    as="fetch"
+    href="/models/88RES-06_05-2.glb"
+    media="(min-width: 1024px)"
+    crossorigin
+  />
+  <link
+    rel="preload"
+    as="fetch"
+    href="/models/88RES-06_05-2-mobile.glb"
+    media="(max-width: 1023px)"
+    crossorigin
+  />
 
   <!-- Hero loader stills (Day and Night), shown full-screen while the masterplan GLB
        above streams in (see containers/global-loader/index.jsx and this file's own
@@ -53,7 +94,7 @@
     rel="preload"
     as="image"
     type="image/webp"
-    href="/dashboard-en/images/hero/PLOT88-birdeye-day-mobile.webp"
+    href="/images/hero/PLOT88-birdeye-day-mobile.webp"
     media="(max-width: 1023px)"
     fetchpriority="high"
   />
@@ -61,7 +102,7 @@
     rel="preload"
     as="image"
     type="image/webp"
-    href="/dashboard-en/images/hero/PLOT88-birdeye-day.webp"
+    href="/images/hero/PLOT88-birdeye-day.webp"
     media="(min-width: 1024px)"
     fetchpriority="high"
   />
@@ -69,14 +110,14 @@
     rel="preload"
     as="image"
     type="image/webp"
-    href="/dashboard-en/images/hero/PLOT88-birdeye-night-mobile.webp"
+    href="/images/hero/PLOT88-birdeye-night-mobile.webp"
     media="(max-width: 1023px)"
   />
   <link
     rel="preload"
     as="image"
     type="image/webp"
-    href="/dashboard-en/images/hero/PLOT88-birdeye-night.webp"
+    href="/images/hero/PLOT88-birdeye-night.webp"
     media="(min-width: 1024px)"
   />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -280,16 +321,16 @@
     <div id="app-boot-splash" aria-hidden="true">
       <div class="abs-slide abs-slide--day">
         <picture>
-          <source srcset="/dashboard-en/images/hero/PLOT88-birdeye-day-mobile.webp" type="image/webp" media="(max-width: 1023px)" />
-          <source srcset="/dashboard-en/images/hero/PLOT88-birdeye-day.webp" type="image/webp" />
-          <img src="/dashboard-en/images/hero/PLOT88-birdeye-day.jpg" alt="" width="2500" height="1375" fetchpriority="high" />
+          <source srcset="/images/hero/PLOT88-birdeye-day-mobile.webp" type="image/webp" media="(max-width: 1023px)" />
+          <source srcset="/images/hero/PLOT88-birdeye-day.webp" type="image/webp" />
+          <img src="/images/hero/PLOT88-birdeye-day.jpg" alt="" width="2500" height="1375" fetchpriority="high" />
         </picture>
       </div>
       <div class="abs-slide abs-slide--night">
         <picture>
-          <source srcset="/dashboard-en/images/hero/PLOT88-birdeye-night-mobile.webp" type="image/webp" media="(max-width: 1023px)" />
-          <source srcset="/dashboard-en/images/hero/PLOT88-birdeye-night.webp" type="image/webp" />
-          <img src="/dashboard-en/images/hero/PLOT88-birdeye-night.jpg" alt="" width="2500" height="1375" fetchpriority="low" />
+          <source srcset="/images/hero/PLOT88-birdeye-day-mobile.webp" type="image/webp" media="(max-width: 1023px)" />
+          <source srcset="/images/hero/PLOT88-birdeye-day.webp" type="image/webp" />
+          <img src="/images/hero/PLOT88-birdeye-day.jpg" alt="" width="2500" height="1375" fetchpriority="low" />
         </picture>
       </div>
       <div class="logo-wrap">
