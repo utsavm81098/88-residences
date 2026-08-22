@@ -3,7 +3,17 @@ import { ICONS } from "@/assets/icons";
 
 export const DASHBOARD_PREFIX = "dashboard";
 export const WEBSITE_URL = "https://www.88residences.com";
+
+export const isDashboardPrefixEnabled = () => {
+  if (import.meta.env.VITE_USE_DASHBOARD_PREFIX === "false") return false;
+  if (import.meta.env.MODE === "staging") return false;
+  return true;
+};
+
 export const getAssetPrefix = () => {
+  if (!isDashboardPrefixEnabled()) {
+    return "";
+  }
   if (typeof window !== "undefined") {
     const match = window.location.pathname.match(/^\/(dashboard-[a-z]{2})/i);
     if (match) return `/${match[1].toLowerCase()}`;
@@ -15,6 +25,11 @@ export const getAssetPrefix = () => {
 export const getAssetPath = (path) => {
   if (!path) return "";
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
+
+  if (!isDashboardPrefixEnabled()) {
+    return path.replace(/^\/dashboard-[a-z]{2}\//i, "/");
+  }
+
   if (/^\/dashboard-[a-z]{2}\//i.test(path)) return path;
 
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
