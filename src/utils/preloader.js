@@ -182,13 +182,22 @@ export const startSequentialBuildingPreload = async () => {
   isSequentialPreloadRunning = true;
   isSequentialPreloadCancelled = false;
 
+  const landingBuilding = getInitialLandingBuilding();
+  const landingModel = landingBuilding.model;
+  const landingHitbox = landingBuilding.hitbox;
+
+  if (landingModel) loadedAssetUrls.add(landingModel);
+  if (landingHitbox) loadedAssetUrls.add(landingHitbox);
+
   const queue = [];
   BUILDING_CONFIG.forEach((config) => {
     if (config.model && !loadedAssetUrls.has(config.model)) {
       queue.push({ type: "model", path: config.model });
+      loadedAssetUrls.add(config.model);
     }
     if (config.hitbox && !loadedAssetUrls.has(config.hitbox)) {
       queue.push({ type: "hitbox", path: config.hitbox });
+      loadedAssetUrls.add(config.hitbox);
     }
     if (config.environment) {
       const key =
@@ -197,6 +206,7 @@ export const startSequentialBuildingPreload = async () => {
           : String(config.environment);
       if (!loadedAssetUrls.has(key)) {
         queue.push({ type: "env", path: config.environment });
+        loadedAssetUrls.add(key);
       }
     }
   });
@@ -220,28 +230,15 @@ export const cancelSequentialBuildingPreload = () => {
 
 /**
  * Triggers prioritized preloading of unique building and hitbox models.
+ * Loads the active landing building immediately, then queues the rest sequentially during idle time.
  */
 export const preloadModels = () => {
   const landingBuilding = getInitialLandingBuilding();
   const landingModel = landingBuilding.model;
   const landingHitbox = landingBuilding.hitbox;
-
   const landingEnv = landingBuilding.environment;
 
   // 1. High Priority: Landing building
-  // useDraco/useMeshopt passed as `false`: drei's useGLTF/preload wrapper
-  // only overrides configureLoader's self-hosted DRACOLoader with its own
-  // gstatic.com-CDN-backed one when these flags are truthy — see the
-  // matching comment in use-building-instance.js.
-  //
-  // Gated on whenKTX2Ready(): the building GLBs now carry KHR_texture_basisu
-  // textures (converted from plain webp/jpeg to KTX2 for GPU-compressed VRAM
-  // usage on low-end devices), and this call can run from main.jsx BEFORE any
-  // <Canvas> — and therefore no live WebGLRenderer — exists. Same reasoning
-  // as the HOME_MODEL_PATH preload in src/main.jsx; see whenKTX2Ready's own
-  // doc comment above. The hitbox/env preloads don't carry KTX2 textures, but
-  // are grouped here for simplicity — the wait costs them nothing, since both
-  // resolve on the same "first Canvas mounted" event this already needs.
   try {
     dracoLoader.preload();
   } catch {
@@ -253,6 +250,18 @@ export const preloadModels = () => {
       useGLTF.preload(landingModel, false, false, configureLoader);
     if (landingHitbox)
       useGLTF.preload(landingHitbox, false, false, configureLoader);
+
+    // 2. Queue Priority: Sequentially download remaining models (Type D, Type F, Type G, etc.)
+    // one-by-one during browser idle frames to maintain low memory & CPU on mobile.
+    if (typeof window !== "undefined") {
+      const scheduleIdle = window.requestIdleCallback
+        ? (cb) => window.requestIdleCallback(cb, { timeout: 3000 })
+        : (cb) => setTimeout(cb, 1200);
+
+      scheduleIdle(() => {
+        startSequentialBuildingPreload();
+      });
+    }
   });
   if (landingEnv) useEnvironment.preload(landingEnv);
 };
