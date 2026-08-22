@@ -184,7 +184,11 @@ const disposeSceneMaterials = (scene) => {
  * Handles the logic for a single building instance.
  * Loads models, sets up hitboxes, and manages unit interactions.
  */
-export const useBuildingInstance = ({ config, controlsRef, sceneActive = true }) => {
+export const useBuildingInstance = ({
+  config,
+  controlsRef,
+  sceneActive = true,
+}) => {
   const dispatch = useDispatch();
   const isDragging = useSelector((state) => state.drag.isDragging);
   const {
