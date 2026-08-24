@@ -18,6 +18,8 @@ const InventorySidebarContainer = memo(() => {
     setActiveAccordion,
     scrollRef,
     itemRefs,
+    unitRefs,
+    tableScrollRefs,
     totalApartments,
     activeFilterCount,
     loading,
@@ -64,6 +66,8 @@ const InventorySidebarContainer = memo(() => {
           handleClearFilters={handleClearFilters}
           scrollRef={scrollRef}
           itemRefs={itemRefs}
+          unitRefs={unitRefs}
+          tableScrollRefs={tableScrollRefs}
           totalApartments={totalApartments}
           loading={loading}
         />

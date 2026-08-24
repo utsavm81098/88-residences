@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { ICONS } from "@/assets/icons";
 import {
@@ -25,7 +25,16 @@ import { getLocalizedString } from "@/utils/helper";
  * Only re-renders if its selection status or unit data changes.
  */
 const InventoryUnitRow = memo(
-  ({ unit, building, idx, isSelected, onUnitSelect, language, t }) => {
+  ({
+    unit,
+    building,
+    idx,
+    isSelected,
+    onUnitSelect,
+    language,
+    t,
+    registerUnitRef,
+  }) => {
     const unitCode =
       unit?.apartment_number || `${building}${101 + idx * 100}`;
     const dir =
@@ -39,6 +48,7 @@ const InventoryUnitRow = memo(
 
     return (
       <TableRow
+        ref={(el) => registerUnitRef(unit, unitCode, el)}
         style={{ "--row-i": idx }}
         onClick={() => onUnitSelect(unit)}
         className={cn(
@@ -75,6 +85,13 @@ const InventoryUnitRow = memo(
       </TableRow>
     );
   },
+  (prevProps, nextProps) =>
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.unit === nextProps.unit &&
+    prevProps.language === nextProps.language &&
+    prevProps.building === nextProps.building &&
+    prevProps.idx === nextProps.idx &&
+    prevProps.onUnitSelect === nextProps.onUnitSelect,
 );
 
 /**
@@ -87,10 +104,37 @@ const BuildingAccordionCard = memo(
     selectedUnit,
     onUnitSelect,
     itemRefs,
+    unitRefs,
+    tableScrollRefs,
     language,
     t,
   }) => {
     const isRtl = language === "he" || language?.startsWith("he");
+
+    const registerUnitRef = useCallback(
+      (unit, unitCode, el) => {
+        if (!unitRefs?.current) return;
+        if (el) {
+          if (unit?.apartment_number) unitRefs.current[unit.apartment_number] = el;
+          if (unit?.title) unitRefs.current[unit.title] = el;
+          if (unit?.id) unitRefs.current[unit.id] = el;
+          if (unit?.name) unitRefs.current[unit.name] = el;
+          if (unitCode) unitRefs.current[unitCode] = el;
+        } else {
+          if (unit?.apartment_number) delete unitRefs.current[unit.apartment_number];
+          if (unit?.title) delete unitRefs.current[unit.title];
+          if (unit?.id) delete unitRefs.current[unit.id];
+          if (unit?.name) delete unitRefs.current[unit.name];
+          if (unitCode) delete unitRefs.current[unitCode];
+        }
+      },
+      [unitRefs],
+    );
+
+    const selectedId = selectedUnit?.id;
+    const selectedAptNo = selectedUnit?.apartment_number;
+    const selectedTitle = selectedUnit?.title;
+    const selectedName = selectedUnit?.name;
 
     return (
       <div
@@ -128,37 +172,53 @@ const BuildingAccordionCard = memo(
           </AccordionTrigger>
 
           <AccordionContent className="pb-0 p-0 border-t border-border-light">
-            <Table
-              containerClassName="overflow-hidden"
-              className="w-full table-fixed"
+            <div
+              ref={(el) => {
+                if (tableScrollRefs?.current) {
+                  if (el) tableScrollRefs.current[building] = el;
+                  else delete tableScrollRefs.current[building];
+                }
+              }}
+              className="max-h-[calc(100vh-420px)] min-h-[300px] overflow-y-auto custom-scrollbar"
             >
-              <TableBody>
-                {units.map((unit, idx) => {
-                  const isSelected =
-                    selectedUnit?.id === unit.id &&
-                    selectedUnit?.apartment_number === unit?.apartment_number;
+              <Table
+                containerClassName="overflow-hidden"
+                className="w-full table-fixed"
+              >
+                <TableBody>
+                  {units.map((unit, idx) => {
+                    const isSelected = Boolean(
+                      selectedUnit &&
+                        ((selectedId && unit.id === selectedId) ||
+                          (selectedAptNo && unit.apartment_number === selectedAptNo) ||
+                          (selectedTitle && unit.title === selectedTitle) ||
+                          (selectedName && unit.name === selectedName)),
+                    );
 
-                  return (
-                    <InventoryUnitRow
-                      key={`${building}-${unit?.apartment_number || idx}`}
-                      unit={unit}
-                      building={building}
-                      idx={idx}
-                      isSelected={isSelected}
-                      onUnitSelect={onUnitSelect}
-                      language={language}
-                      t={t}
-                    />
-                  );
-                })}
-              </TableBody>
-            </Table>
+                    return (
+                      <InventoryUnitRow
+                        key={`${building}-${unit?.apartment_number || unit?.title || idx}`}
+                        unit={unit}
+                        building={building}
+                        idx={idx}
+                        isSelected={isSelected}
+                        onUnitSelect={onUnitSelect}
+                        registerUnitRef={registerUnitRef}
+                        language={language}
+                        t={t}
+                      />
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           </AccordionContent>
         </AccordionItem>
       </div>
     );
   },
 );
+
 
 const InventoryList = memo(
   ({
@@ -170,6 +230,8 @@ const InventoryList = memo(
     handleClearFilters,
     scrollRef,
     itemRefs,
+    unitRefs,
+    tableScrollRefs,
     totalApartments,
     loading,
   }) => {
@@ -266,7 +328,7 @@ const InventoryList = memo(
           </Table>
         </div>
 
-        {/* ── Accordion Building List (ONLY THIS DIV SCROLLS) ── */}
+        {/* ── Accordion Building List ── */}
         <div
           ref={scrollRef}
           className="flex-1 overflow-y-auto custom-scrollbar p-0.5 min-h-0 pe-0 [scrollbar-gutter:stable] relative"
@@ -307,6 +369,8 @@ const InventoryList = memo(
                   selectedUnit={selectedUnit}
                   onUnitSelect={onUnitSelect}
                   itemRefs={itemRefs}
+                  unitRefs={unitRefs}
+                  tableScrollRefs={tableScrollRefs}
                   language={language}
                   t={t}
                 />

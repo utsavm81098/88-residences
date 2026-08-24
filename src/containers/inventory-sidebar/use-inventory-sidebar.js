@@ -19,6 +19,8 @@ export const useInventorySidebar = () => {
 
   const scrollRef = useRef(null);
   const itemRefs = useRef({});
+  const unitRefs = useRef({});
+  const tableScrollRefs = useRef({});
 
   // Fine-grained Redux selectors: avoids re-rendering on unrelated building state changes
   const currentBuildingName = useSelector(
@@ -64,7 +66,7 @@ export const useInventorySidebar = () => {
   }, [filteredUnits]);
 
   // Deterministic smooth scroll: computes the exact post-collapse position of the target building
-  // to ensure monotonic, unidirectional scrolling with zero rubber-banding or direction reversal.
+  // to ensure monotonic, unidirectional scrolling so the current building is at the top.
   const scrollToBuilding = useCallback(
     (buildingName) => {
       const container = scrollRef.current;
@@ -89,13 +91,75 @@ export const useInventorySidebar = () => {
       gsap.killTweensOf(container);
       gsap.to(container, {
         scrollTop: targetTop,
-        duration: 0.38,
+        duration: 0.35,
         ease: "power2.out",
         overwrite: "auto",
       });
     },
     [finalData],
   );
+
+  // Smoothly scrolls inner building table ONLY when needed to bring the selected flat into view,
+  // eliminating jarring jumping when clicking rows that are already visible.
+  const scrollToUnit = useCallback((unit) => {
+    if (!unit) return;
+
+    const buildingName =
+      unit?.buildingName || unit?.building_name || unit?.building;
+    if (!buildingName) return;
+
+    const tableContainer = tableScrollRefs.current[buildingName];
+    const rowEl =
+      (unit?.apartment_number && unitRefs.current[unit.apartment_number]) ||
+      (unit?.title && unitRefs.current[unit.title]) ||
+      (unit?.id && unitRefs.current[unit.id]) ||
+      (unit?.name && unitRefs.current[unit.name]);
+
+    if (!rowEl || !tableContainer) return;
+
+    const rowRect = rowEl.getBoundingClientRect();
+    const containerRect = tableContainer.getBoundingClientRect();
+
+    const rowTop = rowRect.top;
+    const rowBottom = rowRect.bottom;
+    const containerTop = containerRect.top;
+    const containerBottom = containerRect.bottom;
+
+    // If the row is already fully visible inside the table, do not move/jump at all!
+    const isFullyVisible =
+      rowTop >= containerTop + 4 && rowBottom <= containerBottom - 4;
+
+    if (isFullyVisible) {
+      return;
+    }
+
+    const rowRelativeTop =
+      rowRect.top - containerRect.top + tableContainer.scrollTop;
+    const rowHeight = rowEl.offsetHeight;
+
+    let targetScrollTop = tableContainer.scrollTop;
+
+    if (rowTop < containerTop + 4) {
+      // Row is above visible area: scroll up just enough to reveal it
+      targetScrollTop = Math.max(0, rowRelativeTop - 8);
+    } else if (rowBottom > containerBottom - 4) {
+      // Row is below visible area: scroll down just enough to reveal it
+      targetScrollTop =
+        rowRelativeTop + rowHeight - tableContainer.clientHeight + 8;
+    }
+
+    gsap.killTweensOf(tableContainer);
+    gsap.to(tableContainer, {
+      scrollTop: targetScrollTop,
+      duration: 0.3,
+      ease: "power2.out",
+      overwrite: "auto",
+    });
+  }, []);
+
+
+
+
 
   // Sync active accordion whenever currentBuildingName changes
   useEffect(() => {
@@ -104,10 +168,29 @@ export const useInventorySidebar = () => {
     }
   }, [currentBuildingName]);
 
-  // Smooth scroll on building change OR when finalData finishes loading on first render (e.g. ?building=D)
+  // Clean up all active GSAP animations on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (scrollRef.current) gsap.killTweensOf(scrollRef.current);
+      if (tableScrollRefs.current) {
+        Object.values(tableScrollRefs.current).forEach((container) => {
+          if (container) gsap.killTweensOf(container);
+        });
+      }
+    };
+  }, []);
+
+  // Smooth scroll on building change OR when finalData finishes loading on first render (e.g. ?building=D).
+  // Skipped when a unit selection caused the building change — scrollToUnit handles that case.
+  const lastScrollSourceRef = useRef("building");
+
   useEffect(() => {
     const targetBuilding = currentBuildingName || initialTargetBuilding;
     if (!targetBuilding || finalData.length === 0) return;
+    if (lastScrollSourceRef.current === "unit") {
+      lastScrollSourceRef.current = "building";
+      return;
+    }
 
     scrollToBuilding(targetBuilding);
 
@@ -117,6 +200,7 @@ export const useInventorySidebar = () => {
       }
     };
   }, [currentBuildingName, finalData, initialTargetBuilding, scrollToBuilding]);
+
 
   // Stable Accordion Change Handler: opens clicked building & updates 3D view and URL
   const handleAccordionChange = useCallback(
@@ -160,6 +244,52 @@ export const useInventorySidebar = () => {
     },
     [dispatch],
   );
+
+  // When selectedUnit changes (e.g. clicked on 3D model or in sidebar), scroll the inner
+  // table so that unit row stays in view and focused — zero unwanted resets to top.
+  const prevSelectedUnitRef = useRef(null);
+  useEffect(() => {
+    if (!selectedUnit) return;
+    const key =
+      selectedUnit?.apartment_number ||
+      selectedUnit?.title ||
+      selectedUnit?.id ||
+      selectedUnit?.name;
+    const prevKey =
+      prevSelectedUnitRef.current?.apartment_number ||
+      prevSelectedUnitRef.current?.title ||
+      prevSelectedUnitRef.current?.id ||
+      prevSelectedUnitRef.current?.name;
+    if (key && key === prevKey) return; // same unit re-clicked, nothing to do
+    prevSelectedUnitRef.current = selectedUnit;
+
+    // Mark that next building-scroll should be skipped (unit click already handles it)
+    lastScrollSourceRef.current = "unit";
+
+    const unitBuilding =
+      selectedUnit?.buildingName ||
+      selectedUnit?.building_name ||
+      selectedUnit?.building;
+
+    const isDifferentBuilding =
+      unitBuilding && unitBuilding !== currentBuildingNameRef.current;
+
+    if (unitBuilding) {
+      setActiveAccordionState([unitBuilding]);
+    }
+
+    if (isDifferentBuilding) {
+      // If building changed, scroll outer list and wait for accordion expansion animation (~300ms)
+      if (unitBuilding) scrollToBuilding(unitBuilding);
+      const id = setTimeout(() => scrollToUnit(selectedUnit), 320);
+      return () => clearTimeout(id);
+    } else {
+      // Same building: 50ms layout buffer then scroll smoothly to the unit
+      const id = setTimeout(() => scrollToUnit(selectedUnit), 50);
+      return () => clearTimeout(id);
+    }
+  }, [selectedUnit, scrollToUnit, scrollToBuilding]);
+
 
   // Stable unit select handler
   const onUnitSelect = useCallback(
@@ -214,8 +344,11 @@ export const useInventorySidebar = () => {
     currentBuildingName,
     scrollRef,
     itemRefs,
+    unitRefs,
+    tableScrollRefs,
     loading,
   };
 };
 
 export default useInventorySidebar;
+
