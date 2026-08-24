@@ -300,9 +300,9 @@ export const BUILDING_BBOX = {
  * the same thing on every device.
  */
 export const HOME_CAMERA = {
-  target: [-8.5, 11.1, -11.3],
-  azimuthDeg: -115.73,
-  elevationDeg: 10,
+  target: [-8.5, 8.0, -11.3],
+  azimuthDeg: 64.27,
+  elevationDeg: 22,
   bbox: BUILDING_BBOX,
 
   baseFov: 35,
@@ -418,7 +418,9 @@ const DESKTOP_DPR_FLOOR = 1;
 export const getHomeDpr = (isMobile) => {
   if (typeof window === "undefined") return 1;
   const dpr = window.devicePixelRatio || 1;
-  return isMobile ? Math.min(dpr, 1.5) : Math.min(Math.max(dpr, DESKTOP_DPR_FLOOR), 2);
+  return isMobile
+    ? Math.min(dpr, 1.5)
+    : Math.min(Math.max(dpr, DESKTOP_DPR_FLOOR), 2);
 };
 
 // Matches hooks/use-mobile.js's MOBILE_BREAKPOINT. Not imported from there:
