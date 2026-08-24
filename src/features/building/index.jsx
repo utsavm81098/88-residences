@@ -136,6 +136,8 @@ const BuildingInstance = memo(function BuildingInstance({
       ? ACTIVE_POSITION
       : INACTIVE_POSITION;
 
+  const rotation = config.rotation || [0, 0, 0];
+
   return (
     <group
       ref={(el) => {
@@ -144,19 +146,22 @@ const BuildingInstance = memo(function BuildingInstance({
       visible={isVisible}
       position={position}
     >
-      <primitive object={buildingScene} renderOrder={renderOrder} />
-      <primitive
-        key={glassScene.uuid}
-        object={glassScene}
-        renderOrder={glassRenderOrder}
-        onPointerOver={active ? handlePointerOver : undefined}
-        onPointerOut={active ? handlePointerOut : undefined}
-        onPointerMove={active ? handlePointerMove : undefined}
-        onPointerLeave={active ? handlePointerLeave : undefined}
-        onClick={active ? handleClick : undefined}
-      />
+      <group rotation={rotation}>
+        <primitive object={buildingScene} renderOrder={renderOrder} />
+        <primitive
+          key={glassScene.uuid}
+          object={glassScene}
+          renderOrder={glassRenderOrder}
+          onPointerOver={active ? handlePointerOver : undefined}
+          onPointerOut={active ? handlePointerOut : undefined}
+          onPointerMove={active ? handlePointerMove : undefined}
+          onPointerLeave={active ? handlePointerLeave : undefined}
+          onClick={active ? handleClick : undefined}
+        />
+      </group>
     </group>
   );
 });
+
 
 export default BuildingModel;
