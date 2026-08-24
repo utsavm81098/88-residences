@@ -604,7 +604,9 @@ export const BUILDING_CONFIG = [
     ...typeAConfig,
     model: getAssetPath("/models/type-g.glb"),
     hitbox: getAssetPath("/models/g-hitbox.glb"),
+    rotation: [0, Math.PI, 0],
   },
 ];
+
 
 export const DEFAULT_STALE_TIME = 1000 * 60 * 5;
