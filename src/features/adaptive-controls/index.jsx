@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useThree } from "@react-three/fiber";
+import { useTranslation } from "react-i18next";
 import { OrbitControls } from "@react-three/drei";
 import useAdaptiveControls from "./use-adaptive-controls";
 
@@ -10,6 +11,8 @@ const AdaptiveControls = ({ controlsRef, active = true }) => {
   const { orbitLimits, onStart, onEnd, POLAR, TARGET, config } =
     useAdaptiveControls(controlsRef);
   const snapHeight = useSelector((state) => state.building.snapHeight);
+  const { i18n } = useTranslation();
+  const isRtl = i18n.dir() === "rtl";
   const camera = useThree((state) => state.camera);
   const size = useThree((state) => state.size);
 
@@ -17,10 +20,14 @@ const AdaptiveControls = ({ controlsRef, active = true }) => {
     if (!active || !camera) return;
 
     if (size.width >= 1024) {
+      // Sidebar overlay flips sides with the flex-row layout's inherited
+      // `dir` — right in RTL (he), left in LTR (en) — so the compensating
+      // view-offset shift must flip sign to match, or the model shifts the
+      // wrong way instead of re-centering in the visible region.
       camera.setViewOffset(
         size.width,
         size.height,
-        -Math.round(SIDEBAR_WIDTH / 2),
+        (isRtl ? 1 : -1) * Math.round(SIDEBAR_WIDTH / 2),
         0,
         size.width,
         size.height,
@@ -64,6 +71,7 @@ const AdaptiveControls = ({ controlsRef, active = true }) => {
     active,
     camera,
     size.width,
+    isRtl,
     size.height,
     snapHeight,
     config.cameraZ,
