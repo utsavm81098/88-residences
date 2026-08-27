@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import useKeepAliveKey from "@/hooks/use-keep-alive-key";
 import { useIsMobile } from "@/hooks/use-mobile";
+import useSceneLoadingProgress from "@/hooks/use-scene-loading-progress";
 import useHome from "@/containers/home/use-home";
 import useInventory from "@/containers/inventory/use-inventory";
 
@@ -160,6 +161,18 @@ export const useSceneCanvas = () => {
     inventory.handleResetCache();
   }, [home, inventory]);
 
+  // Feedback for switching to a building whose GLB hasn't been downloaded
+  // yet (accordion click in the inventory sidebar) — see
+  // components/ui/scene-loading-indicator for why this can't just be
+  // Suspense's own fallback. Gated on `inventory.isReady` so this never
+  // doubles up with the initial-load cover (containers/global-loader,
+  // z-[200]) or Inventory's own SceneReadyGate reveal — it only ever
+  // appears for a SUBSEQUENT building switch, once the first real reveal
+  // has already happened.
+  const { isLoading: isStreamingAssets } = useSceneLoadingProgress();
+  const showBuildingLoadingIndicator =
+    isInventory && inventory.isReady && isStreamingAssets;
+
   return {
     activeKey,
     isHome,
@@ -173,6 +186,7 @@ export const useSceneCanvas = () => {
     inventoryModelRef: inventory.modelRef,
     handleInventoryReady: inventory.handleReady,
     handleResetAllCaches,
+    showBuildingLoadingIndicator,
   };
 };
 
