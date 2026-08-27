@@ -547,7 +547,10 @@ const typeAConfig = {
   hitbox: getAssetPath("/models/a-hitbox.glb"),
   heroAngle: 0,
   environment: {
-    files: getAssetPath("/hdr/sky-40m.hdr"),
+    // .exr, not .hdr: same panorama, ~4.7x smaller (990KB vs 4.5MB) — see
+    // useEnvironment's own extension switch (three-stdlib's EXRLoader is
+    // picked automatically off the ".exr" suffix, no other wiring needed).
+    files: getAssetPath("/hdr/sky-40m.exr"),
     background: false,
     rotation: [0, 0, 0],
     backgroundRotation: [0, 0, 0],

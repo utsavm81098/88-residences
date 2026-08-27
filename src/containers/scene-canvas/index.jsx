@@ -13,6 +13,7 @@ import DirectionLabel from "@/features/direction-label";
 import SceneReadyGate from "@/features/scene-ready-gate";
 import KTX2Init from "@/features/ktx2-init";
 import { ComponentErrorBoundary } from "@/components/error-boundary";
+import SceneLoadingIndicator from "@/components/ui/scene-loading-indicator";
 import { solveFraming } from "@/features/home-scene/fit-camera";
 import { HOME_CAMERA } from "@/utils/constant";
 import useWebGLRecovery from "@/hooks/use-webgl-recovery";
@@ -47,6 +48,7 @@ export const SceneCanvasContainer = memo(() => {
     inventoryModelRef,
     handleInventoryReady,
     handleResetAllCaches,
+    showBuildingLoadingIndicator,
   } = useSceneCanvas();
 
   const initialCamera = useMemo(() => {
@@ -155,6 +157,8 @@ export const SceneCanvasContainer = memo(() => {
             transitionTimingFunction: "ease-in-out",
           }}
         />
+
+        <SceneLoadingIndicator visible={showBuildingLoadingIndicator} />
       </div>
     </div>
   );
