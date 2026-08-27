@@ -209,6 +209,24 @@ export const useBuilding = ({ controlsRef, sceneActive = true }) => {
   const [warmedUp, setWarmedUp] = useState(false);
   const frames = useRef(0);
   const [mountBackground, setMountBackground] = useState(false);
+
+  // Latches true the first time Inventory actually becomes the visible
+  // scene, and never reverts — same rationale/pattern as `warmedUp` just
+  // above and HomeScene's own equivalent latch: <Building> is a
+  // permanently-mounted sibling under the single shared Canvas (see
+  // containers/scene-canvas/index.jsx's `<group visible={isInventory}>`),
+  // so without this gate the DEFAULT building (index 0, "A") mounted — and
+  // fetched its ~5MB GLB — on every cold load, including a cold landing on
+  // Home that never shows Inventory at all.
+  //
+  // Initialized from `sceneActive` itself, so a COLD LANDING ON INVENTORY
+  // is unaffected: hasBeenActive is already true on the very first render,
+  // same render pass, so Building A mounts exactly when it always has.
+  const [hasBeenActive, setHasBeenActive] = useState(sceneActive);
+  useEffect(() => {
+    if (sceneActive) setHasBeenActive(true);
+  }, [sceneActive]);
+
   useBuildingTransition({ groupRefs, controlsRef });
   // REAL BUG FOUND HERE: this warmup counter used to run unconditionally
   // from the moment <Building> first mounted — which, since it's an
@@ -269,6 +287,7 @@ export const useBuilding = ({ controlsRef, sceneActive = true }) => {
     groupRefs,
     warmedUp,
     mountBackground,
+    hasBeenActive,
   };
 };
 export default useBuilding;

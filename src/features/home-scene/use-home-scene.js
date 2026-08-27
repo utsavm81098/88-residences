@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import { configureLoader } from "@/utils/preloader";
@@ -85,7 +85,7 @@ const WOOD_RAILING_MAT_NAME = "adskMatG__WOOD_RAILING";
 // Roughness, metalness, and color are NOT touched — they come from the GLB.
 const RAILING_NODE_RE = /^Obj_RAILING/i;
 
-export const useHomeScene = () => {
+export const useHomeScene = ({ active = true } = {}) => {
   // Byte-level streamed fetch + manual GLTFLoader.parse(), NOT drei's
   // useGLTF/useLoader. useLoader is hardwired to THREE.DefaultLoadingManager
   // — a single instance shared by every loader in the app — whose progress
@@ -114,7 +114,30 @@ export const useHomeScene = () => {
   // stay fixed for the life of this mount so it can't flip and trigger a
   // second, wasted fetch for the other variant mid-session.
   const [modelPath] = useState(() => getHomeModelPath());
-  const { scene, error } = useGLBLoader(modelPath, configureLoader);
+
+  // Latches true the first time this scene actually becomes the visible
+  // one, and never reverts — mirrors features/building/use-building.js's
+  // `mountBackground`/`warmedUp` gating for the same reason: HomeScene is a
+  // permanently-mounted sibling under the single shared Canvas (see
+  // containers/scene-canvas/index.jsx's `<group visible={isHome}>`), so
+  // without this gate its ~35-46MB GLB fetch fired on EVERY cold load
+  // regardless of whether Inventory, not Home, was the actual landing
+  // route. Once true, behaves identically to before this change — a
+  // returning-to-Home visit never re-fetches or re-gates.
+  //
+  // Initialized from `active` itself (not `false`), so a COLD LANDING ON
+  // HOME is unaffected by this change at all: hasBeenActive is already
+  // true on the very first render, in the same render pass, so the fetch
+  // starts exactly when it always has.
+  const [hasBeenActive, setHasBeenActive] = useState(active);
+  useEffect(() => {
+    if (active) setHasBeenActive(true);
+  }, [active]);
+
+  const { scene, error } = useGLBLoader(
+    hasBeenActive ? modelPath : null,
+    configureLoader,
+  );
   const gl = useThree((state) => state.gl);
   const maxAnisotropy = useMemo(
     () =>

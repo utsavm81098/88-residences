@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import useKeepAliveKey from "@/hooks/use-keep-alive-key";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useSceneLoadingProgress from "@/hooks/use-scene-loading-progress";
 import useHome from "@/containers/home/use-home";
 import useInventory from "@/containers/inventory/use-inventory";
+import { SIDEBAR_WIDTH as INVENTORY_SIDEBAR_WIDTH } from "@/features/adaptive-controls";
 
 import { HOME_EXPOSURE } from "@/utils/constant";
 
@@ -173,6 +176,37 @@ export const useSceneCanvas = () => {
   const showBuildingLoadingIndicator =
     isInventory && inventory.isReady && isStreamingAssets;
 
+  // Where the indicator needs to sit so it lands in the middle of the
+  // actually-visible canvas, not the middle of the raw full-screen <canvas>
+  // box. The Inventory sidebar (desktop, containers/inventory/index.jsx's
+  // `w-[380px]` panel) and the mobile bottom sheet (`snapHeight` tall) are
+  // both opaque DOM overlays painted OVER the canvas, not reductions of the
+  // canvas's own size — see this file's own canvasHeight comment further up
+  // for why the canvas itself stays permanently full-bleed. A plain
+  // `inset-0` center in components/ui/scene-loading-indicator would sit
+  // partly or fully underneath one of those overlays instead of in the
+  // middle of what the visitor can actually see.
+  //
+  // Deliberately mirrors features/adaptive-controls's own
+  // camera.setViewOffset() compensation instead of introducing separate
+  // math: same breakpoint (isMobile, 1024px), same constant
+  // (INVENTORY_SIDEBAR_WIDTH), same RTL side-flip, same snapHeight source
+  // (state.building.snapHeight) — that hook already solved "where is the
+  // visible region's center" for the 3D camera; this reuses that answer for
+  // the 2D DOM indicator instead of re-deriving it.
+  const { i18n } = useTranslation();
+  const isRtl = i18n.dir() === "rtl";
+  const snapHeight = useSelector((state) => state.building.snapHeight);
+  const loadingIndicatorOffset = useMemo(() => {
+    if (!isMobile) {
+      return { x: (isRtl ? -1 : 1) * (INVENTORY_SIDEBAR_WIDTH / 2), y: 0 };
+    }
+    if (snapHeight > 0) {
+      return { x: 0, y: -(snapHeight / 2) };
+    }
+    return { x: 0, y: 0 };
+  }, [isMobile, isRtl, snapHeight]);
+
   return {
     activeKey,
     isHome,
@@ -187,6 +221,7 @@ export const useSceneCanvas = () => {
     handleInventoryReady: inventory.handleReady,
     handleResetAllCaches,
     showBuildingLoadingIndicator,
+    loadingIndicatorOffset,
   };
 };
 

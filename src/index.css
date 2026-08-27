@@ -1,3 +1,38 @@
+/* `latin-*`/`hebrew-*` subsets only, not the plain `*.css` files: the
+   unsuffixed files pull in EVERY unicode-range subset @fontsource ships
+   (cyrillic, greek, vietnamese, math, symbols, ...) as separate @font-face
+   rules — the actual .woff2 files stay lazy (a browser only fetches the
+   subset covering glyphs it renders), but the CSS itself, which IS
+   render-blocking, grew from 10.67KB gzip (the old Google Fonts stylesheet)
+   to 34.48KB gzip importing all of them.
+   CORRECTED: this app ships TWO locales, not one — src/utils/languages.js's
+   SUPPORTED_LANGS is ["en", "he"], with public/locales/he/ shipped and
+   RTL_LANGS treating "he" as first-class, reachable via ordinary automatic
+   language detection (src/i18n/index.js's LanguageDetector), not just a
+   manually-typed URL. An earlier pass here assumed English-only and dropped
+   the `hebrew-*` subset entirely — Open Sans (the body's primary font, see
+   below) genuinely covers Hebrew upstream (confirmed: @fontsource/open-sans
+   ships hebrew-400/500/600/700.css) and the old Google Fonts css2 endpoint
+   included that subset automatically, so that was a real regression for
+   Hebrew visitors (silent fallback to the system font, not a crash, but a
+   visible brand-consistency break) — fixed by importing it explicitly here.
+   Inter has no `hebrew-*` subset in @fontsource at all (matches upstream
+   Google Fonts — Inter never covered Hebrew, before or after this file's
+   changes), so there's nothing to add for it; it's only ever the fallback
+   behind Open Sans in the font stack below anyway. */
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-500.css";
+@import "@fontsource/inter/latin-600.css";
+@import "@fontsource/inter/latin-700.css";
+@import "@fontsource/open-sans/latin-400.css";
+@import "@fontsource/open-sans/latin-500.css";
+@import "@fontsource/open-sans/latin-600.css";
+@import "@fontsource/open-sans/latin-700.css";
+@import "@fontsource/open-sans/hebrew-400.css";
+@import "@fontsource/open-sans/hebrew-500.css";
+@import "@fontsource/open-sans/hebrew-600.css";
+@import "@fontsource/open-sans/hebrew-700.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -55,7 +90,7 @@
 
   body {
     margin: 0;
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Open Sans', 'Inter', sans-serif;
     overflow: hidden;
   }
 
@@ -239,7 +274,8 @@
 @media (prefers-reduced-motion: reduce) {
   [data-slot="accordion-content"],
   [data-slot="accordion-content"] [data-slot="table-row"],
-  [data-slot="accordion-trigger-icon"] {
+  [data-slot="accordion-trigger-icon"],
+  .animate-rotate-logo {
     animation: none !important;
     transition: none !important;
   }

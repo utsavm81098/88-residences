@@ -49,6 +49,7 @@ export const SceneCanvasContainer = memo(() => {
     handleInventoryReady,
     handleResetAllCaches,
     showBuildingLoadingIndicator,
+    loadingIndicatorOffset,
   } = useSceneCanvas();
 
   const initialCamera = useMemo(() => {
@@ -158,7 +159,10 @@ export const SceneCanvasContainer = memo(() => {
           }}
         />
 
-        <SceneLoadingIndicator visible={showBuildingLoadingIndicator} />
+        <SceneLoadingIndicator
+          visible={showBuildingLoadingIndicator}
+          offset={loadingIndicatorOffset}
+        />
       </div>
     </div>
   );

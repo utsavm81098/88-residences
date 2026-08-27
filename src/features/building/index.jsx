@@ -32,10 +32,17 @@ const BuildingModel = memo(function BuildingModel({
     groupRefs,
     warmedUp,
     mountBackground,
+    hasBeenActive,
   } = useBuilding({
     controlsRef,
     sceneActive,
   });
+
+  // Inventory has never been the visible scene yet (e.g. a cold landing on
+  // Home) — don't mount ANY building, including the default one, so its
+  // GLB+hitbox never fetch until the user actually opens Inventory. See
+  // use-building.js's hasBeenActive comment for the full rationale.
+  if (!hasBeenActive) return null;
 
   return (
     <group position={position}>
