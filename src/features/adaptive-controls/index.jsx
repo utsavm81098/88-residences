@@ -5,7 +5,12 @@ import { useTranslation } from "react-i18next";
 import { OrbitControls } from "@react-three/drei";
 import useAdaptiveControls from "./use-adaptive-controls";
 
-const SIDEBAR_WIDTH = 380;
+// Exported so other consumers that need to compensate for this same overlay
+// (e.g. components/ui/scene-loading-indicator, positioned via
+// containers/scene-canvas's own hook) share one source of truth instead of
+// re-hardcoding 380 — see containers/inventory/index.jsx's `w-[380px]`
+// panel, the actual DOM element this offsets for.
+export const SIDEBAR_WIDTH = 380;
 
 const AdaptiveControls = ({ controlsRef, active = true }) => {
   const { orbitLimits, onStart, onEnd, POLAR, TARGET, config } =

@@ -15,7 +15,7 @@ import { HOME_CAMERA, HOME_EXPOSURE } from "@/utils/constant";
 const ENVIRONMENT_ROTATION_DEG = 1;
 
 const HomeSceneImpl = ({ controlsRef, onReady, active = true }) => {
-  const { scene } = useHomeScene();
+  const { scene } = useHomeScene({ active });
   const { gl, scene: rootScene, camera } = useThree();
 
   useLayoutEffect(() => {

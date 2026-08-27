@@ -79,6 +79,58 @@
     href="/dashboard-en/images/hero/PLOT88-birdeye-night.webp"
     media="(min-width: 1024px)"
   />
+
+  <!-- i18next-http-backend (src/i18n/index.js) fetches these two files, for
+       whichever language it resolves, before main.jsx's root.render() runs
+       at all — preloading here lets the browser start that fetch in
+       parallel with JS parsing instead of only after main.jsx has
+       downloaded, parsed and executed.
+
+       CORRECTED: this app ships two locales, not one — src/utils/
+       languages.js's SUPPORTED_LANGS is ["en", "he"], and a visitor with no
+       localStorage entry and a Hebrew navigator.language is routed to
+       /dashboard-he/... by ordinary automatic language detection (see
+       src/i18n/index.js's LanguageDetector order and src/routes/index.jsx's
+       RootRedirect), not just by typing the URL. A single hardcoded
+       /dashboard-en/ preload here only ever matches the English visitor;
+       for a Hebrew one it's a wasted fetch of JSON they never use (plus an
+       "unused preload" console warning) while their REAL
+       /dashboard-he/locales/he/*.json request gets no head start at all —
+       so both locales are listed explicitly. There's no third option: a
+       static <link> can't conditionally target "whichever language i18next
+       will resolve" the way the hero image preloads above conditionally
+       target viewport width via `media` — language detection itself
+       requires JS to run first. Both locales' files together are ~2.6KB
+       (public/locales/en + public/locales/he), so preloading the one that
+       turns out unused costs nothing meaningful. -->
+  <link
+    rel="preload"
+    as="fetch"
+    type="application/json"
+    crossorigin
+    href="/dashboard-en/locales/en/translation.json"
+  />
+  <link
+    rel="preload"
+    as="fetch"
+    type="application/json"
+    crossorigin
+    href="/dashboard-en/locales/en/common.json"
+  />
+  <link
+    rel="preload"
+    as="fetch"
+    type="application/json"
+    crossorigin
+    href="/dashboard-he/locales/he/translation.json"
+  />
+  <link
+    rel="preload"
+    as="fetch"
+    type="application/json"
+    crossorigin
+    href="/dashboard-he/locales/he/common.json"
+  />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="index, follow" />
   <meta property="og:image" content="https://www.88residences.com/wp-content/uploads/2026/04/PLOT88-birdeye-night.jpg" />
@@ -87,11 +139,6 @@
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <title>88 Residence – Building Your Dreams</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&display=swap"
-    rel="stylesheet" />
 
   <!-- Static boot splash (below) needs its rules available at first paint, so
        they are inlined here rather than shipped in src/index.css: an external
