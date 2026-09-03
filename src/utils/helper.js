@@ -4,10 +4,23 @@ import { DASHBOARD_PREFIX, WEBSITE_URL } from "./constant";
 import { SUPPORTED_LANGS } from "./languages";
 
 export const getWebsiteRedirectUrl = (i18nOrLang) => {
-  const langStr = typeof i18nOrLang === "string" ? i18nOrLang : i18nOrLang?.language;
-  const detectedLang = langStr?.split("-")[0].toLowerCase() || "en";
-  const isHebrew = detectedLang === "he" || window.location.pathname.includes("dashboard-he");
-  return isHebrew ? `${WEBSITE_URL}/?lang=he` : WEBSITE_URL;
+  const isBrowser = typeof window !== "undefined";
+  const pathname = isBrowser ? window.location.pathname : "";
+  const isHebrewPath = pathname.includes("dashboard-he");
+  const isEnglishPath = pathname.includes("dashboard-en");
+
+  let isHebrew = false;
+  if (isHebrewPath) {
+    isHebrew = true;
+  } else if (isEnglishPath) {
+    isHebrew = false;
+  } else {
+    const langStr = typeof i18nOrLang === "string" ? i18nOrLang : i18nOrLang?.language;
+    const detectedLang = langStr?.split("-")[0].toLowerCase() || "en";
+    isHebrew = detectedLang === "he";
+  }
+
+  return isHebrew ? `${WEBSITE_URL}/?lang=he` : `${WEBSITE_URL}/`;
 };
 
 

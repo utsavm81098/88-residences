@@ -49,30 +49,26 @@ const UnitInfoCardView = ({
               {t("apt")} {unit.apartment_number || unit.title || unit.name}
             </span>
             <div className="flex items-center gap-2">
-              {status !== "sold" && (
+              {unit?.apartment_floor_plan_image && (
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-8 px-3 gap-2 text-[11px] uppercase font-bold rounded-full border border-accent-yellow/30 text-accent-yellow bg-accent-yellow/5 hover:!bg-accent-yellow hover:!text-white transition-all duration-300 group"
                   onClick={(e) => {
                     e.stopPropagation();
-                    openEnquiry();
+                    window.open(
+                      unit.apartment_floor_plan_image,
+                      "_blank",
+                      "noopener,noreferrer",
+                    );
                   }}
                 >
-                  <ICONS.Mail
+                  <ICONS.FileText
                     size={14}
                     className="text-accent-yellow group-hover:text-white transition-colors"
                   />
-                  <span>{t("enquiry")}</span>
+                  <span>{t("floor_plan")}</span>
                 </Button>
-              )}
-              {status === "sold" && (
-                <Badge
-                  variant="sold"
-                  className="text-[10px] uppercase px-2 py-0"
-                >
-                  {t("sold")}
-                </Badge>
               )}
             </div>
           </div>
@@ -122,30 +118,33 @@ const UnitInfoCardView = ({
           </div>
         </CardContent>
 
-        {unit?.apartment_floor_plan_image && (
-          <CardFooter className="px-0 flex gap-2">
+        <CardFooter className="px-0 flex gap-2">
+          {status !== "sold" ? (
             <Button
               variant="brand"
               className="flex-1 font-bold h-10 rounded-lg text-[13px] transition-colors gap-1.5 cursor-pointer group"
               onClick={(e) => {
                 e.stopPropagation();
-                window.open(
-                  unit.apartment_floor_plan_image,
-                  "_blank",
-                  "noopener,noreferrer",
-                );
+                openEnquiry();
               }}
             >
-              <ICONS.FileText
+              <ICONS.Mail
                 size={16}
                 className="opacity-85 pointer-events-none group-hover:text-accent-yellow transition-colors"
               />
               <span className="pointer-events-none group-hover:text-accent-yellow transition-colors">
-                {t("floor_plan")}
+                {t("enquiry")}
               </span>
             </Button>
-          </CardFooter>
-        )}
+          ) : (
+            <Badge
+              variant="sold"
+              className="w-full justify-center text-center font-bold h-10 rounded-lg text-[13px] uppercase tracking-wider py-0"
+            >
+              {t("sold")}
+            </Badge>
+          )}
+        </CardFooter>
       </Card>
     </div>
   );
