@@ -291,4 +291,52 @@ export const clearGLBCache = (url) => {
  */
 export const getCachedGLBScene = (url) => cache.get(url)?.scene ?? null;
 
+/**
+ * Non-hook subscription to a single URL's cache entry — the same underlying
+ * fetch/cache/retry engine `useGLBLoader` uses (`getOrCreateEntry`), exposed
+ * as a plain callback API instead of a hook. Exists for orchestration code
+ * (see hooks/use-glb-chunks-loader.js) that fans out over a variable number
+ * of URLs from inside a single `useEffect`: calling `useGLBLoader` itself
+ * from inside a loop/`.map()` would violate the rules of hooks (React can't
+ * statically verify a fixed call count), so this gives that code a way to
+ * reuse the exact same cache/retry/dedup behavior from ordinary control
+ * flow instead.
+ *
+ * `onUpdate` is called synchronously once with whatever is already known
+ * (mirrors useGLBLoader's lazy-state-initializer sync-on-mount behavior),
+ * then again on every progress tick, and a final time on resolution/
+ * rejection. Returns an unsubscribe function.
+ *
+ * @param {string | null | undefined} url
+ * @param {(loader: import('three').Loader) => void} configureLoader
+ * @param {(state: { scene: import('three').Group | null, progress: number, error: Error | null }) => void} onUpdate
+ * @returns {() => void}
+ */
+export const subscribeGLB = (url, configureLoader, onUpdate) => {
+  if (!url) return () => {};
+
+  const entry = getOrCreateEntry(url, configureLoader);
+  let cancelled = false;
+
+  const emit = () => {
+    if (!cancelled) {
+      onUpdate({ scene: entry.scene, progress: entry.progress, error: entry.error });
+    }
+  };
+
+  const handleProgress = () => emit();
+  entry.listeners.add(handleProgress);
+
+  // Sync immediately in case the entry already resolved/errored/progressed
+  // before this subscriber attached.
+  emit();
+
+  entry.promise.then(emit).catch(emit);
+
+  return () => {
+    cancelled = true;
+    entry.listeners.delete(handleProgress);
+  };
+};
+
 export default useGLBLoader;

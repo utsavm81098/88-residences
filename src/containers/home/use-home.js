@@ -3,12 +3,11 @@ import { useDispatch } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useBottomMenuHeight from "@/hooks/use-bottom-menu-height";
-import { clearGLBCache, getCachedGLBScene } from "@/hooks/use-glb-loader";
-import { getDeviceTier, getHomeModelPath } from "@/utils/constant";
+import { clearHomeModelCaches } from "@/hooks/use-glb-chunks-loader";
+import { getDeviceTier, getHomeModelManifest } from "@/utils/constant";
 import { markInitialLoadComplete } from "@/store/slices/app-loader-slice";
 import { getWebsiteRedirectUrl } from "@/utils/helper";
 import {
-  disposeThreeScene,
   startSequentialBuildingPreload,
   cancelSequentialBuildingPreload,
 } from "@/utils/preloader";
@@ -95,20 +94,20 @@ export const useHome = () => {
   }, [dispatch]);
 
   const handleResetCache = useCallback(() => {
-    // getHomeModelPath() re-resolves the SAME tier decision
+    // getHomeModelManifest() re-resolves the SAME tier decision
     // use-home-scene.js made when it first loaded the model — device
     // capability doesn't change mid-session, so this always lands on
-    // whichever variant is actually cached.
-    const modelPath = getHomeModelPath();
+    // whichever variant (desktop/mobile chunk set) is actually cached.
+    // clearHomeModelCaches disposes the merged group's current GPU
+    // resources AND evicts every manifest URL (preview + tier1 + tier2)
+    // from use-glb-loader.js's cache — see its own doc comment for why
+    // disposing the MERGED group, not each chunk's original GLTF root, is
+    // required now that chunks are reparented into one persistent Group.
     try {
-      const cachedScene = getCachedGLBScene(modelPath);
-      if (cachedScene) {
-        disposeThreeScene(cachedScene);
-      }
+      clearHomeModelCaches(getHomeModelManifest());
     } catch {
-      // Ignore if cache getter fails
+      // Ignore if cache getter/disposal fails
     }
-    clearGLBCache(modelPath);
     setIsReady(false);
   }, []);
 

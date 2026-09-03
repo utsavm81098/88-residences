@@ -95,6 +95,24 @@ export const configureLoader = (loader) => {
   loader.setMeshoptDecoder(MeshoptDecoder);
 };
 
+/**
+ * Triggers DRACOLoader's WASM decoder fetch+instantiate ahead of need, in
+ * parallel with whatever GLB fetch is already in flight — without this, the
+ * decoder lazily instantiates itself the moment the FIRST Draco-compressed
+ * primitive is actually decoded (i.e. only once GLTFLoader.parse() reaches
+ * that point, sequentially AFTER the GLB's own network fetch has already
+ * completed), adding WASM-compile latency on the critical path instead of
+ * overlapping it with the download. Safe to call multiple times — DRACOLoader
+ * internally no-ops a repeat preload() once already in flight/resolved.
+ */
+export const preloadDracoDecoder = () => {
+  try {
+    dracoLoader.preload();
+  } catch {
+    // Ignore if already preloaded
+  }
+};
+
 export const getInitialLandingBuilding = () => {
   if (typeof window !== "undefined") {
     const params = new URLSearchParams(window.location.search);
@@ -242,11 +260,7 @@ export const preloadModels = () => {
   // doc comment above. The hitbox/env preloads don't carry KTX2 textures, but
   // are grouped here for simplicity — the wait costs them nothing, since both
   // resolve on the same "first Canvas mounted" event this already needs.
-  try {
-    dracoLoader.preload();
-  } catch {
-    // Ignore if already preloaded
-  }
+  preloadDracoDecoder();
 
   whenKTX2Ready().then(() => {
     if (landingModel)
