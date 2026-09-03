@@ -67,5 +67,8 @@
   "direction_n": "צפון",
   "direction_s": "דרום",
   "direction_e": "מזרח -כיוון הים",
-  "direction_w": "מערב"
+  "direction_w": "מערב",
+  "your_message": "הודעתך",
+  "message_placeholder": "כתוב את הודעתך כאן..."
 }
+

@@ -67,5 +67,8 @@
   "direction_n": "NORTH",
   "direction_s": "SOUTH",
   "direction_e": "Sea Side - East",
-  "direction_w": "WEST"
+  "direction_w": "WEST",
+  "your_message": "Your Message",
+  "message_placeholder": "Type your message here."
 }
+

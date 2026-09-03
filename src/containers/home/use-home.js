@@ -1,10 +1,12 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useBottomMenuHeight from "@/hooks/use-bottom-menu-height";
 import { clearGLBCache, getCachedGLBScene } from "@/hooks/use-glb-loader";
 import { getDeviceTier, getHomeModelPath } from "@/utils/constant";
 import { markInitialLoadComplete } from "@/store/slices/app-loader-slice";
+import { getWebsiteRedirectUrl } from "@/utils/helper";
 import {
   disposeThreeScene,
   startSequentialBuildingPreload,
@@ -13,9 +15,42 @@ import {
 
 export const useHome = () => {
   const dispatch = useDispatch();
+  const { i18n } = useTranslation();
   const controlsRef = useRef();
   const isMobile = useIsMobile();
   const [isReady, setIsReady] = useState(false);
+  const [isContactOpen, setContactOpen] = useState(false);
+
+  const handleOpenContact = useCallback(() => {
+    setContactOpen(true);
+  }, []);
+
+  // Compute language-aware external redirect destination
+  const redirectUrl = useMemo(
+    () => getWebsiteRedirectUrl(i18n),
+    [i18n?.language],
+  );
+
+  const handleRedirect = useCallback(
+    (e) => {
+      e?.preventDefault();
+      e?.stopPropagation();
+
+      if (typeof window === "undefined") return;
+
+      try {
+        if (window.top && window.top !== window) {
+          window.top.location.href = redirectUrl;
+          return;
+        }
+      } catch {
+        // Fallback for cross-origin iframes
+      }
+
+      window.location.href = redirectUrl;
+    },
+    [redirectUrl],
+  );
 
   // Below lg the bottom nav is `fixed bottom-0 ... z-[120]` (main-layout), so it
   // would sit on top of the canvas. Same approach the inventory container uses.
@@ -84,6 +119,11 @@ export const useHome = () => {
     isReady,
     handleReady,
     handleResetCache,
+    redirectUrl,
+    handleRedirect,
+    isContactOpen,
+    setContactOpen,
+    handleOpenContact,
   };
 };
 
