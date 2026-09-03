@@ -1,4 +1,11 @@
-import { Fragment, memo, useMemo, useEffect, useLayoutEffect } from "react";
+import {
+  Fragment,
+  memo,
+  useMemo,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import useHomeScene from "./use-home-scene";
@@ -15,8 +22,34 @@ import { HOME_CAMERA, HOME_EXPOSURE } from "@/utils/constant";
 const ENVIRONMENT_ROTATION_DEG = 1;
 
 const HomeSceneImpl = ({ controlsRef, onReady, active = true }) => {
-  const { scene } = useHomeScene({ active });
+  const {
+    scene,
+    mergeVersion,
+    tier1Ready,
+    tier1FullyRevealed,
+    tier2FullyRevealed,
+  } = useHomeScene({
+    active,
+  });
   const { gl, scene: rootScene, camera } = useThree();
+
+  // Hides the global loader the moment tier-1 (ground + all 7 buildings) is
+  // visible, WITHOUT waiting for gl.compile() to finish (unlike
+  // SceneReadyGate below). Root cause of the loader taking multiple seconds
+  // even after chunking made the download itself fast: tier-1 still carries
+  // ~200 unique materials, and compiling that many shader programs before
+  // revealing anything is a real, multi-second cost on its own (see
+  // SHADER_LINK_GRACE_MS's own doc comment — the same compile step existed
+  // for the single-file model before this feature and was already slow for
+  // the same reason). A single possibly-stuttery first frame is a far
+  // better trade than a multi-second blank loading screen, so this
+  // deliberately skips that wait.
+  const firedOnTier1ReadyRef = useRef(false);
+  useEffect(() => {
+    if (!active || !tier1Ready || firedOnTier1ReadyRef.current) return;
+    firedOnTier1ReadyRef.current = true;
+    onReady?.();
+  }, [active, tier1Ready, onReady]);
 
   useLayoutEffect(() => {
     if (!active || !camera) return;
@@ -66,18 +99,38 @@ const HomeSceneImpl = ({ controlsRef, onReady, active = true }) => {
 
       {/* Low-energy image-based lighting restores natural sky bounce on shaded
           facades without replacing the GLB's own panorama sphere. */}
-      <EnvironmentSetup modelScene={scene} environmentRotation={environmentRotation} active={active} />
+      <EnvironmentSetup
+        modelScene={scene}
+        modelVersion={mergeVersion}
+        environmentRotation={environmentRotation}
+        active={active}
+      />
 
       {/* A fixed sun keeps the site lighting stable while the camera orbits. */}
       <SceneLights environmentRotationDeg={ENVIRONMENT_ROTATION_DEG} active={active} />
 
       <primitive object={scene} />
 
-      {/* Display SVG markers on top of each of the 7 buildings in the masterplan scene only when Home is active */}
-      {active && <BuildingMarkers />}
+      {/* Gated on tier1FullyRevealed, not just `active`: BuildingMarkers
+          renders all 7 A-G marker icons from FIXED positions the instant
+          it mounts (features/building-markers/index.jsx has no per-
+          building visibility check of its own) — mounting it while
+          tier-1's staggered reveal (use-glb-chunks-loader.js) is still
+          bringing buildings in one by one would show markers floating
+          over buildings that haven't appeared yet. Waiting the extra
+          ~0.4s for the full reveal to finish keeps markers and the
+          buildings they point to in sync. */}
+      {active && tier1FullyRevealed && <BuildingMarkers />}
 
-      {/* Mounted last so the scene graph is complete before warm-up compiles it. */}
-      {active && <SceneReadyGate onReady={onReady} />}
+      {/* Deliberately gated on tier2FullyRevealed (trees/amenities done
+          trying to load AND, if they arrived, fully staggered into view —
+          see use-glb-chunks-loader.js), not just `active`: the loader is
+          already hidden by the tier1Ready effect above by the time this
+          mounts, so its gl.compile() + grace-period wait (worthwhile once
+          nothing else is going to arrive/change the material set again —
+          avoids a stutter the next time the camera moves) no longer
+          blocks anything user-visible. */}
+      {active && tier2FullyRevealed && <SceneReadyGate onReady={onReady} />}
 
       {/* EffectComposer + FXAA removed: native hardware MSAA (antialias:true in
           getHomeGlConfig) is now restored on the canvas. Native MSAA provides

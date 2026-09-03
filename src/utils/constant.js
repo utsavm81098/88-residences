@@ -225,6 +225,64 @@ export const getHomeModelPath = () =>
     ? HOME_MODEL_PATH_MOBILE
     : HOME_MODEL_PATH;
 
+// Tiny (~5MB), heavily-decimated stand-in for the ENTIRE Home masterplan
+// scene, built by scripts/build_preview_model.mjs. NOT currently used by
+// getHomeModelManifest below (see that function's doc comment) — kept
+// defined/generated in case a fast-preview swap step is revisited later,
+// but nothing in the runtime loading path references this today.
+export const HOME_MODEL_PREVIEW_PATH = getAssetPath(
+  "/models/88RES-06_05-2-preview.glb",
+);
+
+// Two merged bundles of the Home masterplan GLB (see
+// scripts/generate-tier-bundles.js — a lossless subset operation, verified
+// 965/965 top-level nodes + every node/material NAME preserved exactly).
+// tier1 (ground + all 7 buildings, ONE file) is the first thing shown/gates
+// the loader-hide; tier2 (trees/amenities, ONE file) streams in afterward,
+// live, once tier1 is already visible.
+//
+// An earlier version split tier1 into 8 separate per-building files (plus 2
+// for tier2) for parallel-fetch parallelism. Measured after shipping that:
+// the 8 tier1 files alone summed to ~22.6MB (desktop) — essentially the
+// size of the ENTIRE original 22.37MB model, despite excluding trees/
+// amenities entirely — because any material/texture shared across more
+// than one building got duplicated into every file referencing it (the
+// original single file has zero such duplication; splitting introduced
+// it). Merging tier1's categories back into ONE file (still excluding
+// tree/amenity nodes) restores that dedup for free: ~13.96MB desktop /
+// ~8.41MB mobile, a real ~38% cut, plus one parse() call instead of eight.
+// Network parallelism across many small files turned out not to matter
+// once raw transfer was already proven fast — the real cost was JS-side
+// parse/construction overhead and duplicated bytes, both of which scale
+// with FILE COUNT and TOTAL SIZE respectively, not with how "chunked" the
+// loading looks.
+const buildHomeTierManifest = (tierDirSuffix) => ({
+  tier1: getAssetPath(`/models/tiers${tierDirSuffix}/tier1.glb`),
+  tier2: getAssetPath(`/models/tiers${tierDirSuffix}/tier2.glb`),
+});
+
+/**
+ * Returns the tier manifest ({ tier1: string, tier2: string }) for the
+ * current device — mirrors getHomeModelPath()'s exact viewport heuristic
+ * (<=1024 => the mobile tier bundles, same VRAM-reduced textures as
+ * HOME_MODEL_PATH_MOBILE, else the desktop bundles). Same one-time-
+ * resolution contract as getHomeModelPath: call once via a lazy useState
+ * initializer, never reactively — see use-home-scene.js.
+ *
+ * No `preview` field: an earlier version of this manifest included a tiny
+ * heavily-decimated stand-in (HOME_MODEL_PREVIEW_PATH above) shown before
+ * tier-1, but real-world testing showed it read as visually incomplete/
+ * inconsistent (missing trees/amenities by design, softer geometry+textures)
+ * compared to tier-1's full-quality content arriving moments later — a
+ * confusing swap rather than a helpful one. Tier-1 alone, made to load and
+ * render fast on its own (see useHomeScene/useGLBChunksLoader), is now the
+ * first thing shown.
+ */
+export const getHomeModelManifest = () =>
+  typeof window !== "undefined" && window.innerWidth <= 1024
+    ? buildHomeTierManifest("-mobile")
+    : buildHomeTierManifest("");
+
 // This panorama is used for image-based lighting only. The model owns the
 // visible panorama sphere, so it is never used as a flat background.
 export const HOME_ENV_PATH = getAssetPath("/hdr/80m-nano-green.jpg");

@@ -8,14 +8,28 @@ import { logger } from "@/utils/logger";
 // history below for why a real guarantee was tried and reverted), but a
 // real, safe improvement over revealing on the very next frame with zero
 // grace period at all.
-// Extra time given to the GPU driver to finish linking shader programs in
-// the background after gl.compile() issues the work, before the loader is
-// allowed to hide.
 const SHADER_LINK_GRACE_MS = 400;
 
 // Track scenes that have already been compiled so repeat route visits are instant
 const compiledScenes = new WeakSet();
 
+/**
+ * Compiles every shader program currently in the scene (gl.compile), waits
+ * a grace period for the GPU driver to actually finish linking them, then
+ * calls onReady(). This is the RIGHT trade for content the user is about to
+ * look at for a while (avoids a stutter on first paint) — but it is NOT
+ * free: compiling ~200 unique materials' worth of shader programs is a real,
+ * measurable cost (that's why SHADER_LINK_GRACE_MS exists at all). Home
+ * (features/home-scene/index.jsx) deliberately does NOT mount this for its
+ * instant preview tier for exactly that reason — see the comment there. It
+ * only mounts this once tier-1's real content (ground + all 7 buildings) is
+ * fully loaded, by which point the global loader is already hidden, so this
+ * compile pass's cost is invisible to the user instead of blocking the
+ * loading screen.
+ *
+ * @param {object} props
+ * @param {() => void} [props.onReady]
+ */
 const SceneReadyGate = ({ onReady }) => {
   const gl = useThree((state) => state.gl);
   const scene = useThree((state) => state.scene);

@@ -21,12 +21,26 @@ let cachedGl = null;
 let cachedGreenEnvMap = null;
 let cachedNeutralEnvMap = null;
 
+// Top-level chunk roots (direct children of the merged group
+// use-home-scene.js/use-glb-chunks-loader.js build up) already scanned for
+// glass materials. Mirrors use-home-scene.js's tunedTopLevelNodes WeakSet —
+// same rationale: a chunk arrives as a whole subtree in one shot, so
+// tracking membership at that granularity keeps this effect's traversal at
+// O(new chunks) per merge instead of re-scanning every previously-processed
+// building's glass on every chunk arrival.
+const glassProcessedTopLevelNodes = new WeakSet();
+
 /**
  * Applies neutral RoomEnvironment IBL for overall scene lighting (so shadows and foliage
  * stay bright and natural), while specifically applying the 80m-nano-green.jpg HDR panorama
  * reflection to building window glass materials.
  */
-const EnvironmentSetup = ({ modelScene, environmentRotation, active = true }) => {
+const EnvironmentSetup = ({
+  modelScene,
+  modelVersion,
+  environmentRotation,
+  active = true,
+}) => {
   const rootScene = useThree((state) => state.scene);
   const gl = useThree((state) => state.gl);
   const invalidate = useThree((state) => state.invalidate);
@@ -149,78 +163,90 @@ const EnvironmentSetup = ({ modelScene, environmentRotation, active = true }) =>
     gl.toneMappingExposure = Math.pow(2, HOME_EXPOSURE);
     gl.needsUpdate = true;
 
-    // Traverse ONLY the home model scene so Inventory buildings are never corrupted
+    // Traverse ONLY newly-arrived top-level chunk roots of the home model
+    // scene (not the whole merged group every run) so Inventory buildings
+    // are never corrupted, and so a chunk arriving late doesn't force a
+    // re-scan of every previously-processed building's glass materials —
+    // see glassProcessedTopLevelNodes' own doc comment above.
     if (modelScene) {
       const clonedMaterialsCache = new Map();
+      const newTopLevelNodes = modelScene.children.filter(
+        (node) => !glassProcessedTopLevelNodes.has(node),
+      );
 
-      modelScene.traverse((child) => {
-        if (!child.isMesh && !child.isInstancedMesh) return;
-        const childName = child.name || "";
-        const materials = Array.isArray(child.material)
-          ? child.material
-          : [child.material];
+      newTopLevelNodes.forEach((node) => {
+        glassProcessedTopLevelNodes.add(node);
 
-        materials.forEach((material, index) => {
-          if (!material) return;
+        node.traverse((child) => {
+          if (!child.isMesh && !child.isInstancedMesh) return;
+          const childName = child.name || "";
+          const materials = Array.isArray(child.material)
+            ? child.material
+            : [child.material];
 
-          const materialName = material.name || "";
-          const isExcludedGlassNode = GLASS_NODE_EXCLUSION_RE.test(childName);
+          materials.forEach((material, index) => {
+            if (!material) return;
 
-          const isGlass =
-            !isExcludedGlassNode &&
-            (GLASS_MATERIALS_RE.test(materialName) ||
-              GLASS_MATERIALS_RE.test(childName));
+            const materialName = material.name || "";
+            const isExcludedGlassNode = GLASS_NODE_EXCLUSION_RE.test(childName);
 
-          if (isGlass) {
-            const isPbr =
-              material.isMeshStandardMaterial || material.isMeshPhysicalMaterial;
+            const isGlass =
+              !isExcludedGlassNode &&
+              (GLASS_MATERIALS_RE.test(materialName) ||
+                GLASS_MATERIALS_RE.test(childName));
 
-            if (isPbr) {
-              let targetMaterial = material;
-              if (material.userData?.__isClonedByEnvSetup) {
-                material.envMap = greenEnvMap;
-                material.envMapIntensity = 1.2;
-                if (material.isMeshPhysicalMaterial) {
-                  material.transmission = 0;
-                  material.thickness = 0;
-                }
-                material.needsUpdate = true;
-              } else {
-                if (clonedMaterialsCache.has(material)) {
-                  targetMaterial = clonedMaterialsCache.get(material);
+            if (isGlass) {
+              const isPbr =
+                material.isMeshStandardMaterial ||
+                material.isMeshPhysicalMaterial;
+
+              if (isPbr) {
+                let targetMaterial = material;
+                if (material.userData?.__isClonedByEnvSetup) {
+                  material.envMap = greenEnvMap;
+                  material.envMapIntensity = 1.2;
+                  if (material.isMeshPhysicalMaterial) {
+                    material.transmission = 0;
+                    material.thickness = 0;
+                  }
+                  material.needsUpdate = true;
                 } else {
-                  targetMaterial = material.clone();
-                  targetMaterial.name = (material.name || "glass") + "_cloned";
-                  targetMaterial.userData.__originalMaterial = material;
-                  targetMaterial.userData.__isClonedByEnvSetup = true;
+                  if (clonedMaterialsCache.has(material)) {
+                    targetMaterial = clonedMaterialsCache.get(material);
+                  } else {
+                    targetMaterial = material.clone();
+                    targetMaterial.name = (material.name || "glass") + "_cloned";
+                    targetMaterial.userData.__originalMaterial = material;
+                    targetMaterial.userData.__isClonedByEnvSetup = true;
 
-                  // Disable physical transmission so Three.js renders crisp PBR reflections
-                  if (targetMaterial.isMeshPhysicalMaterial) {
-                    targetMaterial.transmission = 0;
-                    targetMaterial.thickness = 0;
+                    // Disable physical transmission so Three.js renders crisp PBR reflections
+                    if (targetMaterial.isMeshPhysicalMaterial) {
+                      targetMaterial.transmission = 0;
+                      targetMaterial.thickness = 0;
+                    }
+
+                    // Window glass receives the 80m-nano-green panorama environment reflection
+                    targetMaterial.envMap = greenEnvMap;
+                    targetMaterial.envMapIntensity = 1.2;
+                    targetMaterial.roughness = 0.05;
+                    targetMaterial.metalness = 0.9;
+                    targetMaterial.transparent = false;
+                    targetMaterial.opacity = 1.0;
+                    targetMaterial.color.set("#ffffff");
+                    targetMaterial.needsUpdate = true;
+
+                    clonedMaterialsCache.set(material, targetMaterial);
                   }
 
-                  // Window glass receives the 80m-nano-green panorama environment reflection
-                  targetMaterial.envMap = greenEnvMap;
-                  targetMaterial.envMapIntensity = 1.2;
-                  targetMaterial.roughness = 0.05;
-                  targetMaterial.metalness = 0.9;
-                  targetMaterial.transparent = false;
-                  targetMaterial.opacity = 1.0;
-                  targetMaterial.color.set("#ffffff");
-                  targetMaterial.needsUpdate = true;
-
-                  clonedMaterialsCache.set(material, targetMaterial);
-                }
-
-                if (Array.isArray(child.material)) {
-                  child.material[index] = targetMaterial;
-                } else {
-                  child.material = targetMaterial;
+                  if (Array.isArray(child.material)) {
+                    child.material[index] = targetMaterial;
+                  } else {
+                    child.material = targetMaterial;
+                  }
                 }
               }
             }
-          }
+          });
         });
       });
     }
@@ -236,7 +262,17 @@ const EnvironmentSetup = ({ modelScene, environmentRotation, active = true }) =>
     // the ONLY way to force this effect to re-run when nothing else here
     // (gl's identity included) actually changed — see that listener's
     // comment above for why the `cachedGl !== gl` check alone can't do it.
-  }, [gl, invalidate, panorama, rootScene, modelScene, environmentRotation, active, contextGeneration]);
+  }, [
+    gl,
+    invalidate,
+    panorama,
+    rootScene,
+    modelScene,
+    modelVersion,
+    environmentRotation,
+    active,
+    contextGeneration,
+  ]);
 
   return null;
 };

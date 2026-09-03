@@ -9,9 +9,10 @@ import {
   preloadModels,
   configureLoader,
   whenKTX2Ready,
+  preloadDracoDecoder,
 } from "@/utils/preloader";
 import { preloadGLB } from "@/hooks/use-glb-loader";
-import { getHomeModelPath, getDeviceTier } from "@/utils/constant";
+import { getHomeModelManifest, getDeviceTier } from "@/utils/constant";
 import { WEB_ROUTES } from "@/routes/routes";
 
 const isLandingOnInventory =
@@ -55,13 +56,61 @@ if (typeof window !== "undefined") {
 
     if (isHighTier) {
       scheduleIdlePreload(() => {
-        whenKTX2Ready().then(() =>
-          preloadGLB(getHomeModelPath(), configureLoader),
-        );
+        whenKTX2Ready().then(() => {
+          // Warm both tier URLs the same way the single-file version warmed
+          // just getHomeModelPath() — each URL is independently cached/
+          // deduped by use-glb-loader.js, so a later real mount's
+          // useGLBChunksLoader call resolves from cache instead of
+          // re-fetching. See getHomeModelManifest in utils/constant.js.
+          const manifest = getHomeModelManifest();
+          preloadGLB(manifest.tier1, configureLoader);
+          preloadGLB(manifest.tier2, configureLoader);
+        });
       });
     }
-  } else if (isHighTier) {
-    scheduleIdlePreload(preloadModels);
+  } else {
+    // Landing on Home (the common case): kick off tier-1's fetch+parse
+    // IMMEDIATELY, synchronously here — not gated behind requestIdleCallback,
+    // not gated behind whenKTX2Ready(), not waiting for i18n or any React
+    // mount. This is the CURRENT route's own required asset (see the
+    // "never skipped" note above), so unlike the cross-route warm-ups
+    // there's no reason to delay it.
+    //
+    // REAL GAP FIXED HERE: before this, tier1/tier2's fetch only started
+    // once the ENTIRE React tree had mounted — i18n's initPromise resolving
+    // (gates root.render() below), Provider/AppProviders mounting, the
+    // Canvas mounting, HomeScene mounting, and ITS OWN effect
+    // (use-glb-chunks-loader.js) finally firing. All of that is real,
+    // measurable time in which the browser could already have been
+    // downloading tier1.glb — the network and this JS bundle's own
+    // fetch() call don't need to wait for any of it. preloadGLB populates
+    // the exact same use-glb-loader.js cache useGLBChunksLoader reads from
+    // later (keyed by URL), so the real mount resolves instantly from
+    // cache instead of re-fetching — this doesn't fetch anything twice,
+    // it just starts the one fetch that was always going to happen much
+    // earlier.
+    //
+    // Safe to skip whenKTX2Ready() specifically for tier1/tier2 (unlike
+    // the cross-route preload above, which does wait for it): both tier
+    // bundles use plain WebP textures with Draco-compressed geometry, no
+    // KHR_texture_basisu/KTX2 anywhere (see scripts/generate-tier-
+    // bundles.js) — GLTFLoader only ever invokes the KTX2 loader's
+    // transcode path for a file that actually declares that extension, so
+    // there's nothing here that needs a live WebGLRenderer to exist first.
+    // Both tier bundles now compress geometry with Draco (see
+    // scripts/generate-tier-bundles.js) — start the decoder's own WASM
+    // fetch+instantiate in parallel with the GLB download below, instead
+    // of leaving it to lazily start only once the GLB has already fully
+    // arrived and GLTFLoader.parse() reaches the first Draco primitive.
+    preloadDracoDecoder();
+
+    const manifest = getHomeModelManifest();
+    preloadGLB(manifest.tier1, configureLoader);
+    preloadGLB(manifest.tier2, configureLoader);
+
+    if (isHighTier) {
+      scheduleIdlePreload(preloadModels);
+    }
   }
 }
 
