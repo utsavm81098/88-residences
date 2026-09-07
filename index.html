@@ -131,7 +131,7 @@
     crossorigin
     href="/dashboard-he/locales/he/common.json"
   />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="robots" content="index, follow" />
   <meta property="og:image" content="https://www.88residences.com/wp-content/uploads/2026/04/PLOT88-birdeye-night.jpg" />
   <meta property="og:image:secure_url" content="https://www.88residences.com/wp-content/uploads/2026/04/PLOT88-birdeye-night.jpg" />
@@ -268,9 +268,17 @@
       }
     }
 
+    @keyframes rotate-logo {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .animate-rotate-logo {
+      animation: rotate-logo 3s linear infinite !important;
+    }
+
     @media (prefers-reduced-motion: reduce) {
-      #app-boot-splash .abs-slide--night,
-      #app-boot-splash .logo-wrap svg {
+      #app-boot-splash .abs-slide--night {
         animation: none !important;
       }
     }

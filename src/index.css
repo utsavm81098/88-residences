@@ -274,9 +274,15 @@
 @media (prefers-reduced-motion: reduce) {
   [data-slot="accordion-content"],
   [data-slot="accordion-content"] [data-slot="table-row"],
-  [data-slot="accordion-trigger-icon"],
-  .animate-rotate-logo {
+  [data-slot="accordion-trigger-icon"] {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+@layer utilities {
+  .h-app-shell {
+    height: 100vh;
+    height: 100dvh;
   }
 }

@@ -78,10 +78,9 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        // Left-right sway for the home-page drag hint's hand icon — reads as
-        // "swipe left/right" (see src/containers/home/drag-hint.jsx). Kept
-        // small since the hand sits inline between two flanking chevrons —
-        // wide enough to sway is fine, wide enough to reach them is not.
+        // Left-right sway for the home-page hand-gesture hint's hand icon —
+        // reads as "swipe left/right" (see
+        // src/components/ui/hand-gesture-hint/index.jsx).
         "drag-hint": {
           "0%, 100%": { transform: "translateX(-10px)" },
           "50%": { transform: "translateX(10px)" },

@@ -17,7 +17,7 @@ export default function MainLayout() {
   }, [dispatch]);
 
   return (
-    <div className="flex h-screen w-screen bg-background text-white font-open-sans overflow-hidden relative">
+    <div className="flex h-app-shell w-screen bg-background text-white font-open-sans overflow-hidden relative">
       {/* Synchronization bridge with parent iframe / WordPress host */}
       <ParentBridge />
 

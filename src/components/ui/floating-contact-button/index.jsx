@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
  */
 export const FloatingContactButton = memo(function FloatingContactButton({
   onClick,
+  dir,
   className,
 }) {
   return (
@@ -16,9 +17,15 @@ export const FloatingContactButton = memo(function FloatingContactButton({
       variant="ghost"
       size="icon-xl"
       onClick={onClick}
+      dir={dir}
       aria-label="Contact Us"
       className={cn(
-        "group absolute bottom-4 right-4 sm:bottom-6 sm:right-6 lg:bottom-10 lg:right-10 z-20 pointer-events-auto",
+        "group fixed z-30 pointer-events-auto",
+        "bottom-[max(1rem,calc(0.75rem+env(safe-area-inset-bottom,0px)))] sm:bottom-6 lg:bottom-10",
+        "end-4 sm:end-6 lg:end-10",
+        "ltr:end-[max(1rem,calc(0.75rem+env(safe-area-inset-right,0px)))]",
+        "rtl:end-[max(1rem,calc(0.75rem+env(safe-area-inset-left,0px)))]",
+        "sm:ltr:end-6 sm:rtl:end-6 lg:ltr:end-10 lg:rtl:end-10",
         "size-[44px] sm:size-[48px] lg:size-[54px]",
         "bg-white border border-border-light rounded-full text-accent-yellow shadow-xl hover:shadow-2xl",
         "hover:!bg-gray-50 active:!bg-gray-100 hover:scale-105 active:scale-95",
