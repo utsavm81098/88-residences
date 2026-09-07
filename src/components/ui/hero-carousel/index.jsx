@@ -62,6 +62,7 @@ export const HeroCarousel = ({ slides = [], className }) => {
       <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
         <div
           data-slot="hero-logo"
+          style={{ animation: "rotate-logo 3s linear infinite" }}
           className="animate-rotate-logo flex h-[60px] w-[60px] items-center justify-center drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)] sm:h-[60px] sm:w-[60px] md:h-[90px] md:w-[90px]"
         >
           <Logo />

@@ -1,24 +1,24 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useTranslation } from "react-i18next";
+import { getDirection } from "@/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useBottomMenuHeight from "@/hooks/use-bottom-menu-height";
 import { clearHomeModelCaches } from "@/hooks/use-glb-chunks-loader";
 import { getDeviceTier, getHomeModelManifest } from "@/utils/constant";
 import { markInitialLoadComplete } from "@/store/slices/app-loader-slice";
 import { getWebsiteRedirectUrl } from "@/utils/helper";
-import {
-  startSequentialBuildingPreload,
-  cancelSequentialBuildingPreload,
-} from "@/utils/preloader";
+import { startSequentialBuildingPreload } from "@/utils/preloader";
 
 export const useHome = () => {
   const dispatch = useDispatch();
   const { i18n } = useTranslation();
+  const dir = getDirection(i18n.language);
   const controlsRef = useRef();
   const isMobile = useIsMobile();
   const [isReady, setIsReady] = useState(false);
   const [isContactOpen, setContactOpen] = useState(false);
+  const [showHandGesture, setShowHandGesture] = useState(false);
 
   const handleOpenContact = useCallback(() => {
     setContactOpen(true);
@@ -27,7 +27,7 @@ export const useHome = () => {
   // Compute language-aware external redirect destination
   const redirectUrl = useMemo(
     () => getWebsiteRedirectUrl(i18n),
-    [i18n?.language],
+    [i18n],
   );
 
   const handleRedirect = useCallback(
@@ -93,6 +93,18 @@ export const useHome = () => {
     }
   }, [dispatch]);
 
+  // Threaded down to CameraRig's onHintVisibleChange (via HomeScene ->
+  // use-auto-rotate-hint.js), exactly like handleReady above — the
+  // hand-gesture hint's idle timers live in CameraRig (it already owns
+  // controlsRef and the auto-rotate idle timers), but the hint itself
+  // renders as a plain DOM overlay outside the Canvas (see
+  // src/components/ui/hand-gesture-hint), so its visibility has to bubble
+  // up to here.
+  const handleHintVisibleChange = useCallback(
+    (visible) => setShowHandGesture(visible),
+    [],
+  );
+
   const handleResetCache = useCallback(() => {
     // getHomeModelManifest() re-resolves the SAME tier decision
     // use-home-scene.js made when it first loaded the model — device
@@ -118,11 +130,14 @@ export const useHome = () => {
     isReady,
     handleReady,
     handleResetCache,
+    showHandGesture,
+    handleHintVisibleChange,
     redirectUrl,
     handleRedirect,
     isContactOpen,
     setContactOpen,
     handleOpenContact,
+    dir,
   };
 };
 

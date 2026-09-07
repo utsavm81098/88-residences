@@ -214,16 +214,19 @@ export const useGLBChunksLoader = (manifest, configureLoader) => {
           // Reveals trees_vegetation, then amenities_pools, in the same
           // staggered fashion as tier-1 — see scheduleStaggeredReveal's own
           // doc comment.
-          unsubscribers.push(
-            scheduleStaggeredReveal(
-              arrivedNodes,
-              TIER2_REVEAL_GROUP_ORDER,
-              () => cancelled,
-              () => {
-                tier2FullyRevealedRef.current = true;
-                bumpVersion();
-              },
-            ),
+          //
+          // NOT pushed into `unsubscribers`: see the matching comment on
+          // tier-1's own scheduleStaggeredReveal call below for why this
+          // reveal must be allowed to run to completion independent of
+          // this effect instance's cleanup.
+          scheduleStaggeredReveal(
+            arrivedNodes,
+            TIER2_REVEAL_GROUP_ORDER,
+            () => false,
+            () => {
+              tier2FullyRevealedRef.current = true;
+              bumpVersion();
+            },
           );
           bumpVersion();
         }),
@@ -253,16 +256,51 @@ export const useGLBChunksLoader = (manifest, configureLoader) => {
         // the data arrived) — index.jsx gates BuildingMarkers on the
         // former specifically, since markers render from fixed positions
         // independent of individual building visibility.
-        unsubscribers.push(
-          scheduleStaggeredReveal(
-            arrivedNodes,
-            TIER1_REVEAL_GROUP_ORDER,
-            () => cancelled,
-            () => {
-              tier1FullyRevealedRef.current = true;
-              bumpVersion();
-            },
-          ),
+        //
+        // REAL BUG FIXED HERE: this used to be wrapped in
+        // `unsubscribers.push(...)`, so this effect's own cleanup (which
+        // runs on every StrictMode double-invoke, and — confirmed by
+        // instrumenting this exact effect — at least once more a few
+        // hundred ms after that on initial Home load, well before the
+        // scheduled 60-480ms staggered reveal finishes) called
+        // scheduleStaggeredReveal's returned cleanup and clearTimeout'd
+        // every pending group's reveal. `arrivedNodes` had ALREADY been
+        // permanently reparented into `group` (groupRef.current, stable
+        // across this effect's own remounts) by the `.add()` call above —
+        // that reparenting also drains `scene.children` on the SHARED
+        // use-glb-loader.js cache entry down to empty, so a subsequent
+        // re-run of this same effect (tier1StatusRef reset to "pending" a
+        // few lines up, exactly like a fresh mount) finds `[...scene.
+        // children]` empty and schedules a no-op reveal over zero nodes —
+        // nothing is ever left to re-flip the ALREADY-MERGED building_a..g
+        // (and, via tier2, amenities_pools) nodes back to visible after
+        // their timers were cancelled. Only `ground_surface`/
+        // `trees_vegetation` (group index 0, set visible synchronously,
+        // not via a cancellable timer) survived — reproduced exactly as
+        // "every building renders as a flat, untextured white/gray box
+        // (Gray_BUILD's raw GLB color, unaffected by visibility) and pools
+        // never fill in", on `vite dev` only: a production bundle's faster
+        // startup means the reveal timers normally finish before this
+        // extra remount happens, so the cancellation lands on already-
+        // completed (harmless) timers instead of in-flight ones — same
+        // race, environment-dependent outcome, not a dev-only code path.
+        // Fix: never cancel this. `group` outlives any single invocation
+        // of this effect (it's a stable ref, unaffected by the remounts
+        // above), so the nodes this reveal touches are permanent regardless
+        // of whether the effect instance that scheduled it is still
+        // "current" — there is no correctness reason to stop it partway.
+        // `startTier2()`/subscribeGLB's OWN cancellation (guarding against
+        // acting on a network response after this effect instance moved
+        // on) is untouched by this — only the purely-visual, already-
+        // irreversible reveal is exempted.
+        scheduleStaggeredReveal(
+          arrivedNodes,
+          TIER1_REVEAL_GROUP_ORDER,
+          () => false,
+          () => {
+            tier1FullyRevealedRef.current = true;
+            bumpVersion();
+          },
         );
         bumpVersion();
         startTier2();

@@ -6,6 +6,7 @@ import useSceneCanvas, {
   VEIL_FADE_OUT_MS,
 } from "./use-scene-canvas";
 import HomeScene from "@/features/home-scene";
+import HandGestureHint from "@/components/ui/hand-gesture-hint";
 import SceneEnvironment from "@/features/scene-environment";
 import Building from "@/features/building";
 import AdaptiveControls from "@/features/adaptive-controls";
@@ -44,6 +45,8 @@ export const SceneCanvasContainer = memo(() => {
     dpr,
     homeControlsRef,
     handleHomeReady,
+    showHandGesture,
+    handleHintVisibleChange,
     inventoryControlsRef,
     inventoryModelRef,
     handleInventoryReady,
@@ -110,6 +113,7 @@ export const SceneCanvasContainer = memo(() => {
                 <HomeScene
                   controlsRef={homeControlsRef}
                   onReady={handleHomeReady}
+                  onHintVisibleChange={handleHintVisibleChange}
                   active={isHome}
                 />
               </group>
@@ -163,6 +167,13 @@ export const SceneCanvasContainer = memo(() => {
           visible={showBuildingLoadingIndicator}
           offset={loadingIndicatorOffset}
         />
+
+        {/* Home-only idle hint — see use-auto-rotate-hint.js for the timing
+            sequence that drives `visible`. Rendered here (not from
+            containers/home/index.jsx) for the same reason
+            SceneLoadingIndicator is: this is the subtree that actually owns
+            the Canvas/CameraRig this hint is wired to. */}
+        {isHome && <HandGestureHint visible={showHandGesture} />}
       </div>
     </div>
   );

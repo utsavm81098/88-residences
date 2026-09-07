@@ -21,7 +21,12 @@ import { HOME_CAMERA, HOME_EXPOSURE } from "@/utils/constant";
 // baked into the supplied GLB. The dome remains the visible background.
 const ENVIRONMENT_ROTATION_DEG = 1;
 
-const HomeSceneImpl = ({ controlsRef, onReady, active = true }) => {
+const HomeSceneImpl = ({
+  controlsRef,
+  onReady,
+  onHintVisibleChange,
+  active = true,
+}) => {
   const {
     scene,
     mergeVersion,
@@ -95,7 +100,13 @@ const HomeSceneImpl = ({ controlsRef, onReady, active = true }) => {
           reach full res. That was the blurry-then-sharpens first render. This is a
           static architectural view, so a fixed dpr is the right trade. */}
 
-      {active && <CameraRig controlsRef={controlsRef} active={active} />}
+      {active && (
+        <CameraRig
+          controlsRef={controlsRef}
+          active={active}
+          onHintVisibleChange={onHintVisibleChange}
+        />
+      )}
 
       {/* Low-energy image-based lighting restores natural sky bounce on shaded
           facades without replacing the GLB's own panorama sphere. */}
@@ -148,9 +159,10 @@ const HomeSceneImpl = ({ controlsRef, onReady, active = true }) => {
   );
 };
 
-// Memoized: controlsRef/onReady are stable references from useHome (useRef
-// and useCallback([]) respectively), so this — and by extension CameraRig,
-// BuildingMarkers, EnvironmentSetup, everything in this subtree — bails out
+// Memoized: controlsRef/onReady/onHintVisibleChange are stable references
+// from useHome (useRef and useCallback([]) respectively), so this — and by
+// extension CameraRig, BuildingMarkers, EnvironmentSetup, everything in this
+// subtree — bails out
 // of re-rendering when HomeContainer re-renders for a reason that has
 // nothing to do with this scene.
 export const HomeScene = memo(HomeSceneImpl);

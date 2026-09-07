@@ -15,20 +15,28 @@ export const HomeContainer = memo(({ active = true }) => {
     isContactOpen,
     setContactOpen,
     handleOpenContact,
+    dir,
   } = useHome();
 
   return (
-    <div className="relative h-full w-full flex-1 overflow-hidden pointer-events-none select-none">
-      {/* Top Left: 88 Residences Brand Pill with Home Icon & Website Redirection */}
+    <div
+      dir={dir}
+      className="relative h-full w-full flex-1 overflow-hidden pointer-events-none select-none"
+    >
+      {/* Top Start: 88 Residences Brand Pill with Home Icon & Website Redirection */}
       <HomeBrandPill
         redirectUrl={redirectUrl}
         onClick={handleRedirect}
+        dir={dir}
       />
 
-      {/* Bottom Right: Floating Email Contact Button */}
-      <FloatingContactButton
-        onClick={handleOpenContact}
-      />
+      {/* Bottom End: Floating Email Contact Button */}
+      {active && (
+        <FloatingContactButton
+          onClick={handleOpenContact}
+          dir={dir}
+        />
+      )}
 
       {/* Contact Enquiry Dialog Modal */}
       <ContactDialogContainer

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import { configureLoader } from "@/utils/preloader";
@@ -427,28 +427,55 @@ export const useHomeScene = ({ active = true } = {}) => {
   // why this stays O(new chunks) instead of re-walking everything on every
   // merge.
   //
-  // A useEffect, NOT a useMemo — this used to be a useMemo (to run
-  // synchronously before paint, avoiding a one-frame flash of un-tuned
-  // materials on each chunk arrival) but that was a REAL BUG, not just a
-  // style nit: mergeVersion is never read inside the callback body (it's
-  // there purely to force a re-run — mergedGroup's own reference identity
-  // never changes, since it's mutated via .add(), not replaced), and this
-  // project's React Compiler optimizes useMemo based on which dependencies
-  // are ACTUALLY read, not the literal array written here. It very likely
-  // treated mergeVersion as inert and only ever ran this callback ONCE, for
-  // whatever was in the group at that first moment (the preview) — every
-  // chunk that arrived afterward (all of tier-1 and tier-2) never got
-  // applyMaterialTuning applied at all, left rendering with raw GLB
-  // materials: Gray_BUILD's transmission not disabled (walls turn
-  // see-through, exposing internal framework), unfixed balcony glass
-  // (renders as a dark/broken slab), no road-line/decal polygonOffset
-  // (z-fighting), no anisotropy/mipmap tuning. useEffect isn't subject to
-  // this optimization (side effects are its whole purpose, unlike useMemo
-  // which is meant to be pure) — the only real cost of switching is a
-  // possible single-frame flash of untuned materials on a chunk's first
-  // render, immediately corrected next frame, which is a dramatically
-  // better trade than "permanently untuned."
-  useEffect(() => {
+  // A useLayoutEffect, NOT a useMemo and NOT a plain useEffect.
+  //
+  // Not useMemo — this used to be one (to run synchronously before paint,
+  // avoiding a one-frame flash of un-tuned materials on each chunk arrival)
+  // but that was a REAL BUG, not just a style nit: mergeVersion is never
+  // read inside the callback body (it's there purely to force a re-run —
+  // mergedGroup's own reference identity never changes, since it's mutated
+  // via .add(), not replaced), and this project's React Compiler optimizes
+  // useMemo based on which dependencies are ACTUALLY read, not the literal
+  // array written here. It very likely treated mergeVersion as inert and
+  // only ever ran this callback ONCE, for whatever was in the group at that
+  // first moment (the preview) — every chunk that arrived afterward (all of
+  // tier-1 and tier-2) never got applyMaterialTuning applied at all, left
+  // rendering with raw GLB materials: Gray_BUILD's transmission not
+  // disabled (walls turn see-through, exposing internal framework), unfixed
+  // balcony glass (renders as a dark/broken slab), no road-line/decal
+  // polygonOffset (z-fighting), no anisotropy/mipmap tuning.
+  //
+  // Not a plain useEffect either — REAL BUG FIXED HERE, confirmed by
+  // reproducing it: a useEffect defers this traversal until AFTER the
+  // browser paints, and home-scene/index.jsx's own onReady effect (which
+  // hides the global loader the instant tier1Ready flips true, deliberately
+  // WITHOUT waiting for gl.compile — see that file's own comment) is a
+  // sibling plain useEffect in the very same commit. Both are pure
+  // synchronous JS work (traversing ~1800 nodes), and the browser paints
+  // whatever is in the scene graph at that moment regardless of which
+  // effect flavor either one uses — so revealing the loader and tuning
+  // materials were racing for the same post-paint effect slot. On a
+  // production build this traversal finishes fast enough that the race is
+  // never visible (matches this project's own "single-frame flash,
+  // immediately corrected next frame" expectation below) — but Vite's dev
+  // server (unminified, unbundled, far more per-module overhead) stretches
+  // that same traversal long enough to persist for multiple frames,
+  // reproducing as untextured, Gray_BUILD-transmissive (flat/washed-out)
+  // buildings that never self-correct on a slow machine or a busy dev
+  // session — "works in `vite preview`, broken in `vite dev`" being the
+  // exact, deterministic symptom of the race losing more often when
+  // everything is slower, not an actual load/decode failure (confirmed:
+  // network shows tier1.glb/tier2.glb both completing at full byte size,
+  // no console errors). useLayoutEffect runs synchronously BEFORE the
+  // browser paints, and React always runs every useLayoutEffect in a commit
+  // before any useEffect in that same commit — so this now finishes, and
+  // the materials are already tuned, before onReady's effect (still a plain
+  // useEffect) can fire and reveal anything. Dependency tracking is
+  // unaffected by this swap: the useMemo hazard above was specific to
+  // useMemo's memoization semantics, not to effects in general — a
+  // useLayoutEffect re-runs on every mergeVersion change exactly like the
+  // useEffect it replaces did.
+  useLayoutEffect(() => {
     if (!mergedGroup) return;
 
     mergedGroup.children.forEach((topLevelNode) => {

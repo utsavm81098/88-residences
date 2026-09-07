@@ -216,6 +216,8 @@ export const useSceneCanvas = () => {
     dpr,
     homeControlsRef: home.controlsRef,
     handleHomeReady: home.handleReady,
+    showHandGesture: home.showHandGesture,
+    handleHintVisibleChange: home.handleHintVisibleChange,
     inventoryControlsRef: inventory.controlsRef,
     inventoryModelRef: inventory.modelRef,
     handleInventoryReady: inventory.handleReady,

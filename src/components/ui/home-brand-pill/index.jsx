@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 export const HomeBrandPill = memo(function HomeBrandPill({
   redirectUrl = "https://www.88residences.com/",
   onClick,
+  dir = "ltr",
   className,
 }) {
   return (
@@ -38,10 +39,14 @@ export const HomeBrandPill = memo(function HomeBrandPill({
         // Prevent GTM linker from intercepting mousedown to decorate href with _gl params
         e.stopPropagation();
       }}
-      dir="ltr"
+      dir={dir}
       aria-label="88 Residences Home"
       className={cn(
-        "group absolute top-4 left-4 sm:top-6 sm:left-6 lg:top-10 lg:left-10 z-20 pointer-events-auto",
+        "group absolute top-4 sm:top-6 lg:top-10 z-20 pointer-events-auto",
+        "start-4 sm:start-6 lg:start-10",
+        "ltr:start-[max(1rem,calc(0.75rem+env(safe-area-inset-left,0px)))]",
+        "rtl:start-[max(1rem,calc(0.75rem+env(safe-area-inset-right,0px)))]",
+        "sm:ltr:start-6 sm:rtl:start-6 lg:ltr:start-10 lg:rtl:start-10",
         "flex items-center gap-2.5 sm:gap-3 lg:gap-3.5",
         "h-[44px] sm:h-[48px] lg:h-[54px]",
         "px-3.5 sm:px-4.5 lg:px-5",
