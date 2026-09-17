@@ -20,7 +20,12 @@ const ANIMATION_RULE =
  * At every millisecond, (Night*α + Day*(1-α)) = 1.0, giving an uninterrupted,
  * perfectly smooth transition without any darkness dip or blinking.
  */
-export const HeroCarousel = ({ slides = [], className }) => {
+export const HeroCarousel = ({
+  slides = [],
+  className,
+  loadingText,
+  textDir = "ltr",
+}) => {
   const baseSlide = slides[0]; // Day (PLOT88-birdeye-day.jpg)
   const overlaySlide = slides[1]; // Night (PLOT88-birdeye-night.jpg)
 
@@ -29,7 +34,7 @@ export const HeroCarousel = ({ slides = [], className }) => {
       dir="ltr"
       className={cn(
         "relative h-full w-full select-none overflow-hidden bg-background [touch-action:pinch-zoom]",
-        className
+        className,
       )}
     >
       {/* ── Base Layer (Day) — Solid Opacity at zIndex 1 ── */}
@@ -68,9 +73,22 @@ export const HeroCarousel = ({ slides = [], className }) => {
           <Logo />
         </div>
       </div>
+
+      {/* ── Hero 3D Title Overlay ── */}
+
+      <div
+        data-slot="hero-3d-title-wrapper"
+        className="hero-3d-title-wrapper pointer-events-none absolute bottom-[160px] md:bottom-[200px] left-1/2 -translate-x-1/2 z-[98] w-[95%] md:w-[90%] max-w-[850px] text-center"
+      >
+        <h1
+          dir={textDir}
+          className="hero-3d-title !text-white text-[20px] md:text-[clamp(22px,3.2vw,36px)] font-semibold leading-[1.25] tracking-[1px] uppercase m-0 mx-auto p-0 font-sans [text-shadow:0_4px_15px_rgba(0,0,0,0.75),0_2px_5px_rgba(0,0,0,0.9)]"
+        >
+          {loadingText}
+        </h1>
+      </div>
     </div>
   );
 };
 
 export default HeroCarousel;
-

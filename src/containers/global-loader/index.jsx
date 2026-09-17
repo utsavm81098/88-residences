@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { getDirection } from "@/i18n";
 import HeroCarousel from "@/components/ui/hero-carousel";
 import { HOME_LOADER_SLIDES } from "@/utils/constant";
 import { cn } from "@/lib/utils";
@@ -40,10 +41,28 @@ import useGlobalLoader from "./use-global-loader";
  * each route's own HomeLoader/CanvasLoader's job to recover from, not a
  * reason to re-show the very-first-load splash again.
  */
+const FALLBACK_MESSAGES = {
+  en: "Please hold on for a few seconds while we load your dream in 3D",
+  he: "כמה שניות אנחנו טוענים את החלום שלכם בתלת מימד",
+};
+
 export const GlobalLoader = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isReady } = useGlobalLoader();
   const [unmounted, setUnmounted] = useState(false);
+
+  // Synchronously resolve language from URL or i18n to prevent frame-0 flash
+  const currentLang =
+    typeof window !== "undefined" && window.location.pathname.includes("/dashboard-he")
+      ? "he"
+      : (i18n.resolvedLanguage || i18n.language || "en").startsWith("he")
+      ? "he"
+      : "en";
+
+  const defaultText = FALLBACK_MESSAGES[currentLang] || FALLBACK_MESSAGES.en;
+  const rawText = t("loader_holding_text", { lng: currentLang, defaultValue: defaultText });
+  const loadingText = !rawText || rawText === "loader_holding_text" ? defaultText : rawText;
+  const textDir = getDirection(currentLang);
 
   const handleTransitionEnd = useCallback(
     (event) => {
@@ -75,7 +94,13 @@ export const GlobalLoader = () => {
           : "pointer-events-auto opacity-100",
       )}
     >
-      <HeroCarousel slides={HOME_LOADER_SLIDES} />
+      <HeroCarousel
+        {...{
+          slides: HOME_LOADER_SLIDES,
+          loadingText,
+          textDir,
+        }}
+      />
     </div>
   );
 };
